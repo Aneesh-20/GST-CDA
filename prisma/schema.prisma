@@ -1,0 +1,709 @@
+// GST CDA - Database Schema (Prisma)
+// Supports local zero-dependency SQLite and enterprise PostgreSQL via DATABASE_URL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------
+// Identity, Tenancy & Access Control
+// -------------------------------------------------------------
+
+model User {
+  id            String               @id @default(cuid())
+  email         String               @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  isActive      Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  profile       UserProfile?
+  memberships   BusinessMembership[]
+  auditLogs     AuditLog[]
+  aiConversations AIConversation[]
+  kioskSessions KioskSession[]
+  caAssignments CAAssignment[]       @relation("AssignedCA")
+  docGrants     DocumentAccessGrant[]
+  referralsMade Referral[]           @relation("Referrer")
+  referralsRecv Referral[]           @relation("ReferredUser")
+  preferences   NotificationPreference?
+}
+
+model UserProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredLang  String   @default("en") // en, ta (Tamil ready)
+  avatarUrl      String?
+  designation    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Business {
+  id                   String               @id @default(cuid())
+  legalName            String
+  tradeName            String?
+  businessType         String               // PROPRIETORSHIP, PARTNERSHIP, LLP, PVT_LTD, OTHER
+  pan                  String?
+  isDemo               Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  memberships          BusinessMembership[]
+  registrations        GSTRegistration[]
+  addresses            Address[]
+  customers            Customer[]
+  suppliers            Supplier[]
+  salesInvoices        SalesInvoice[]
+  purchaseInvoices     PurchaseInvoice[]
+  importJobs           ImportJob[]
+  returnPeriods        ReturnPeriod[]
+  gstr1Drafts          GSTR1Draft[]
+  gstr3bDrafts         GSTR3BDraft[]
+  reconciliationRuns   ReconciliationRun[]
+  complianceTasks      ComplianceTask[]
+  documents            Document[]
+  filingAttempts       FilingAttempt[]
+  integrationConns     IntegrationConnection[]
+  auditLogs            AuditLog[]
+  caAssignments        CAAssignment[]
+  kioskSessions        KioskSession[]
+  aiConversations      AIConversation[]
+  subscription         SubscriptionPlan?
+}
+
+model BusinessMembership {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  role       String   // OWNER, CA, KIOSK_OPERATOR, ADMIN, VIEWER
+  status     String   @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique // OWNER, CA, KIOSK_OPERATOR, ADMIN, VIEWER
+  description String
+  permissions Permission[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "sales:read", "sales:write", "filing:authorize"
+  name        String
+  description String
+  roles       Role[]
+}
+
+model GSTRegistration {
+  id                  String   @id @default(cuid())
+  businessId          String
+  gstin               String   @unique
+  stateCode           String   // First 2 digits of GSTIN (e.g. "33" for Tamil Nadu)
+  registrationType    String   @default("REGULAR") // REGULAR, COMPOSITION, SEZ
+  registrationDate    DateTime?
+  portalStatus        String   @default("UNVERIFIED") // UNVERIFIED, ACTIVE, CANCELLED, SUSPENDED
+  consentGiven        Boolean  @default(false)
+  isConfigured        Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  business            Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  businessId  String
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  stateCode   String
+  pincode     String
+  isPrincipal Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Customers & Suppliers
+// -------------------------------------------------------------
+
+model Customer {
+  id          String         @id @default(cuid())
+  businessId  String
+  name        String
+  gstin       String?
+  stateCode   String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  business    Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoices    SalesInvoice[]
+}
+
+model Supplier {
+  id          String            @id @default(cuid())
+  businessId  String
+  name        String
+  gstin       String?
+  stateCode   String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  business    Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoices    PurchaseInvoice[]
+}
+
+// -------------------------------------------------------------
+// Invoices (Sales & Purchases) - Exact Currency in Paise / Integers
+// -------------------------------------------------------------
+
+model SalesInvoice {
+  id             String        @id @default(cuid())
+  businessId     String
+  customerId     String?
+  invoiceNumber  String
+  invoiceDate    DateTime
+  placeOfSupply  String        // 2-digit state code
+  invoiceType    String        @default("B2B") // B2B, B2CL, B2CS, EXP, CDNR
+  supplyType     String        @default("INTRA") // INTRA, INTER
+  status         String        @default("DRAFT") // DRAFT, CONFIRMED, CANCELLED
+  isExported     Boolean       @default(false)
+
+  // Stored in paise (integer) to prevent floating point inaccuracies
+  taxableAmount  BigInt        @default(0)
+  cgstAmount     BigInt        @default(0)
+  sgstAmount     BigInt        @default(0)
+  igstAmount     BigInt        @default(0)
+  totalAmount    BigInt        @default(0)
+
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  business       Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer       Customer?     @relation(fields: [customerId], references: [id])
+  lines          InvoiceLine[]
+  taxes          InvoiceTax[]
+
+  @@unique([businessId, invoiceNumber])
+}
+
+model PurchaseInvoice {
+  id             String                @id @default(cuid())
+  businessId     String
+  supplierId     String?
+  invoiceNumber  String
+  invoiceDate    DateTime
+  supplierGstin  String?
+  placeOfSupply  String                // 2-digit state code
+  supplyType     String                @default("INTRA") // INTRA, INTER
+  status         String                @default("CONFIRMED") // DRAFT, CONFIRMED, CANCELLED
+  itcEligibility String                @default("PENDING_REVIEW") // ELIGIBLE, INELIGIBLE, PENDING_REVIEW
+
+  // Stored in paise (integer)
+  taxableAmount  BigInt                @default(0)
+  cgstAmount     BigInt                @default(0)
+  sgstAmount     BigInt                @default(0)
+  igstAmount     BigInt                @default(0)
+  totalAmount    BigInt                @default(0)
+
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  business       Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier       Supplier?             @relation(fields: [supplierId], references: [id])
+  lines          InvoiceLine[]
+  taxes          InvoiceTax[]
+  reconciliationMatches ReconciliationMatch[]
+
+  @@unique([businessId, supplierGstin, invoiceNumber])
+}
+
+model InvoiceLine {
+  id                String           @id @default(cuid())
+  salesInvoiceId    String?
+  purchaseInvoiceId String?
+  itemDescription   String
+  hsnCode           String?
+  quantity          Decimal          @default(1)
+  unitPricePaise    BigInt           @default(0)
+  taxRatePercent    Decimal          // 0, 0.25, 3, 5, 12, 18, 28
+  taxablePaise      BigInt           @default(0)
+  cgstPaise         BigInt           @default(0)
+  sgstPaise         BigInt           @default(0)
+  igstPaise         BigInt           @default(0)
+  totalPaise        BigInt           @default(0)
+
+  salesInvoice      SalesInvoice?    @relation(fields: [salesInvoiceId], references: [id], onDelete: Cascade)
+  purchaseInvoice   PurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+}
+
+model InvoiceTax {
+  id                String           @id @default(cuid())
+  salesInvoiceId    String?
+  purchaseInvoiceId String?
+  ratePercent       Decimal
+  taxablePaise      BigInt
+  cgstPaise         BigInt
+  sgstPaise         BigInt
+  igstPaise         BigInt
+
+  salesInvoice      SalesInvoice?    @relation(fields: [salesInvoiceId], references: [id], onDelete: Cascade)
+  purchaseInvoice   PurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+}
+
+model ImportJob {
+  id           String           @id @default(cuid())
+  businessId   String
+  entityType   String           // SALES, PURCHASES
+  fileName     String
+  status       String           // UPLOADED, VALIDATING, VALIDATED, COMMITTED, FAILED
+  totalRows    Int              @default(0)
+  validRows    Int              @default(0)
+  errorRows    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  business     Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  issues       ImportRowIssue[]
+}
+
+model ImportRowIssue {
+  id          String    @id @default(cuid())
+  importJobId String
+  rowIndex    Int
+  columnName  String?
+  issueType   String    // MISSING_REQUIRED, INVALID_GSTIN, RATE_MISMATCH, DUPLICATE
+  message     String
+  rawData     String    // JSON encoded row
+
+  importJob   ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Tax Engine & Legal Rule Configuration
+// -------------------------------------------------------------
+
+model GSTRate {
+  id             String         @id @default(cuid())
+  ratePercent    Decimal        @unique // 0, 0.25, 3, 5, 12, 18, 28
+  description    String
+  isActive       Boolean        @default(true)
+}
+
+model TaxRuleVersion {
+  id             String         @id @default(cuid())
+  version        String         // e.g. "2026.1"
+  effectiveFrom  DateTime
+  effectiveTo    DateTime?
+  rulesJson      String         // JSON encoded statutory rules & thresholds
+  approvedBy     String
+  approvedAt     DateTime       @default(now())
+}
+
+model ReturnPeriod {
+  id             String         @id @default(cuid())
+  businessId     String
+  periodKey      String         // e.g. "042026" (MMYYYY)
+  year           Int
+  month          Int
+  status         String         @default("OPEN") // OPEN, IN_PROGRESS, READY, FILED
+
+  business       Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  gstr1Drafts    GSTR1Draft[]
+  gstr3bDrafts   GSTR3BDraft[]
+
+  @@unique([businessId, periodKey])
+}
+
+// -------------------------------------------------------------
+// Returns & Filing State Machine
+// -------------------------------------------------------------
+
+model GSTR1Draft {
+  id             String         @id @default(cuid())
+  businessId     String
+  periodId       String
+  status         String         @default("LOCAL_DRAFT") // LOCAL_DRAFT, VALIDATION_ISSUES, READY_FOR_REVIEW, AWAITING_AUTHORISATION, FILING_REQUESTED, FILED, FAILED
+  totalInvoices  Int            @default(0)
+  taxablePaise   BigInt         @default(0)
+  cgstPaise      BigInt         @default(0)
+  sgstPaise      BigInt         @default(0)
+  igstPaise      BigInt         @default(0)
+  payloadJson    String?        // Aggregated canonical return payload
+  validationNotes String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  business       Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  period         ReturnPeriod   @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  filingAttempts FilingAttempt[]
+}
+
+model GSTR3BDraft {
+  id                String         @id @default(cuid())
+  businessId        String
+  periodId          String
+  status            String         @default("LOCAL_DRAFT")
+  outwardTaxable    BigInt         @default(0)
+  outwardTax        BigInt         @default(0)
+  inwardEligibleItc BigInt         @default(0)
+  inwardIneligibleItc BigInt       @default(0)
+  taxPayableCash    BigInt         @default(0)
+  taxPayableItc     BigInt         @default(0)
+  payloadJson       String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  business          Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  period            ReturnPeriod   @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  validationIssues  ReturnLineValidationIssue[]
+  filingAttempts    FilingAttempt[]
+}
+
+model ReturnLineValidationIssue {
+  id            String       @id @default(cuid())
+  gstr3bDraftId String
+  field         String
+  severity      String       // WARNING, BLOCKER
+  message       String
+
+  draft         GSTR3BDraft  @relation(fields: [gstr3bDraftId], references: [id], onDelete: Cascade)
+}
+
+model FilingAttempt {
+  id               String               @id @default(cuid())
+  businessId       String
+  returnType       String               // GSTR1, GSTR3B
+  periodKey        String
+  gstr1DraftId     String?
+  gstr3bDraftId    String?
+  status           String               // INITIATED, AUTHORISED, SUBMITTED_GSP, COMPLETED, REJECTED
+  idempotencyKey   String               @unique
+  correlationId    String               @unique
+  authorisedByUserId String
+  authorisedAt     DateTime             @default(now())
+  providerResponse String?              // Raw provider response (encrypted or sanitized)
+
+  business         Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  gstr1Draft       GSTR1Draft?          @relation(fields: [gstr1DraftId], references: [id])
+  gstr3bDraft      GSTR3BDraft?         @relation(fields: [gstr3bDraftId], references: [id])
+  acknowledgement  FilingAcknowledgement?
+}
+
+model FilingAcknowledgement {
+  id               String        @id @default(cuid())
+  filingAttemptId  String        @unique
+  arn              String        @unique // Application Reference Number from GSTN
+  filingDate       DateTime
+  mode             String        // EVC, DSC
+  acknowledgementHash String
+  storedPayloadUrl String?
+
+  filingAttempt    FilingAttempt @relation(fields: [filingAttemptId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Reconciliation (GSTR-2B vs Local Purchases)
+// -------------------------------------------------------------
+
+model ReconciliationRun {
+  id             String                @id @default(cuid())
+  businessId     String
+  periodKey      String
+  status         String                // RUNNING, COMPLETED, FAILED
+  matchedCount   Int                   @default(0)
+  localOnlyCount Int                   @default(0)
+  gstOnlyCount   Int                   @default(0)
+  mismatchCount  Int                   @default(0)
+  summaryJson    String?
+  createdAt      DateTime              @default(now())
+
+  business       Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  matches        ReconciliationMatch[]
+}
+
+model ReconciliationMatch {
+  id                  String             @id @default(cuid())
+  runId               String
+  purchaseInvoiceId   String?
+  portalInvoiceNumber String?
+  portalSupplierGstin String?
+  portalInvoiceDate   DateTime?
+  portalTotalPaise    BigInt?
+  matchCategory       String             // EXACT_MATCH, LOCAL_ONLY, PORTAL_ONLY, AMOUNT_MISMATCH, DATE_MISMATCH, GSTIN_MISMATCH
+  suggestedAction     String             // ACCEPT, CONTACT_SUPPLIER, ADD_TO_BOOKS, DISMISS
+  status              String             @default("PENDING") // PENDING, RESOLVED, DISMISSED
+
+  run                 ReconciliationRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  purchaseInvoice     PurchaseInvoice?   @relation(fields: [purchaseInvoiceId], references: [id])
+}
+
+// -------------------------------------------------------------
+// Compliance Calendar & Tasks
+// -------------------------------------------------------------
+
+model ComplianceTask {
+  id          String    @id @default(cuid())
+  businessId  String
+  title       String
+  description String
+  dueDate     DateTime?
+  isConfirmed Boolean   @default(false)
+  status      String    @default("PENDING") // PENDING, COMPLETED, OVERDUE, WAITING_EXTERNAL
+  taskType    String    // GSTR1_FILING, GSTR3B_FILING, RECONCILIATION, TAX_PAYMENT
+  sourceRule  String    // e.g. "Rule 61(1) of CGST Rules"
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model DeadlineRuleVersion {
+  id            String    @id @default(cuid())
+  ruleCode      String    // e.g. "GSTR1_MONTHLY_11TH"
+  returnType    String
+  taxpayerClass String    // REGULAR_MONTHLY, QRMP_QUARTERLY
+  deadlineFormula String  // e.g. "M+1, DAY 11"
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  officialOrderNo String?
+}
+
+// -------------------------------------------------------------
+// Document Vault
+// -------------------------------------------------------------
+
+model Document {
+  id           String                @id @default(cuid())
+  businessId   String
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  category     String                // INVOICE, REGISTRATION, BANK_STATEMENT, ID_PROOF, CHALAN, OTHER
+  storageKey   String                @unique
+  retentionUntil DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  business     Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  grants       DocumentAccessGrant[]
+}
+
+model DocumentAccessGrant {
+  id          String    @id @default(cuid())
+  documentId  String
+  grantedToId String    // User ID
+  expiresAt   DateTime?
+  canDownload Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  grantedTo   User      @relation(fields: [grantedToId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Integrations, Capability Registry & Protected Tokens
+// -------------------------------------------------------------
+
+model IntegrationConnection {
+  id              String         @id @default(cuid())
+  businessId      String
+  providerName    String         // e.g. "NIC_GSP", "MASTERCARD_GSP", "MOCK_SANDBOX"
+  environment     String         // SANDBOX, PRODUCTION
+  status          String         @default("NOT_CONFIGURED") // NOT_CONFIGURED, AWAITING_DOCS, SANDBOX_VALIDATED, PRODUCTION_VERIFIED, DISABLED
+  gstin           String
+  username        String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  business        Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  tokens          EncryptedTokenSecret[]
+  requestLogs     APIRequestLog[]
+}
+
+model ProviderCapability {
+  id              String   @id @default(cuid())
+  apiCode         String   @unique // e.g. "GSTR1_FILE", "GSTR2B_GET", "IMS_INVOICES"
+  name            String
+  category        String   // SESSION, GSTR1, GSTR2, GSTR3B, MISC
+  workbookStatus  String   // WORKING, PARTIAL, NOT_WORKING, NOT_TESTED, UNKNOWN
+  systemStatus    String   @default("DISABLED_UNVERIFIED") // DISABLED_UNVERIFIED, SANDBOX_MOCKED, READY_PRODUCTION
+  requiresOtp     Boolean  @default(false)
+  endpointDocPath String?
+}
+
+model EncryptedTokenSecret {
+  id             String                @id @default(cuid())
+  connectionId   String
+  secretType     String                // AUTH_TOKEN, REFRESH_TOKEN, GSP_APP_KEY
+  encryptedData  String
+  iv             String
+  expiresAt      DateTime?
+  createdAt      DateTime              @default(now())
+
+  connection     IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model APIRequestLog {
+  id             String                @id @default(cuid())
+  connectionId   String?
+  apiCode        String
+  endpointUrl    String
+  httpMethod     String
+  httpStatus     Int?
+  correlationId  String
+  durationMs     Int
+  errorSummary   String?
+  createdAt      DateTime              @default(now())
+
+  connection     IntegrationConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  businessId  String?
+  userId      String?
+  action      String    // e.g. "INVOICE_CREATED", "FILING_AUTHORISED", "CA_INVITED"
+  entityType  String
+  entityId    String?
+  detailsJson String?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+
+  business    Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// -------------------------------------------------------------
+// CA Support & Kiosk Mode
+// -------------------------------------------------------------
+
+model CAAssignment {
+  id          String    @id @default(cuid())
+  businessId  String
+  caUserId    String
+  status      String    @default("INVITED") // INVITED, ACTIVE, REVOKED
+  scope       String    @default("FULL_ACCESS") // FULL_ACCESS, PREPARE_ONLY, VIEW_ONLY
+  invitedAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  caUser      User      @relation("AssignedCA", fields: [caUserId], references: [id], onDelete: Cascade)
+}
+
+model KioskSession {
+  id          String    @id @default(cuid())
+  businessId  String
+  operatorId  String
+  sessionToken String   @unique
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  ipAddress   String?
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  operator    User      @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Referrals, Subscriptions & Notifications
+// -------------------------------------------------------------
+
+model Referral {
+  id             String           @id @default(cuid())
+  referrerUserId String
+  referredUserId String?
+  referralCode   String           @unique
+  status         String           @default("PENDING") // PENDING, SIGNED_UP, CONVERTED
+  createdAt      DateTime         @default(now())
+
+  referrer       User             @relation("Referrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referred       User?            @relation("ReferredUser", fields: [referredUserId], references: [id])
+  rewards        ReferralReward[]
+}
+
+model ReferralReward {
+  id          String    @id @default(cuid())
+  referralId  String
+  rewardType  String    // DISCOUNT_COUPON, CREDITS
+  amountPaise BigInt    @default(0)
+  claimedAt   DateTime?
+
+  referral    Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionPlan {
+  id          String    @id @default(cuid())
+  businessId  String    @unique
+  planName    String    @default("STARTER") // STARTER, GROWTH, CA_PRO
+  billingTerm String    @default("MONTHLY") // MONTHLY, ANNUAL
+  pricePaise  BigInt    @default(0)
+  validUntil  DateTime
+  isTrial     Boolean   @default(true)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model NotificationPreference {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  emailReminders   Boolean  @default(true)
+  smsReminders     Boolean  @default(false)
+  whatsappReminders Boolean @default(false)
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// Grounded GST Copilot
+// -------------------------------------------------------------
+
+model AIConversation {
+  id          String      @id @default(cuid())
+  businessId  String
+  userId      String
+  title       String      @default("GST Assistance")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    AIMessage[]
+}
+
+model AIMessage {
+  id              String         @id @default(cuid())
+  conversationId  String
+  role            String         // USER, ASSISTANT, SYSTEM
+  content         String
+  provenanceLabel String?        // "BASED_ON_RECORDS", "GENERAL_EXPLANATION", "NEEDS_VERIFICATION"
+  contextUsedJson String?        // Redacted payload snippet passed to LLM
+  createdAt       DateTime       @default(now())
+
+  conversation    AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
