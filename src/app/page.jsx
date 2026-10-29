@@ -1122,14 +1122,34 @@ export default function GSTCDAApp() {
             <span>Portal Status (182 APIs)</span>
           </button>
         </nav>
+
+        {/* Sidebar Footer: User Identity & Quick Switcher */}
+        <div className="sidebar-footer">
+          <div className="sidebar-user-card">
+            <div className="sidebar-avatar">
+              {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : '👤'}
+            </div>
+            <div className="sidebar-user-meta">
+              <div className="sidebar-user-name" title={currentUser?.name}>
+                {currentUser?.name || 'Business Owner'}
+              </div>
+              <div className="sidebar-user-role">
+                {userRole === 'OWNER' ? 'Owner' : userRole === 'CA' ? 'Auditor / CA' : 'Kiosk'}
+              </div>
+            </div>
+            <button onClick={handleSignOut} className="sidebar-signout-btn" title="Sign Out of GST CDA">
+              <LogOut style={{ width: 14 }} />
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* Main App Canvas */}
       <div className="main-wrapper">
         {/* Top Header */}
         <header className="top-header">
-          {/* Left: Entity Identification */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 1 }}>
+          {/* Left: Entity Identification & Edit */}
+          <div className="header-left">
             <div className="business-pill">
               <span className="business-name" title={businessProfile.legalName}>
                 {businessProfile.legalName}
@@ -1137,7 +1157,7 @@ export default function GSTCDAApp() {
               <span className="business-gstin">{businessProfile.gstin}</span>
               <span className="live-badge">
                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-                LIVE BOOKS
+                <span className="hide-on-compact">LIVE BOOKS</span>
               </span>
             </div>
 
@@ -1147,7 +1167,7 @@ export default function GSTCDAApp() {
               onClick={() => setIsEditProfileOpen(true)}
               title="Edit Business Profile & GSTIN"
             >
-              <Edit3 style={{ width: 12 }} /> Edit Profile
+              <Edit3 style={{ width: 12 }} /> <span className="hide-on-compact">Edit Profile</span>
             </button>
           </div>
 
@@ -1172,12 +1192,12 @@ export default function GSTCDAApp() {
               onClick={() => handleResetToNormal(true)}
               title="Reset records back to normal baseline data"
             >
-              <RotateCcw style={{ width: 11 }} /> Reset Data
+              <RotateCcw style={{ width: 11 }} /> <span className="hide-on-compact">Reset Data</span>
             </button>
 
             {/* User Profile Pill */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', padding: '5px 12px', borderRadius: 9999, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', whiteSpace: 'nowrap' }}>
-              <span>👤 {currentUser?.name || 'Business Owner'}</span>
+              <span>👤</span> <span className="hide-on-compact">{currentUser?.name || 'Business Owner'}</span>
             </div>
 
             {/* Role Switcher */}
@@ -1200,7 +1220,7 @@ export default function GSTCDAApp() {
               onClick={handleSignOut}
               title="Sign Out of GST CDA"
             >
-              <LogOut style={{ width: 12 }} /> Sign Out
+              <LogOut style={{ width: 12 }} /> <span className="hide-on-compact">Sign Out</span>
             </button>
           </div>
         </header>
