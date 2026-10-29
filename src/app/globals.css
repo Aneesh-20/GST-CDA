@@ -591,6 +591,163 @@ button {
   flex-shrink: 0;
 }
 
+/* ==========================================================================
+   REUSABLE LUXURY CUSTOM SELECT (Replaces All Native OS <select>)
+   ========================================================================== */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  text-align: left;
+}
+
+.custom-select-trigger:hover {
+  border-color: #10B981;
+  background-color: #FAFBFC;
+}
+
+.custom-select-trigger.open {
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+  background-color: #FFFFFF;
+}
+
+.custom-select-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.custom-select-chevron {
+  width: 16px;
+  height: 16px;
+  color: #64748B;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-select-chevron.rotated {
+  transform: rotate(180deg);
+  color: #10B981;
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  z-index: 100;
+  overflow: hidden;
+  animation: selectPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes selectPop {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-select-search-wrapper {
+  padding: 8px 10px;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FAFBFD;
+}
+
+.custom-select-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  color: var(--text-main);
+  background-color: #FFFFFF;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.custom-select-search-input:focus {
+  border-color: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.custom-select-options-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 10px;
+}
+
+.custom-select-option:hover {
+  background-color: #F8FAFC;
+  transform: translateX(2px);
+}
+
+.custom-select-option.selected {
+  background-color: #ECFDF5;
+  color: #047857;
+  font-weight: 700;
+}
+
+.custom-select-option-text {
+  font-size: 0.88rem;
+  line-height: 1.3;
+}
+
+.custom-select-option-sub {
+  font-size: 0.72rem;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.custom-select-option.selected .custom-select-option-sub {
+  color: #059669;
+}
+
+.custom-select-check {
+  width: 16px;
+  height: 16px;
+  color: #059669;
+  flex-shrink: 0;
+}
+
 /* Live Badge with Pulsing Emerald Beacon */
 .live-badge {
   background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);

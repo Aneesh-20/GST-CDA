@@ -63,6 +63,99 @@ INV-001,2026-10-05,Sri Ram Agencies,33AABCS1234F1Z1,33,25000,18
 INV-002,2026-10-12,Walk-in Cash Customer,,33,8500,18
 INV-003,2026-10-18,Bangalore Tech Supplies,29AAACL5678K1Z3,29,45000,18`;
 
+// Reusable Luxury Custom Select Component
+function CustomSelect({ value, onChange, options, placeholder = 'Select...', searchable = false }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const formattedOptions = options.map(opt => 
+    typeof opt === 'string' ? { value: opt, label: opt } : opt
+  );
+
+  const filtered = formattedOptions.filter(opt => 
+    !search || 
+    opt.label.toLowerCase().includes(search.toLowerCase()) || 
+    (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase())) ||
+    (opt.value && String(opt.value).toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const selectedOpt = formattedOptions.find(o => String(o.value) === String(value));
+
+  return (
+    <div className="custom-select-container" ref={containerRef}>
+      <button
+        type="button"
+        className={`custom-select-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="custom-select-label">
+          {selectedOpt ? selectedOpt.label : placeholder}
+        </span>
+        <ChevronDown className={`custom-select-chevron ${isOpen ? 'rotated' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="custom-select-menu">
+          {searchable && (
+            <div className="custom-select-search-wrapper">
+              <input
+                type="text"
+                className="custom-select-search-input"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+          <div className="custom-select-options-list">
+            {filtered.length === 0 ? (
+              <div style={{ padding: '12px', textAlign: 'center', fontSize: '0.82rem', color: '#94a3b8' }}>
+                No matching results found
+              </div>
+            ) : (
+              filtered.map((opt) => (
+                <div
+                  key={opt.value}
+                  className={`custom-select-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                    setSearch('');
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="custom-select-option-text">{opt.label}</div>
+                    {opt.sublabel && (
+                      <div className="custom-select-option-sub">{opt.sublabel}</div>
+                    )}
+                  </div>
+                  {String(opt.value) === String(value) && (
+                    <Check className="custom-select-check" />
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GSTCDAApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [userRole, setUserRole] = useState('OWNER');
@@ -2261,33 +2354,35 @@ export default function GSTCDAApp() {
 
               <div className="form-group">
                 <label className="form-label">Principal State of Business</label>
-                <select 
-                  className="form-select"
+                <CustomSelect
                   value={businessProfile.stateCode}
-                  onChange={(e) => setBusinessProfile({ 
+                  onChange={(val) => setBusinessProfile({ 
                     ...businessProfile, 
-                    stateCode: e.target.value,
-                    stateName: INDIAN_STATES[e.target.value] || ''
+                    stateCode: val,
+                    stateName: INDIAN_STATES[val] || ''
                   })}
-                >
-                  {Object.entries(INDIAN_STATES).map(([code, name]) => (
-                    <option key={code} value={code}>{code} - {name}</option>
-                  ))}
-                </select>
+                  options={Object.entries(INDIAN_STATES).map(([code, name]) => ({
+                    value: code,
+                    label: `${code} - ${name}`
+                  }))}
+                  searchable={true}
+                  placeholder="Select State / UT..."
+                />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Business Structure</label>
-                <select 
-                  className="form-select"
+                <CustomSelect
                   value={businessProfile.businessType}
-                  onChange={(e) => setBusinessProfile({ ...businessProfile, businessType: e.target.value })}
-                >
-                  <option>Sole Proprietorship</option>
-                  <option>Partnership Firm</option>
-                  <option>LLP (Limited Liability Partnership)</option>
-                  <option>Private Limited Company</option>
-                </select>
+                  onChange={(val) => setBusinessProfile({ ...businessProfile, businessType: val })}
+                  options={[
+                    { value: 'Sole Proprietorship', label: 'Sole Proprietorship', sublabel: 'Individual Trader / Retailer' },
+                    { value: 'Partnership Firm', label: 'Partnership Firm', sublabel: 'Registered or Unregistered Firm' },
+                    { value: 'LLP (Limited Liability Partnership)', label: 'LLP (Limited Liability Partnership)', sublabel: 'Corporate Limited Liability' },
+                    { value: 'Private Limited Company', label: 'Private Limited Company', sublabel: 'Incorporated Pvt Ltd Entity' }
+                  ]}
+                  placeholder="Select Structure..."
+                />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
@@ -2394,17 +2489,18 @@ export default function GSTCDAApp() {
 
                 <div className="form-group">
                   <label className="form-label">GST Rate</label>
-                  <select 
-                    className="form-select"
+                  <CustomSelect
                     value={salesForm.ratePercent}
-                    onChange={(e) => setSalesForm({ ...salesForm, ratePercent: parseFloat(e.target.value) })}
-                  >
-                    <option value={0}>0% (Exempt)</option>
-                    <option value={5}>5% (Essentials)</option>
-                    <option value={12}>12% (Standard)</option>
-                    <option value={18}>18% (Standard / Services)</option>
-                    <option value={28}>28% (Luxury / Vehicles)</option>
-                  </select>
+                    onChange={(val) => setSalesForm({ ...salesForm, ratePercent: parseFloat(val) })}
+                    options={[
+                      { value: 0, label: '0% (Exempt)', sublabel: 'Zero-rated goods and fresh items' },
+                      { value: 5, label: '5% (Essentials)', sublabel: 'Basic food & household essentials' },
+                      { value: 12, label: '12% (Standard Category)', sublabel: 'Apparel, processed food, hardware' },
+                      { value: 18, label: '18% (Standard / Services)', sublabel: 'Most goods & professional services' },
+                      { value: 28, label: '28% (Luxury / Vehicles)', sublabel: 'Automobiles & luxury items' }
+                    ]}
+                    placeholder="Select GST Rate..."
+                  />
                 </div>
               </div>
 
@@ -2500,14 +2596,15 @@ export default function GSTCDAApp() {
 
               <div className="form-group">
                 <label className="form-label">Tax Credit (ITC) Eligibility</label>
-                <select 
-                  className="form-select"
+                <CustomSelect
                   value={purchaseForm.itcEligibility}
-                  onChange={(e) => setPurchaseForm({ ...purchaseForm, itcEligibility: e.target.value })}
-                >
-                  <option value="ELIGIBLE">Eligible Business Stock / Materials (Claim Tax Credit)</option>
-                  <option value="INELIGIBLE">Ineligible / Blocked (Food, Snacks, Personal under Sec 17(5))</option>
-                </select>
+                  onChange={(val) => setPurchaseForm({ ...purchaseForm, itcEligibility: val })}
+                  options={[
+                    { value: 'ELIGIBLE', label: 'Eligible Business Stock / Materials', sublabel: 'Claim full Input Tax Credit against outward sales' },
+                    { value: 'INELIGIBLE', label: 'Ineligible / Blocked Credit', sublabel: 'Food, personal use, snacks under Sec 17(5)' }
+                  ]}
+                  placeholder="Select Eligibility..."
+                />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
