@@ -33,7 +33,8 @@ import {
   LogOut,
   Eye,
   EyeOff,
-  RotateCcw
+  RotateCcw,
+  ChevronDown
 } from 'lucide-react';
 
 import { rupeesToPaise, formatINR, paiseToRupees } from '../../packages/domain/currency.js';
@@ -65,6 +66,8 @@ INV-003,2026-10-18,Bangalore Tech Supplies,29AAACL5678K1Z3,29,45000,18`;
 export default function GSTCDAApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [userRole, setUserRole] = useState('OWNER');
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef(null);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState(null);
@@ -248,6 +251,17 @@ export default function GSTCDAApp() {
       console.error('Error initializing user from storage:', e);
       setAuthChecked(true);
     }
+  }, []);
+
+  // Close custom role dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Save Business Profile to database
@@ -1200,18 +1214,100 @@ export default function GSTCDAApp() {
               <span>👤</span> <span className="hide-on-compact">{currentUser?.name || 'Business Owner'}</span>
             </div>
 
-            {/* Role Switcher */}
-            <select 
-              value={userRole} 
-              onChange={(e) => handleRoleChange(e.target.value)}
-              className="form-select"
-              style={{ width: 'auto', padding: '5px 8px', fontSize: '0.78rem', fontWeight: 600, borderRadius: 9999, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', cursor: 'pointer', whiteSpace: 'nowrap' }}
-              title="Switch user role & load isolated workspace"
-            >
-              <option value="OWNER">Role: Owner</option>
-              <option value="CA">Role: CA</option>
-              <option value="KIOSK_OPERATOR">Role: Kiosk</option>
-            </select>
+            {/* Custom Luxury Role Dropdown */}
+            <div ref={roleDropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="role-dropdown-trigger"
+                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                title="Switch active role & workspace"
+              >
+                <span className="role-dot" style={{
+                  backgroundColor: userRole === 'OWNER' ? '#10b981' : userRole === 'CA' ? '#2563eb' : '#d97706'
+                }}></span>
+                <span style={{ fontWeight: 700 }}>
+                  Role: {userRole === 'OWNER' ? 'Owner' : userRole === 'CA' ? 'CA' : 'Kiosk'}
+                </span>
+                <ChevronDown 
+                  style={{ 
+                    width: 12, 
+                    height: 12, 
+                    transition: 'transform 0.2s ease',
+                    transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    color: '#64748b'
+                  }} 
+                />
+              </button>
+
+              {/* Luxury Popover Card */}
+              {isRoleDropdownOpen && (
+                <div className="role-dropdown-menu">
+                  <div className="role-dropdown-header">
+                    SWITCH WORKSPACE ROLE
+                  </div>
+
+                  {/* Option 1: Business Owner */}
+                  <div 
+                    className={`role-option-item ${userRole === 'OWNER' ? 'active' : ''}`}
+                    onClick={() => {
+                      handleRoleChange('OWNER');
+                      setIsRoleDropdownOpen(false);
+                    }}
+                  >
+                    <div className="role-option-avatar" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                      👤
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="role-option-title">Business Owner</div>
+                      <div className="role-option-sub">Murugan Electricals & Hardware</div>
+                    </div>
+                    {userRole === 'OWNER' && (
+                      <Check className="role-option-check" />
+                    )}
+                  </div>
+
+                  {/* Option 2: Chartered Accountant */}
+                  <div 
+                    className={`role-option-item ${userRole === 'CA' ? 'active' : ''}`}
+                    onClick={() => {
+                      handleRoleChange('CA');
+                      setIsRoleDropdownOpen(false);
+                    }}
+                  >
+                    <div className="role-option-avatar" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                      🎓
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="role-option-title">Chartered Accountant (CA)</div>
+                      <div className="role-option-sub">Ramanujam & Associates Audit Firm</div>
+                    </div>
+                    {userRole === 'CA' && (
+                      <Check className="role-option-check" />
+                    )}
+                  </div>
+
+                  {/* Option 3: Kiosk Operator */}
+                  <div 
+                    className={`role-option-item ${userRole === 'KIOSK_OPERATOR' ? 'active' : ''}`}
+                    onClick={() => {
+                      handleRoleChange('KIOSK_OPERATOR');
+                      setIsRoleDropdownOpen(false);
+                    }}
+                  >
+                    <div className="role-option-avatar" style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
+                      🏪
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="role-option-title">CSC / Kiosk Operator</div>
+                      <div className="role-option-sub">Village Assisted Tax Center</div>
+                    </div>
+                    {userRole === 'KIOSK_OPERATOR' && (
+                      <Check className="role-option-check" />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Sign Out Button */}
             <button 
