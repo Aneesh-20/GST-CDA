@@ -24,25 +24,10 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
       {/* Top Greeting & Demo Workspace Pill */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div>
             <h1 className="font-editorial" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#0B132B', margin: 0 }}>
               Good evening, Anaya
             </h1>
-            <span style={{ 
-              fontSize: '0.72rem', 
-              fontWeight: 800, 
-              padding: '3px 10px', 
-              borderRadius: 9999, 
-              backgroundColor: '#ECFDF5', 
-              color: '#0E7051', 
-              border: '1px solid #A7F3D0',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
-              <span>Live Books Active</span>
-            </span>
           </div>
           <p style={{ fontSize: '1rem', color: '#596579', marginTop: 6 }}>
             Your September GST review is nearly ready. Period: <strong>September 2026</strong>.
