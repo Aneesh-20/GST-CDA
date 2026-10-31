@@ -1611,3 +1611,154 @@ tr:hover td {
   display: inline-block;
 }
 
+/* ======================================================== */
+/* QUIET LUXURY FINTECH DESIGN SYSTEM (SHOWCASE ENHANCEMENT) */
+/* ======================================================== */
+:root {
+  --bg-ivory: #FAF8F5;
+  --bg-ivory-subtle: #F5F1EA;
+  --surface-pure: #FFFFFF;
+  --surface-warm: #FCFAF7;
+  --border-warm: #EAE5DC;
+  --border-warm-dark: #DCD5C9;
+  
+  --ink-midnight: #0B132B;
+  --ink-charcoal: #1C2541;
+  --ink-muted: #596579;
+  --ink-subtle: #8D99AE;
+  
+  --teal-primary: #0D6258;
+  --teal-deep: #084039;
+  --teal-hover: #0A4F46;
+  --teal-tint: #EEF8F6;
+  --teal-border: #B2DDD7;
+  
+  --gold-saffron: #C87D0E;
+  --gold-warm: #B45309;
+  --gold-tint: #FEF7EC;
+  --gold-border: #F7E1B8;
+
+  --forest-green: #0E7051;
+  --forest-tint: #ECFDF5;
+  --forest-border: #A7F3D0;
+
+  --amber-status: #B45309;
+  --amber-tint: #FFFBEB;
+  --amber-border: #FDE68A;
+
+  --brick-red: #B91C1C;
+  --brick-tint: #FEF2F2;
+  --brick-border: #FECACA;
+
+  --font-serif: "Newsreader", "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Inter", "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-ivory);
+  color: var(--ink-midnight);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-editorial {
+  font-family: var(--font-serif);
+  font-feature-settings: "kern", "liga", "dlig", "calt";
+}
+
+/* Quiet Luxury Drawer */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 19, 43, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drawer-panel {
+  width: 100%;
+  max-width: 540px;
+  background-color: var(--surface-pure);
+  height: 100%;
+  box-shadow: -10px 0 35px rgba(11, 19, 43, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Command Palette Modal */
+.cmd-palette-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 19, 43, 0.5);
+  backdrop-filter: blur(6px);
+  z-index: 10001;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.cmd-palette-box {
+  width: 100%;
+  max-width: 620px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-warm);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(11, 19, 43, 0.25);
+  overflow: hidden;
+}
+
+/* Subtle Warm Card */
+.card-warm {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-warm);
+  border-radius: 18px;
+  box-shadow: 0 2px 8px -2px rgba(11, 19, 43, 0.04), 0 1px 3px rgba(11, 19, 43, 0.02);
+  transition: all 0.2s ease;
+}
+
+.card-warm:hover {
+  border-color: var(--border-warm-dark);
+  box-shadow: 0 8px 24px -4px rgba(11, 19, 43, 0.08);
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-warm);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 12px 16px;
+  z-index: 999;
+}
+
+@media (min-width: 901px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+

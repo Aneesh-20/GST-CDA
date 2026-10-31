@@ -12,3 +12,4 @@
 - **Financial Arithmetic Integrity**: All currency values (taxable, CGST, SGST, IGST, total liability, ITC) must be computed in integer paise using `BigInt` or minor-unit math. Zero floating-point drift is tolerated.
 - **SQLite Database Persistence**: Database operations in `src/lib/db.js` must maintain multi-tenant safety by user email.
 - **Truthful Compliance Status**: Adhere strictly to the real statutory rules of Indian GST (GSTR-3B, GSTR-2B, Section 16(2)(aa)).
+
