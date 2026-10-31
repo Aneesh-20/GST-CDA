@@ -34,7 +34,10 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
-  ChevronDown
+  ChevronDown,
+  Lock,
+  CreditCard,
+  Zap
 } from 'lucide-react';
 
 import { rupeesToPaise, formatINR, paiseToRupees } from '../../packages/domain/currency.js';
@@ -200,11 +203,34 @@ export default function GSTCDAApp() {
   const [supplierReminderModal, setSupplierReminderModal] = useState(null);
   const [returnDraftStatus, setReturnDraftStatus] = useState('LOCAL_DRAFT');
 
+  // Subscription & Paid Feature Paywall Gating State
+  const [userSubscription, setUserSubscription] = useState('FREE'); // 'FREE' | 'PAY_PER_FILING' | 'PRO' | 'ENTERPRISE'
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [paywallPendingAction, setPaywallPendingAction] = useState(null);
+  const [paywallFeature, setPaywallFeature] = useState({
+    name: 'GSP Portal Filing & Return Preparation',
+    category: 'X_FILING', // 'X_FILING' | 'X_MONTH' | 'ENTERPRISE'
+    description: 'Direct government GSP filing and automated return preparation require an active filing credit or subscription.',
+    suggestedPlan: 'PAY_PER_FILING',
+    price: '₹ 149'
+  });
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState('UPI'); // 'UPI' | 'CARD' | 'NETBANKING'
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   // CSV Import Wizard State
   const [csvRawText, setCsvRawText] = useState('');
   const [parsedPreviewRows, setParsedPreviewRows] = useState([]);
   const [importErrors, setImportErrors] = useState([]);
   const fileInputRef = useRef(null);
+
+  // PDF Invoice Scanner State
+  const [isPdfUploadModalOpen, setIsPdfUploadModalOpen] = useState(false);
+  const [pdfTargetType, setPdfTargetType] = useState('PURCHASE'); // 'PURCHASE' | 'SALES'
+  const [pdfScanning, setPdfScanning] = useState(false);
+  const [pdfExtractedInvoice, setPdfExtractedInvoice] = useState(null);
+  const [pdfError, setPdfError] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
+  const pdfFileInputRef = useRef(null);
 
   // Edit state for Sales and Purchases
   const [editingSalesId, setEditingSalesId] = useState(null);
@@ -299,32 +325,65 @@ export default function GSTCDAApp() {
     }
   };
 
-  // Reset account records in SQLite database
-  const handleResetToNormal = async (showConfirm = true) => {
-    if (showConfirm) {
-      const isMurugan = currentUser?.email === 'owner@murugantraders.in';
-      const promptMsg = isMurugan
-        ? 'Reset Murugan Electricals database records back to the standard 5 sales invoices and 4 purchase bills?'
-        : `Reset database records for ${businessProfile.legalName}? custom data will be cleared for this account.`;
-      const proceed = confirm(promptMsg);
-      if (!proceed) return;
-    }
+  // In-App Toast & Reset Feedback State
+  const [toastMessage, setToastMessage] = useState(null);
+  const [isResetting, setIsResetting] = useState(false);
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  // Reset account records in SQLite database from scratch (0 sales, 0 purchases)
+  const handleResetToNormal = async () => {
+    setIsResetting(true);
     try {
+      const email = currentUser?.email || 'owner@murugantraders.in';
       const res = await fetch('/api/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail: currentUser?.email || 'owner@murugantraders.in', action: 'reset-normal' }),
+        body: JSON.stringify({ userEmail: email, action: 'clear-all' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSalesInvoices([]);
+        setPurchaseInvoices([]);
+        showToast(`✅ Database reset from scratch! Invoices and purchase bills cleared to 0.`);
+      }
+    } catch (err) {
+      console.error('Error resetting database:', err);
+      showToast('⚠️ Reset failed. Please check your connection.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleResetData = handleResetToNormal;
+
+  // Load sample demo data if user explicitly wants 5 sales & 4 purchases
+  const handleLoadSampleData = async () => {
+    setIsResetting(true);
+    try {
+      const email = currentUser?.email || 'owner@murugantraders.in';
+      const res = await fetch('/api/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: email, action: 'seed-sample' }),
       });
       const data = await res.json();
       if (data.success) {
         if (data.business) setBusinessProfile(data.business);
         setSalesInvoices(mapServerInvoices(data.sales));
         setPurchaseInvoices(mapServerInvoices(data.purchases));
-        alert(`✅ Database reset complete for ${businessProfile.legalName}!`);
+        showToast(`✅ Sample data loaded (5 sales invoices & 4 purchase bills)!`);
       }
     } catch (err) {
-      console.error('Error resetting database:', err);
+      console.error('Error loading sample data:', err);
+      showToast('⚠️ Failed to load sample data.');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -339,12 +398,107 @@ export default function GSTCDAApp() {
         // Default on initial load: Murugan Traders from DB
         loadUserDataFromDb('owner@murugantraders.in', 'Murugan N', 'OWNER', 'Murugan Electricals & Hardware');
       }
+
+      const savedSub = localStorage.getItem('gst_cda_subscription');
+      if (savedSub) {
+        setUserSubscription(savedSub);
+      }
+
       setAuthChecked(true);
     } catch (e) {
       console.error('Error initializing user from storage:', e);
       setAuthChecked(true);
     }
   }, []);
+
+  // Subscription Feature Gating Engine
+  const requirePaidFeature = (featureConfig, onAllowedCallback) => {
+    const plan = userSubscription;
+    const isEnterprise = plan === 'ENTERPRISE';
+    const isPro = plan === 'PRO' || isEnterprise;
+    const isPayPerFiling = plan === 'PAY_PER_FILING' || isPro;
+
+    let isAuthorized = false;
+    if (featureConfig.category === 'X_FILING' && isPayPerFiling) isAuthorized = true;
+    if (featureConfig.category === 'X_MONTH' && isPro) isAuthorized = true;
+    if (featureConfig.category === 'ENTERPRISE' && isEnterprise) isAuthorized = true;
+
+    if (isAuthorized) {
+      if (typeof onAllowedCallback === 'function') {
+        onAllowedCallback();
+      }
+      return true;
+    }
+
+    setPaywallFeature(featureConfig);
+    setPaywallPendingAction(() => onAllowedCallback);
+    setIsPaywallOpen(true);
+    return false;
+  };
+
+  const handleConfirmSubscriptionPayment = (planToActivate) => {
+    setIsProcessingPayment(true);
+    setTimeout(() => {
+      setUserSubscription(planToActivate);
+      try {
+        localStorage.setItem('gst_cda_subscription', planToActivate);
+      } catch (e) {}
+      setIsProcessingPayment(false);
+      setIsPaywallOpen(false);
+
+      const planLabels = {
+        PAY_PER_FILING: 'Pay-Per-Filing (₹ 149 / filing)',
+        PRO: 'Pro Monthly (₹ 499 / month)',
+        ENTERPRISE: 'Business / Enterprise (₹ 1,499 / month)',
+        FREE: 'Free Tier'
+      };
+
+      showToast(`🎉 Payment verified via ${selectedPaymentMode}! Activated ${planLabels[planToActivate] || planToActivate}. Feature unlocked!`);
+
+      if (paywallPendingAction) {
+        paywallPendingAction();
+        setPaywallPendingAction(null);
+      }
+    }, 650);
+  };
+
+  const triggerUploadWizard = (type = 'SALES') => {
+    requirePaidFeature({
+      name: 'Bulk Spreadsheet / CSV Invoice Ingestion',
+      category: 'X_FILING',
+      description: 'Bulk CSV ingestion, Excel data parsing, and automated invoice mapping require an active filing credit or subscription.',
+      suggestedPlan: 'PAY_PER_FILING',
+      price: '₹ 149 / filing'
+    }, () => {
+      setUploadType(type);
+      setIsUploadWizardOpen(true);
+    });
+  };
+
+  const triggerPdfScanner = (type = 'PURCHASE') => {
+    requirePaidFeature({
+      name: 'AI GST Tax Invoice PDF Scanner',
+      category: 'X_FILING',
+      description: 'Instant optical PDF invoice parsing and automated tax math calculation require an active filing credit or subscription.',
+      suggestedPlan: 'PAY_PER_FILING',
+      price: '₹ 149 / filing'
+    }, () => {
+      setPdfTargetType(type);
+      setIsPdfUploadModalOpen(true);
+    });
+  };
+
+  const triggerAuthorizeGSP = () => {
+    requirePaidFeature({
+      name: 'Government GSP Portal Filing & Digital Signature',
+      category: 'X_FILING',
+      description: 'Direct government GSP filing and automated statutory return preparation require an active filing credit or subscription.',
+      suggestedPlan: 'PAY_PER_FILING',
+      price: '₹ 149 / filing'
+    }, () => {
+      setIsAuthorizeModalOpen(true);
+    });
+  };
 
   // Close custom role dropdown on outside click
   useEffect(() => {
@@ -770,29 +924,37 @@ export default function GSTCDAApp() {
     document.body.removeChild(link);
   };
 
-  // Copilot Query Handler
+  // Copilot Query Handler (Gated on Pro Plan ₹ 499 / month)
   const handleSendCopilot = (textToSend) => {
     const query = textToSend || copilotInput;
     if (!query.trim()) return;
 
-    const userMsg = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      content: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    requirePaidFeature({
+      name: 'AI GST Copilot Assistant',
+      category: 'X_MONTH',
+      description: 'Conversational GST intelligence, real-time statute assistance, and automated discrepancy detection require a Pro Monthly plan.',
+      suggestedPlan: 'PRO',
+      price: '₹ 499 / month'
+    }, () => {
+      const userMsg = {
+        id: `user-${Date.now()}`,
+        sender: 'user',
+        content: query,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
 
-    const reply = getCopilotResponse(query, {
-      legalName: businessProfile.legalName,
-      gstin: businessProfile.gstin,
-      state: businessProfile.stateName,
-      salesCount: salesInvoices.length,
-      purchasesCount: purchaseInvoices.length,
-      unreconciledCount: 0,
+      const reply = getCopilotResponse(query, {
+        legalName: businessProfile.legalName,
+        gstin: businessProfile.gstin,
+        state: businessProfile.stateName,
+        salesCount: salesInvoices.length,
+        purchasesCount: purchaseInvoices.length,
+        unreconciledCount: 0,
+      });
+
+      setChatMessages(prev => [...prev, userMsg, reply]);
+      setCopilotInput('');
     });
-
-    setChatMessages(prev => [...prev, userMsg, reply]);
-    setCopilotInput('');
   };
 
   // Login & Authentication Handlers backed by SQLite Database
@@ -1262,10 +1424,6 @@ export default function GSTCDAApp() {
                 {businessProfile.legalName}
               </span>
               <span className="business-gstin">{businessProfile.gstin}</span>
-              <span className="live-badge">
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-                <span className="hide-on-compact">LIVE BOOKS</span>
-              </span>
             </div>
 
             <button 

@@ -488,10 +488,54 @@ export function bulkImportPurchases(email, invoices) {
   return getPurchaseInvoices(userEmail);
 }
 
+// Seed standard baseline invoices (5 sales, 4 purchases) for any user account
+export function seedBaselineInvoicesForUser(db, userEmail) {
+  const cleanEmail = (userEmail || 'owner@murugantraders.in').trim().toLowerCase();
+  
+  // Standard 5 sales invoices
+  const defaultSales = [
+    { num: 'INV-2026-081', date: '2026-10-04', party: 'Chennai Construction Corp', gstin: '33AABCC1234F1Z1', pos: '33', supply: 'INTRA', taxable: '4500000', rate: 18, cgst: '405000', sgst: '405000', igst: '0', total: '5310000' },
+    { num: 'INV-2026-082', date: '2026-10-09', party: 'Bengaluru Lightworks Ltd', gstin: '29AAACL5678K1Z3', pos: '29', supply: 'INTER', taxable: '8200000', rate: 18, cgst: '0', sgst: '0', igst: '1476000', total: '9676000' },
+    { num: 'INV-2026-083', date: '2026-10-14', party: 'Counter Cash Sale (Walk-in Customer)', gstin: '', pos: '33', supply: 'INTRA', taxable: '1250000', rate: 18, cgst: '112500', sgst: '112500', igst: '0', total: '1475000' },
+    { num: 'INV-2026-084', date: '2026-10-18', party: 'Salem Motors Pvt Ltd', gstin: '33AABCS9876D1Z8', pos: '33', supply: 'INTRA', taxable: '3500000', rate: 12, cgst: '210000', sgst: '210000', igst: '0', total: '3920000' },
+    { num: 'INV-2026-085', date: '2026-10-22', party: 'Kovai Engineering Works', gstin: '33AABCK3344P1Z2', pos: '33', supply: 'INTRA', taxable: '2800000', rate: 18, cgst: '252000', sgst: '252000', igst: '0', total: '3304000' },
+  ];
+
+  const insertSale = db.prepare(`
+    INSERT INTO sales_invoices (id, user_email, invoice_number, date, party_name, party_gstin, place_of_supply, supply_type, taxable_paise, rate_percent, cgst_paise, sgst_paise, igst_paise, total_paise, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', ?)
+  `);
+
+  for (let i = 0; i < defaultSales.length; i++) {
+    const s = defaultSales[i];
+    const id = `inv-base-${i + 1}-${Date.now()}`;
+    insertSale.run(id, cleanEmail, s.num, s.date, s.party, s.gstin || null, s.pos, s.supply, s.taxable, s.rate, s.cgst, s.sgst, s.igst, s.total, new Date().toISOString());
+  }
+
+  // Standard 4 purchase invoices
+  const defaultPurchases = [
+    { num: 'HVL-2026-992', date: '2026-10-02', party: 'Havells India Limited', gstin: '07AAACH0001K1ZV', pos: '33', supply: 'INTER', taxable: '6500000', rate: 18, cgst: '0', sgst: '0', igst: '1170000', total: '7670000', itc: 'ELIGIBLE' },
+    { num: 'POL-OCT-112', date: '2026-10-08', party: 'Polycab Wires & Cables Ltd', gstin: '33AAACP4411M1ZQ', pos: '33', supply: 'INTRA', taxable: '4000000', rate: 18, cgst: '360000', sgst: '360000', igst: '0', total: '4720000', itc: 'ELIGIBLE' },
+    { num: 'SWT-2026-044', date: '2026-10-15', party: 'Anchor Electrical Switchgears', gstin: '33AAACA9812J1ZR', pos: '33', supply: 'INTRA', taxable: '1800000', rate: 18, cgst: '162000', sgst: '162000', igst: '0', total: '2124000', itc: 'ELIGIBLE' },
+    { num: 'OFF-OCT-01', date: '2026-10-19', party: 'Office Tea & Snacks Supply', gstin: '', pos: '33', supply: 'INTRA', taxable: '250000', rate: 5, cgst: '6250', sgst: '6250', igst: '0', total: '262500', itc: 'INELIGIBLE' },
+  ];
+
+  const insertPur = db.prepare(`
+    INSERT INTO purchase_invoices (id, user_email, invoice_number, date, party_name, party_gstin, place_of_supply, supply_type, taxable_paise, rate_percent, cgst_paise, sgst_paise, igst_paise, total_paise, status, itc_eligibility, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', ?, ?)
+  `);
+
+  for (let i = 0; i < defaultPurchases.length; i++) {
+    const p = defaultPurchases[i];
+    const id = `pur-base-${i + 1}-${Date.now()}`;
+    insertPur.run(id, cleanEmail, p.num, p.date, p.party, p.gstin || null, p.pos, p.supply, p.taxable, p.rate, p.cgst, p.sgst, p.igst, p.total, p.itc, new Date().toISOString());
+  }
+}
+
 // Reset / Clear Operations
 export function resetUserData(email) {
   const db = getDb();
-  const userEmail = (email || '').trim().toLowerCase();
+  const userEmail = (email || 'owner@murugantraders.in').trim().toLowerCase();
 
   db.prepare('DELETE FROM sales_invoices WHERE LOWER(user_email) = LOWER(?)').run(userEmail);
   db.prepare('DELETE FROM purchase_invoices WHERE LOWER(user_email) = LOWER(?)').run(userEmail);
@@ -500,6 +544,9 @@ export function resetUserData(email) {
     db.prepare('DELETE FROM users WHERE LOWER(email) = LOWER(?)').run(userEmail);
     db.prepare('DELETE FROM businesses WHERE LOWER(user_email) = LOWER(?)').run(userEmail);
     seedDefaultUsers(db);
+  } else {
+    // For any user who clicks "Reset to Normal", populate the clean 5 sales and 4 purchase baseline bills!
+    seedBaselineInvoicesForUser(db, userEmail);
   }
 
   return {
@@ -511,10 +558,10 @@ export function resetUserData(email) {
 
 export function clearUserRecords(email) {
   const db = getDb();
-  const userEmail = (email || '').trim();
-  db.prepare('DELETE FROM sales_invoices WHERE LOWER(user_email) = LOWER(?)').run(userEmail);
-  db.prepare('DELETE FROM purchase_invoices WHERE LOWER(user_email) = LOWER(?)').run(userEmail);
-  return { sales: [], purchases: [] };
+  const userEmail = (email || '').trim().toLowerCase();
+  db.prepare('DELETE FROM sales_invoices WHERE LOWER(user_email) = ?').run(userEmail);
+  db.prepare('DELETE FROM purchase_invoices WHERE LOWER(user_email) = ?').run(userEmail);
+  return { sales: [], purchases: [], business: getBusinessForUser(userEmail) };
 }
 
 // Formatters

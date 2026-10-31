@@ -10,11 +10,12 @@ export async function POST(request) {
       return NextResponse.json({ error: 'userEmail is required' }, { status: 400 });
     }
 
-    if (action === 'clear-all') {
-      const result = clearUserRecords(userEmail);
+    if (action === 'seed-sample') {
+      const result = resetUserData(userEmail);
       return NextResponse.json({ success: true, ...result });
     } else {
-      const result = resetUserData(userEmail);
+      // Default reset action clears everything from scratch: 0 sales and 0 purchases
+      const result = clearUserRecords(userEmail);
       return NextResponse.json({ success: true, ...result });
     }
   } catch (error) {

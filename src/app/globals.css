@@ -1596,3 +1596,18 @@ tr:hover td {
     padding: 18px;
   }
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin-loader {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(16, 185, 129, 0.2);
+  border-top-color: #10B981;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
