@@ -12,13 +12,20 @@ import {
   ChevronUp, 
   Lock, 
   Sparkles,
-  Info
+  Info,
+  Rocket,
+  ArrowRight,
+  Database,
+  Layers
 } from 'lucide-react';
-import { DEMO_BUSINESS } from '../lib/showcaseData.js';
+import { DEMO_BUSINESS, STARTUP_EXPRESS_DATA } from '../lib/showcaseData.js';
 
 export default function BusinessRegistration({ onShowToast }) {
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'registration-wizard'
+  const [activeTab, setActiveTab] = useState('startup-express'); // 'startup-express' | 'profile' | 'registration-wizard'
+  const [selectedStructure, setSelectedStructure] = useState('llp');
   const [expandedSection, setExpandedSection] = useState(1);
+  const [isMcaPulling, setIsMcaPulling] = useState(false);
+  const [mcaVerified, setMcaVerified] = useState(true);
 
   const registrationSteps = [
     {
@@ -65,6 +72,15 @@ export default function BusinessRegistration({ onShowToast }) {
     }
   ];
 
+  const handleMcaSync = () => {
+    setIsMcaPulling(true);
+    setTimeout(() => {
+      setIsMcaPulling(false);
+      setMcaVerified(true);
+      onShowToast('✓ MCA corporate master data synced via authorised APIs.');
+    }, 1200);
+  };
+
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%', paddingBottom: 64 }}>
       {/* Top Header & Tab Switcher */}
@@ -72,16 +88,18 @@ export default function BusinessRegistration({ onShowToast }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h1 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, color: '#0B132B', margin: 0 }}>
-              {activeTab === 'profile' ? 'My Business Profile' : 'GST Registration Readiness'}
+              {activeTab === 'startup-express' ? 'Startup Express' : activeTab === 'profile' ? 'My Business Profile' : 'GST Registration Readiness'}
             </h1>
             <span style={{ fontSize: '0.74rem', padding: '3px 8px', borderRadius: 9999, backgroundColor: '#EEF8F6', color: '#0D6258', fontWeight: 700 }}>
-              Kerala State Jurisdiction
+              {activeTab === 'startup-express' ? 'Acquisition Engine' : 'Kerala State Jurisdiction'}
             </span>
           </div>
           <p style={{ fontSize: '0.96rem', color: '#596579', marginTop: 6 }}>
-            {activeTab === 'profile' 
-              ? 'Entity details, GSTIN validation status, and calm descriptive business health overview.'
-              : 'Guided checklist to prepare a bulletproof GST application without rejections.'}
+            {activeTab === 'startup-express'
+              ? '“From starting your business to filing your GST — one digital platform.”'
+              : activeTab === 'profile' 
+              ? 'Entity details, MCA master data, and multi-GSTIN management overview.'
+              : 'Guided checklist to prepare Form GST REG-01 application without rejections.'}
           </p>
         </div>
 
@@ -89,9 +107,30 @@ export default function BusinessRegistration({ onShowToast }) {
         <div style={{ display: 'flex', backgroundColor: '#FFFFFF', padding: 4, borderRadius: 12, border: '1px solid #EAE5DC' }}>
           <button
             type="button"
+            onClick={() => setActiveTab('startup-express')}
+            style={{
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: activeTab === 'startup-express' ? 800 : 600,
+              color: activeTab === 'startup-express' ? '#0D6258' : '#596579',
+              backgroundColor: activeTab === 'startup-express' ? '#EEF8F6' : 'transparent',
+              border: activeTab === 'startup-express' ? '1px solid #B2DDD7' : 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Rocket style={{ width: 14, height: 14 }} />
+            <span>Startup Express</span>
+          </button>
+          
+          <button
+            type="button"
             onClick={() => setActiveTab('profile')}
             style={{
-              padding: '8px 18px',
+              padding: '8px 16px',
               fontSize: '0.84rem',
               fontWeight: activeTab === 'profile' ? 800 : 600,
               color: activeTab === 'profile' ? '#0D6258' : '#596579',
@@ -101,13 +140,14 @@ export default function BusinessRegistration({ onShowToast }) {
               cursor: 'pointer'
             }}
           >
-            Business Profile & Health
+            Business Profile & MCA
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab('registration-wizard')}
             style={{
-              padding: '8px 18px',
+              padding: '8px 16px',
               fontSize: '0.84rem',
               fontWeight: activeTab === 'registration-wizard' ? 800 : 600,
               color: activeTab === 'registration-wizard' ? '#0D6258' : '#596579',
@@ -117,22 +157,233 @@ export default function BusinessRegistration({ onShowToast }) {
               cursor: 'pointer'
             }}
           >
-            Register for GST (Checklist)
+            GST Registration (Checklist)
           </button>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* TAB 1: BUSINESS PROFILE & DESCRIPTIVE HEALTH             */}
+      {/* TAB 1: STARTUP EXPRESS (SECTION 5 OF PDF)                */}
+      {/* ======================================================== */}
+      {activeTab === 'startup-express' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          
+          {/* Hero Banner with "START MY BUSINESS" Action */}
+          <div style={{ 
+            backgroundColor: '#0B132B', 
+            color: '#FFFFFF', 
+            borderRadius: 22, 
+            padding: '36px 40px',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 20px 45px -10px rgba(11, 19, 43, 0.3)'
+          }}>
+            <div style={{ maxWidth: 640 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderRadius: 9999, backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#A7F3D0', fontSize: '0.74rem', fontWeight: 700, marginBottom: 14 }}>
+                <Rocket style={{ width: 14, height: 14 }} />
+                <span>Major Acquisition Engine • Section 5</span>
+              </div>
+              <h2 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, margin: '0 0 12px 0', lineHeight: 1.15 }}>
+                Start your new venture with zero bureaucratic friction.
+              </h2>
+              <p style={{ fontSize: '1rem', color: '#8D99AE', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+                {STARTUP_EXPRESS_DATA.tagline}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => onShowToast('🚀 Initialized Startup Express wizard. Selecting structure below.')}
+                style={{
+                  padding: '14px 28px',
+                  fontSize: '0.96rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  color: '#FFFFFF',
+                  backgroundColor: '#0D6258',
+                  border: '1px solid #34D399',
+                  borderRadius: 14,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  boxShadow: '0 8px 24px rgba(13, 98, 88, 0.4)'
+                }}
+              >
+                <span>{STARTUP_EXPRESS_DATA.ctaText}</span>
+                <ArrowRight style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+          </div>
+
+          {/* Question: "What are you starting?" */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>
+            <div style={{ marginBottom: 20 }}>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0D6258', fontWeight: 800 }}>
+                STEP 1 OF STARTUP EXPRESS
+              </span>
+              <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', margin: '4px 0 0 0' }}>
+                {STARTUP_EXPRESS_DATA.question}
+              </h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              {STARTUP_EXPRESS_DATA.structures.map((s) => {
+                const isSelected = selectedStructure === s.id;
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => {
+                      setSelectedStructure(s.id);
+                      onShowToast(`Selected structure: ${s.title}`);
+                    }}
+                    style={{
+                      padding: 20,
+                      borderRadius: 16,
+                      backgroundColor: isSelected ? '#EEF8F6' : '#FAF8F5',
+                      border: isSelected ? '2px solid #0D6258' : '1px solid #EAE5DC',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: 180,
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <div style={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: 8, 
+                          backgroundColor: isSelected ? '#0D6258' : '#FFFFFF', 
+                          color: isSelected ? '#FFFFFF' : '#0B132B', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          border: '1px solid #EAE5DC'
+                        }}>
+                          <Building2 style={{ width: 16, height: 16 }} />
+                        </div>
+                        {isSelected && (
+                          <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0D6258', backgroundColor: '#FFFFFF', padding: '2px 8px', borderRadius: 9999 }}>
+                            Selected
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0B132B' }}>
+                        {s.title}
+                      </div>
+                      <p style={{ fontSize: '0.76rem', color: '#596579', lineHeight: 1.45, marginTop: 4 }}>
+                        {s.desc}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#8D99AE', paddingTop: 12, borderTop: '1px solid #EAE5DC' }}>
+                      <span>Lead Time: <strong>{s.leadTime}</strong></span>
+                      {s.mcaRequired ? <span style={{ color: '#0D6258', fontWeight: 700 }}>MCA API</span> : <span>Direct</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Visual Step Pipeline from PDF: PAN → Business registration → MCA → GST → Bank → Invoicing → GST compliance */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>
+            <div style={{ marginBottom: 20 }}>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800 }}>
+                FULL END-TO-END GUIDED JOURNEY
+              </span>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0B132B', margin: '4px 0 0 0' }}>
+                Startup Express Workflow Pipeline
+              </h3>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10, position: 'relative' }}>
+              {STARTUP_EXPRESS_DATA.workflow.map((item, idx) => (
+                <div 
+                  key={item.step}
+                  style={{
+                    padding: '14px 12px',
+                    borderRadius: 14,
+                    backgroundColor: item.active ? '#EEF8F6' : item.done ? '#FAF8F5' : '#FFFFFF',
+                    border: item.active ? '2px solid #0D6258' : '1px solid #EAE5DC',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: 120
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ 
+                        fontSize: '0.68rem', 
+                        fontWeight: 800, 
+                        width: 20, 
+                        height: 20, 
+                        borderRadius: '50%', 
+                        backgroundColor: item.done ? '#0E7051' : item.active ? '#0D6258' : '#DCD5C9',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        {item.done ? '✓' : item.step}
+                      </span>
+                      {item.active && (
+                        <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#0D6258', backgroundColor: '#FFFFFF', padding: '1px 6px', borderRadius: 4 }}>
+                          Now
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0B132B', lineHeight: 1.3 }}>
+                      {item.label}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: '#596579', marginTop: 4 }}>
+                    {item.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 2: BUSINESS PROFILE & MCA INTEGRATION                */}
       {/* ======================================================== */}
       {activeTab === 'profile' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 28 }}>
           
           {/* Left Column: Entity Details Card */}
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0B132B', margin: '0 0 18px 0' }}>
-              Entity Information
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0B132B', margin: 0 }}>
+                Entity Information & GSTIN Management
+              </h3>
+              <button
+                type="button"
+                onClick={handleMcaSync}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  color: '#0D6258',
+                  backgroundColor: '#EEF8F6',
+                  border: '1px solid #B2DDD7',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <Database style={{ width: 13, height: 13 }} />
+                <span>{isMcaPulling ? 'Syncing MCA...' : 'Sync via MCA API'}</span>
+              </button>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid #FAF8F5' }}>
@@ -144,7 +395,7 @@ export default function BusinessRegistration({ onShowToast }) {
                 <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0B132B' }}>{DEMO_BUSINESS.legalName}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid #FAF8F5' }}>
-                <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>GSTIN</span>
+                <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>Primary GSTIN</span>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0D6258', fontFamily: 'monospace' }}>{DEMO_BUSINESS.gstin}</span>
                   <div style={{ fontSize: '0.7rem', color: '#0E7051', fontWeight: 600 }}>✓ Format Verified (Kerala 32)</div>
@@ -171,34 +422,49 @@ export default function BusinessRegistration({ onShowToast }) {
             </div>
           </div>
 
-          {/* Right Column: Descriptive Business Health (NO FAKE NUMERIC SCORE!) */}
+          {/* Right Column: Multi-GSTIN & Team Roles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             
+            {/* Multi-GSTIN Module (PDF Module 4) */}
             <div style={{ backgroundColor: '#EEF8F6', borderRadius: 20, border: '1px solid #B2DDD7', padding: 24 }}>
               <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0D6258', fontWeight: 800, marginBottom: 8 }}>
-                DESCRIPTIVE COMPLIANCE STATE
+                GSTIN MANAGEMENT • MODULE 4
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0D6258', marginBottom: 6 }}>
-                Quietly Compliant
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0D6258', marginBottom: 6 }}>
+                Active State Registrations (1)
               </div>
-              <p style={{ fontSize: '0.84rem', color: '#084039', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                No penalty notices, zero delayed filings on record. 124 sales invoices confirmed for September 2026.
+              <p style={{ fontSize: '0.82rem', color: '#084039', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                Manage multiple state GST registrations across India under a single corporate PAN: <strong>AABCA8842P</strong>.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.78rem', color: '#0D6258' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CheckCircle2 style={{ width: 14, height: 14, color: '#0E7051' }} />
-                  <span>Outward sales registered (₹ 8.42 Lakhs)</span>
+              <div style={{ padding: '10px 14px', backgroundColor: '#FFFFFF', borderRadius: 12, border: '1px solid #B2DDD7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0B132B' }}>Kerala (32) — Main Office</div>
+                  <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: '#0D6258' }}>32AABCA8842P1Z9</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CheckCircle2 style={{ width: 14, height: 14, color: '#0E7051' }} />
-                  <span>Zero floating-point calculation drift</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CheckCircle2 style={{ width: 14, height: 14, color: '#0E7051' }} />
-                  <span>3 purchase differences pending 2-minute review</span>
-                </div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0E7051', backgroundColor: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>
+                  Active
+                </span>
               </div>
+
+              <button
+                type="button"
+                onClick={() => onShowToast('Add branch registration wizard (Multi-GSTIN).')}
+                style={{
+                  width: '100%',
+                  marginTop: 12,
+                  padding: '8px 14px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  color: '#0D6258',
+                  backgroundColor: 'transparent',
+                  border: '1px dashed #0D6258',
+                  borderRadius: 8,
+                  cursor: 'pointer'
+                }}
+              >
+                + Add Another State GSTIN
+              </button>
             </div>
 
             {/* Team & Advisor Access Card */}
@@ -231,14 +497,14 @@ export default function BusinessRegistration({ onShowToast }) {
       )}
 
       {/* ======================================================== */}
-      {/* TAB 2: REGISTER FOR GST (6-STAGE READINESS CHECKLIST)     */}
+      {/* TAB 3: REGISTER FOR GST (6-STAGE READINESS CHECKLIST)     */}
       {/* ======================================================== */}
       {activeTab === 'registration-wizard' && (
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: 22, border: '1px solid #EAE5DC', padding: 32, boxShadow: '0 4px 16px rgba(11, 19, 43, 0.03)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, backgroundColor: '#FEF7EC', borderRadius: 14, border: '1px solid #F7E1B8', marginBottom: 24 }}>
             <Info style={{ width: 18, height: 18, color: '#B45309', flexShrink: 0 }} />
             <div style={{ fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5 }}>
-              <strong>Preparation Workspace:</strong> Guided readiness checklist for Form GST REG-01 preparation and statutory verification.
+              <strong>Guided Workflow:</strong> Section 2 Major Module 1 — Prepare Form GST REG-01 application with automatic validation before GSP portal submission.
             </div>
           </div>
 
@@ -300,40 +566,35 @@ export default function BusinessRegistration({ onShowToast }) {
                   </div>
 
                   {isExpanded && (
-                    <div style={{ padding: '0 22px 20px 64px', fontSize: '0.86rem', color: '#596579', lineHeight: 1.6, borderTop: '1px solid #EAE5DC', paddingTop: 14 }}>
-                      {s.content}
+                    <div style={{ padding: '0 22px 20px', borderTop: '1px solid #EAE5DC', paddingTop: 16 }}>
+                      <p style={{ fontSize: '0.84rem', color: '#596579', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+                        {s.content}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => onShowToast(`✓ Step ${s.num} confirmed for Form GST REG-01.`)}
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: '#FFFFFF',
+                          backgroundColor: '#0D6258',
+                          border: 'none',
+                          borderRadius: 8,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Confirm Step {s.num}
+                      </button>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 28 }}>
-            <button
-              type="button"
-              onClick={() => onShowToast('📋 Registration checklist exported to Document Vault (Sample).')}
-              style={{
-                padding: '12px 24px',
-                fontSize: '0.88rem',
-                fontWeight: 700,
-                color: '#FFFFFF',
-                backgroundColor: '#0D6258',
-                border: 'none',
-                borderRadius: 12,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                boxShadow: '0 4px 14px rgba(13, 98, 88, 0.25)'
-              }}
-            >
-              <span>Export Readiness Packet</span>
-            </button>
-          </div>
         </div>
       )}
+
     </div>
   );
 }
-

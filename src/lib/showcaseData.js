@@ -1,8 +1,10 @@
 /**
- * GST CDA - Super-Premium Frontend Showcase Mock Data
+ * GST CDA - GST Compliance Digital Assistant
+ * Core Reference Data aligned with GST CDA Concept Paper
+ * 
  * Fictional Business: Anaya Home & Living (Kochi, Kerala)
- * Period: September 2026 (Demo)
- * All values are strictly marked as Sample / Demo
+ * Period: September 2026
+ * Integer paise math with zero calculation drift
  */
 
 export const DEMO_BUSINESS = {
@@ -17,9 +19,9 @@ export const DEMO_BUSINESS = {
   dateOfRegistration: '14 May 2023',
   filingFrequency: 'Monthly (Regular)',
   period: 'September 2026',
-  annualTurnoverEstimated: '₹ 84.5 Lakhs (Sample)',
+  annualTurnoverEstimated: '₹ 84.5 Lakhs',
   complianceHealth: {
-    status: 'Quietly Compliant',
+    status: 'High Compliance',
     label: 'Records Up to Date',
     subtitle: 'Zero penalty risk • 3 purchase records to review before GSTR-3B summary',
   },
@@ -33,6 +35,100 @@ export const DEMO_BUSINESS = {
     avatarInitials: 'PR',
   }
 };
+
+/**
+ * PDF Section 6: Compliance Score & Status
+ * "YOUR BUSINESS COMPLIANCE"
+ * 🟢 GST Registration — Active
+ * 🟢 GSTR-1 — Ready for review
+ * 🟢 GSTR-3B — Draft ready
+ * 🟡 ITC Reconciliation — 3 mismatches
+ * 🔴 Next payment — Due in 4 days
+ * Compliance Score: 92/100
+ */
+export const COMPLIANCE_SCORE = {
+  score: 92,
+  total: 100,
+  label: 'High Compliance',
+  rating: 'Excellent',
+  lastUpdated: 'Updated today',
+};
+
+export const COMPLIANCE_STATUS_LIST = [
+  { id: 'reg', label: 'GST Registration', status: 'Active', color: '#0E7051', dot: '🟢', bg: '#ECFDF5', border: '#A7F3D0', detail: 'State Jurisdiction: Kerala (32) • Valid' },
+  { id: 'gstr1', label: 'GSTR-1', status: 'Ready for review', color: '#0E7051', dot: '🟢', bg: '#ECFDF5', border: '#A7F3D0', detail: '124 outward sales compiled • Due 11 Oct' },
+  { id: 'gstr3b', label: 'GSTR-3B', status: 'Draft ready', color: '#0E7051', dot: '🟢', bg: '#ECFDF5', border: '#A7F3D0', detail: 'Net tax settlement pending purchase check' },
+  { id: 'itc', label: 'ITC Reconciliation', status: '3 mismatches', color: '#B45309', dot: '🟡', bg: '#FEF7EC', border: '#F7E1B8', detail: '83 matched • 3 items need confirmation' },
+  { id: 'payment', label: 'Next payment', status: 'Due in 4 days', color: '#DC2626', dot: '🔴', bg: '#FEF2F2', border: '#FECACA', detail: 'Estimated ₹ 76,760 due on 20 Oct' },
+];
+
+/**
+ * PDF Section 3: The biggest differentiator: GST Copilot
+ * "Your GST for this month is ready."
+ * Step 1 — Sales: "Upload your sales invoices."
+ * Step 2 — Purchases: "We found ₹X of purchase invoices."
+ * Step 3 — ITC: "Your available input tax credit appears to be ₹X. Review exceptions."
+ * Step 4 — Tax: "Estimated GST payable: ₹X."
+ * Step 5 — File: "Your return is ready. Review and authorise filing."
+ */
+export const COPILOT_5_STEPS = [
+  {
+    step: 1,
+    title: 'Sales',
+    prompt: 'Upload your sales invoices.',
+    detail: '124 sales invoices recorded (₹ 8,42,000 taxable)',
+    status: 'complete',
+    badge: 'Uploaded',
+    color: '#0E7051',
+    bg: '#ECFDF5',
+    tab: 'sales'
+  },
+  {
+    step: 2,
+    title: 'Purchases',
+    prompt: 'We found ₹ 4,85,000 of purchase invoices.',
+    detail: '86 vendor bills matched with supplier GSTR-2B',
+    status: 'complete',
+    badge: 'Found',
+    color: '#0E7051',
+    bg: '#ECFDF5',
+    tab: 'purchases'
+  },
+  {
+    step: 3,
+    title: 'ITC',
+    prompt: 'Your available input tax credit appears to be ₹ 74,800. Review exceptions.',
+    detail: '3 mismatches to review (Calicut Packaging discount, etc.)',
+    status: 'action',
+    badge: '3 Mismatches',
+    color: '#B45309',
+    bg: '#FEF7EC',
+    tab: 'purchases',
+    subTab: 'reconciliation'
+  },
+  {
+    step: 4,
+    title: 'Tax',
+    prompt: 'Estimated GST payable: ₹ 76,760.',
+    detail: 'Net calculation: ₹ 1,51,560 output tax minus ₹ 74,800 credit',
+    status: 'ready',
+    badge: 'Estimated',
+    color: '#0D6258',
+    bg: '#EEF8F6',
+    tab: 'reports'
+  },
+  {
+    step: 5,
+    title: 'File',
+    prompt: 'Your return is ready. Review and authorise filing.',
+    detail: 'Cryptographic review safeguard before GSP submission',
+    status: 'waiting',
+    badge: 'Ready to Authorise',
+    color: '#596579',
+    bg: '#FAF8F5',
+    tab: 'reports'
+  }
+];
 
 export const SAMPLE_SALES_SUMMARY = {
   totalRecords: 124,
@@ -256,7 +352,7 @@ export const SAMPLE_REPORTS_DATA = {
   gstr1: {
     title: 'Report your business sales',
     technicalCode: 'GSTR-1',
-    dueDate: '11 Oct 2026 (Sample)',
+    dueDate: '11 Oct 2026',
     status: 'Ready for your review',
     badge: 'Draft ready',
     totalInvoices: 124,
@@ -264,89 +360,132 @@ export const SAMPLE_REPORTS_DATA = {
     outputTaxRupees: 151560,
     b2bCount: 92,
     b2cCount: 32,
-    explanation: 'This report compiles all invoices issued to customers so your buyers can claim tax credits.',
+    explanation: 'This outward-supply return compiles all invoices issued to customers so your buyers can claim tax credits.',
   },
   gstr3b: {
     title: 'Review your GST summary',
     technicalCode: 'GSTR-3B',
-    dueDate: '20 Oct 2026 (Sample)',
+    dueDate: '20 Oct 2026',
     status: 'Awaiting purchase review',
     badge: 'In review',
     outputTaxPayableRupees: 151560,
     eligibleItcCreditRupees: 74800,
     netTaxPayableRupees: 76760,
     cashPayableRupees: 76760,
-    explanation: 'Your monthly net calculation: Output tax collected on sales minus tax already paid on purchases.',
+    explanation: 'Your monthly summary return: Output tax collected on sales minus eligible input tax credit already paid on purchases.',
   }
 };
 
+/**
+ * PDF Page 3: The exact 7 questions the AI layer handles
+ */
 export const COPILOT_KNOWLEDGE = [
   {
-    id: 'next-steps',
-    question: 'What should I do this month?',
-    badge: 'Recommended',
-    answer: `Good evening! Here is your quick roadmap for **September 2026** for **Anaya Home & Living**:
+    id: 'q1',
+    question: 'Do I need to file this month?',
+    badge: 'Filing Obligation',
+    answer: `Yes, Anaya. As an active regular GST taxpayer in Kerala, you have two monthly filing milestones for **September 2026**:
+    
+1. **GSTR-1 (Outward Sales)**: Due on **11 Oct 2026** — 124 invoices are already verified and ready.
+2. **GSTR-3B (Summary & Settlement)**: Due on **20 Oct 2026** — Net tax payable is **₹ 76,760**.
 
-1. **Your Sales are Complete**: All 124 sales records (₹ 8.42 Lakhs) are organised and ready.
-2. **Review 3 Purchase Differences**: You have 3 purchase bills that need a 60-second review (e.g. a ₹2,000 supplier discount from Calicut Packaging).
-3. **Review GSTR-3B Summary**: After checking those 3 items, your net tax estimate is **₹ 76,760** (Sample).
-
-Would you like to review the 3 purchase differences right now?`,
+Even in months with low or zero sales, regular GSTINs must file to keep their compliance score intact and avoid late fee penalties.`,
     action: {
-      label: 'Open Purchase Reconciliation',
-      tab: 'purchases',
-      subTab: 'reconciliation',
-    }
-  },
-  {
-    id: 'what-is-3b',
-    question: 'What is GSTR-3B?',
-    badge: 'GST Basics',
-    answer: `Think of **GSTR-3B** as your **Monthly Tax Summary & Settlement**.
-
-Instead of listing every individual customer, GSTR-3B has just two main numbers:
-- **Tax you collected on sales** (Output Tax): ₹ 1,51,560
-- **Minus Tax you paid to suppliers** (Input Tax Credit): ₹ 74,800
-- **Net to Pay**: ₹ 76,760 *(Sample calculation)*
-
-Keeping your purchase bills matched is what allows you to legally claim the ₹ 74,800 discount on your tax bill!`,
-    action: {
-      label: 'View September GSTR-3B Summary',
+      label: 'View GSTR-1 Status',
       tab: 'reports',
     }
   },
   {
-    id: 'why-differences',
-    question: 'Why do I have differences?',
-    badge: 'Peace of mind',
-    answer: `A difference **does not mean something is wrong or that you did an error**.
-
-In Indian GST, differences usually happen for 3 very normal business reasons:
-1. **Timing difference**: You recorded the purchase bill in September, but your supplier filed their return on the 13th of October.
-2. **Trade discount**: The supplier gave you a post-billing cash discount not reflected on the original PDF.
-3. **State classification**: A local Kochi shipment was mistakenly tagged as Inter-State (IGST) instead of Intra-State (CGST/SGST).
-
-None of these cause penalties if reviewed before authorizing your summary return.`,
+    id: 'q2',
+    question: 'What is my next GST deadline?',
+    badge: 'Due-Date Engine',
+    answer: `Your next immediate GST deadline is **11 October 2026** for submitting **GSTR-1** (Sales).
+    
+Your second deadline is **20 October 2026** for settling **GSTR-3B** (Payment of ₹ 76,760 net tax). Both dates are tracked automatically by our Due-Date Engine with SMS & WhatsApp reminders.`,
     action: {
-      label: 'Inspect 3 Differences',
+      label: 'Open Compliance Calendar',
+      tab: 'calendar',
+    }
+  },
+  {
+    id: 'q3',
+    question: 'Why is my ITC different?',
+    badge: 'Input Tax Credit',
+    answer: `Your available Input Tax Credit (ITC) is **₹ 74,800**, but your raw purchase records totaled ₹ 75,160.
+    
+The ₹ 360 difference comes from **Calicut Packaging Solutions**: their uploaded GSTR-1 listed ₹ 40,000 (with ₹ 7,200 tax) reflecting a post-invoice ₹ 2,000 trade discount, whereas your draft bill recorded ₹ 42,000. Under GST Section 16(2)(aa), you can only claim what the supplier files in GSTR-2B.`,
+    action: {
+      label: 'Review Purchase Differences',
       tab: 'purchases',
       subTab: 'reconciliation',
     }
   },
   {
-    id: 'how-to-add-sales',
-    question: 'How do I add sales?',
-    badge: 'Guide',
-    answer: `Adding sales in GST CDA takes less than 30 seconds:
+    id: 'q4',
+    question: 'What documents do I need?',
+    badge: 'Document Vault',
+    answer: `To remain 100% compliant for September 2026, you need:
+    
+1. **Tax Invoices for Outward Sales** (All 124 are compiled in your register).
+2. **Supplier Purchase Bills** with valid GSTINs (86 bills stored in your Document Vault).
+3. **E-Way Bills** for inter-state consignments over ₹ 50,000.
+4. **Bank Statement / Challan** proving tax payment after GSTR-3B submission.
 
-- **Method 1 (Fastest)**: Upload an Excel or CSV file from your billing system.
-- **Method 2 (AI Scanner)**: Drag and drop your invoice PDF — we read the amounts automatically.
-- **Method 3**: Click **“Add a sale”** to fill in customer name, amount, and GST rate.
-
-We instantly compute the correct CGST, SGST, or IGST with zero math mistakes!`,
+All of these are safely stored in your immutable Document Vault with SHA-256 integrity.`,
     action: {
-      label: 'Open Sales Desk',
-      tab: 'sales',
+      label: 'Open Document Vault',
+      tab: 'vault',
+    }
+  },
+  {
+    id: 'q5',
+    question: 'Why do I have this mismatch?',
+    badge: 'Reconciliation',
+    answer: `A mismatch **does not mean you or your supplier made a mistake**!
+    
+In GST, mismatches typically fall into three natural categories:
+1. **Trade Discounts**: Suppliers file the post-discount figure in GSTR-1.
+2. **Timing Cut-offs**: A supplier uploaded after the 11th cut-off; the credit shifts to next month under Section 16(2)(aa).
+3. **Tax Head Misclassification**: Billed as CGST/SGST by a local terminal instead of IGST.
+
+None of these cause penalties if reviewed before GSTR-3B authorisation.`,
+    action: {
+      label: 'Inspect 3 Mismatches',
+      tab: 'purchases',
+      subTab: 'reconciliation',
+    }
+  },
+  {
+    id: 'q6',
+    question: 'How much tax do I approximately owe?',
+    badge: 'Tax Computation',
+    answer: `For **September 2026**, your estimated net GST payable is **₹ 76,760**.
+    
+Here is the exact integer calculation:
+- **Output GST collected on sales**: ₹ 1,51,560 (from 124 invoices)
+- **Minus Eligible Input Tax Credit (ITC)**: - ₹ 74,800 (from 83 verified purchases)
+- **Net Cash to Pay**: **₹ 76,760**
+
+Zero floating-point calculation drift.`,
+    action: {
+      label: 'View Detailed GSTR-3B Draft',
+      tab: 'reports',
+    }
+  },
+  {
+    id: 'q7',
+    question: 'My return is ready—what should I do next?',
+    badge: 'Ready to File',
+    answer: `Congratulations! Since your sales are complete and your tax is computed:
+    
+1. **Quick Check**: Spend 60 seconds confirming the 3 purchase differences.
+2. **CA Sign-off (Optional)**: Request a quick verification from CA Priya Ramanujam via the portal.
+3. **Authorise Filing**: Review your GSTR-3B draft and trigger authorized GSP filing with your OTP credentials.
+
+You will receive an instant acknowledgement ARN and an automated challan in your Document Vault.`,
+    action: {
+      label: 'Authorise September Filing',
+      tab: 'reports',
     }
   }
 ];
@@ -354,26 +493,26 @@ We instantly compute the correct CGST, SGST, or IGST with zero math mistakes!`,
 export const TIMELINE_SAMPLE_ITEMS = [
   {
     date: '11 Oct 2026',
-    tag: 'Sample Timeline',
-    title: 'Report Business Sales (GSTR-1)',
-    description: 'Compile September outward invoices so buyers can see tax credits.',
+    tag: 'Due-Date Engine',
+    title: 'GSTR-1: Report Business Sales',
+    description: 'Compile September outward invoices so buyers can claim input tax credit.',
     status: 'Ready',
     completed: true,
   },
   {
     date: '14 Oct 2026',
-    tag: 'Sample Timeline',
+    tag: 'GSTR-2B Statement',
     title: 'Government GSTR-2B Statement Available',
-    description: 'Auto-generated statement reflecting what suppliers uploaded.',
+    description: 'Auto-generated statement reflecting what suppliers uploaded to GSTN.',
     status: 'Available',
     completed: true,
   },
   {
     date: '20 Oct 2026',
-    tag: 'Sample Timeline',
-    title: 'Review & Settle GST Summary (GSTR-3B)',
-    description: 'Final authorization of net tax liability for September.',
-    status: 'Pending your review',
+    tag: 'Due-Date Engine',
+    title: 'GSTR-3B: Review & Settle GST Summary',
+    description: 'Final authorization of net tax liability (₹ 76,760) for September.',
+    status: 'Due in 4 days',
     completed: false,
   },
 ];
@@ -417,3 +556,202 @@ export const DOCUMENTS_VAULT_FILES = [
   },
 ];
 
+/**
+ * PDF Section 5: Startup Express
+ * "START MY BUSINESS"
+ * "What are you starting?"
+ * - Proprietorship
+ * - Partnership / LLP
+ * - Private Limited
+ * - Other applicable structure
+ * "PAN → Business registration → MCA-related workflow where applicable → GST registration → Bank/accounting setup → Invoicing → GST compliance"
+ * Tagline: "From starting your business to filing your GST — one digital platform."
+ */
+export const STARTUP_EXPRESS_DATA = {
+  title: 'Startup Express',
+  ctaText: 'START MY BUSINESS',
+  tagline: 'From starting your business to filing your GST — one digital platform.',
+  question: 'What are you starting?',
+  structures: [
+    {
+      id: 'proprietorship',
+      title: 'Proprietorship',
+      desc: 'Single owner, minimal formalities, immediate operations',
+      leadTime: '2-3 Days',
+      mcaRequired: false,
+    },
+    {
+      id: 'llp',
+      title: 'Partnership / LLP',
+      desc: 'Shared liability, MCA incorporation, ideal for professional firms',
+      leadTime: '5-7 Days',
+      mcaRequired: true,
+      selected: true,
+    },
+    {
+      id: 'pvt_ltd',
+      title: 'Private Limited',
+      desc: 'Separate legal entity, equity funding ready, MCA registrar',
+      leadTime: '7-10 Days',
+      mcaRequired: true,
+    },
+    {
+      id: 'other',
+      title: 'Other applicable structure',
+      desc: 'One Person Company (OPC), Trust, Section 8, or HUF',
+      leadTime: 'Varies',
+      mcaRequired: true,
+    }
+  ],
+  workflow: [
+    { step: 1, label: 'PAN', desc: 'Entity / Proprietor PAN generation', done: true },
+    { step: 2, label: 'Business registration', desc: 'Shop & Establishment / Trade license', done: true },
+    { step: 3, label: 'MCA-related workflow', desc: 'Name approval & digital signatures', done: true },
+    { step: 4, label: 'GST registration', desc: 'Form GST REG-01 filing & GSTIN grant', done: true },
+    { step: 5, label: 'Bank/accounting setup', desc: 'Current account & accounting sync', done: true },
+    { step: 6, label: 'Invoicing', desc: 'GST-compliant invoice templates', done: true },
+    { step: 7, label: 'GST compliance', desc: 'Monthly GSTR-1, GSTR-3B & 2B matching', done: false, active: true },
+  ]
+};
+
+/**
+ * PDF Section 7: Pricing Strategy
+ */
+export const PRICING_STRATEGY_DATA = [
+  {
+    id: 'free',
+    tier: 'FREE',
+    price: '₹ 0',
+    frequency: 'forever',
+    headline: 'Essential compliance tracking for small ventures',
+    features: [
+      'GST reminders via SMS & email',
+      'Basic compliance calendar',
+      'Basic dashboard & GSTIN lookup',
+      'HSN/SAC rate search tool'
+    ],
+    cta: 'Current Starter Tier',
+    highlight: false,
+  },
+  {
+    id: 'filing',
+    tier: 'Per Filing',
+    price: '₹ 199',
+    frequency: 'per return',
+    headline: 'Pay as you file without monthly lock-in',
+    features: [
+      'Automated return preparation',
+      'GSP filing via government APIs',
+      'Invoice upload (Excel / CSV)',
+      'Basic reconciliation (GSTR-2B)'
+    ],
+    cta: 'Choose Per Filing',
+    highlight: false,
+  },
+  {
+    id: 'month',
+    tier: 'Monthly Pro',
+    price: '₹ 499',
+    frequency: 'per month',
+    headline: 'Full digital automation for active MSMEs',
+    features: [
+      'GST + purchase reconciliation',
+      'Multiple GST registrations (GSTINs)',
+      'Automated WhatsApp & voice reminders',
+      'Reports & audit-ready exports',
+      'AI GST assistant (unlimited questions)'
+    ],
+    cta: 'Active on Anaya Workspace',
+    highlight: true,
+  },
+  {
+    id: 'enterprise',
+    tier: 'Business / Enterprise',
+    price: 'Custom',
+    frequency: 'for multi-entity',
+    headline: 'For high-volume traders, CAs & multiple entities',
+    features: [
+      'Multiple business entities',
+      'Direct ERP / API integration',
+      'Accountant / CA collaborative access',
+      'Advanced 3-way reconciliation',
+      'Multi-user role based access'
+    ],
+    cta: 'Contact Advisory Team',
+    highlight: false,
+  }
+];
+
+/**
+ * PDF Section 8: Referral Engine
+ * "Filed successfully 🎉 Refer another business and receive ₹X credit on your next filing."
+ * "Welcome benefit: ₹X off your first GST filing."
+ * Growth loop: GST Filing → Referral → New Business → GST Registration → Monthly Filing → Referral
+ */
+export const REFERRAL_ENGINE_DATA = {
+  postFilingHeadline: 'Filed successfully 🎉',
+  referrerReward: 'Refer another business and receive ₹ 500 credit on your next filing.',
+  refereeReward: 'Welcome benefit: ₹ 500 off your first GST filing.',
+  growthLoop: [
+    'GST Filing',
+    'Referral',
+    'New Business',
+    'GST Registration',
+    'Monthly Filing',
+    'Referral'
+  ],
+  referralCode: 'ANAYA500',
+  totalEarnedRupees: 1500,
+  successfulReferralsCount: 3,
+};
+
+/**
+ * PDF Section 9: Kiosk Model
+ * "Assisted GST services at physical locations (especially for smaller towns and MSME markets)"
+ * Services:
+ * - GST Registration
+ * - GST Return Filing
+ * - PAN Services
+ * - Business Registration Assistance
+ * - Invoice Services
+ * - Compliance Check
+ * Tagline: "Digital-first + assisted commerce. This can be especially powerful in Kerala and subsequently across India."
+ */
+export const KIOSK_SERVICES_DATA = [
+  { id: 'k1', title: 'GST Registration', desc: 'Guided on-spot application with instant acknowledgement', icon: 'UserPlus' },
+  { id: 'k2', title: 'GST Return Filing', desc: 'Assisted GSTR-1 & GSTR-3B submission with operator support', icon: 'FileText' },
+  { id: 'k3', title: 'PAN Services', desc: 'Instant PAN application, verification & corrections', icon: 'ShieldCheck' },
+  { id: 'k4', title: 'Business Registration Assistance', desc: 'MSME Udyam, Partnership, and trade licenses', icon: 'Building2' },
+  { id: 'k5', title: 'Invoice Services', desc: 'Convert physical paper bills into digital GST invoices', icon: 'Receipt' },
+  { id: 'k6', title: 'Compliance Check', desc: 'Instant health scan & penalty risk audit report', icon: 'CheckCircle2' },
+];
+
+/**
+ * PDF Section 1: Experience Channels
+ */
+export const EXPERIENCE_CHANNELS = [
+  { id: 'web', name: 'Web Portal', icon: '💻', desc: 'Full-featured desktop workspace' },
+  { id: 'mobile', name: 'Mobile App', icon: '📱', desc: 'Concise touch-first companion' },
+  { id: 'kiosk', name: 'Assisted Kiosk', icon: '🏢', desc: 'Physical touchpoint for small towns' },
+  { id: 'voice_wa', name: 'Voice / WhatsApp', icon: '📞', desc: 'Conversational compliance updates' },
+  { id: 'ca_desk', name: 'CA Dashboard', icon: '👨‍💼', desc: 'Professional review & audit console' },
+];
+
+/**
+ * PDF Section 11: Long-term opportunity (Phase 2) - MSME Compliance OS
+ */
+export const MSME_OS_ROADMAP = [
+  'GST',
+  'PAN / Business Registration',
+  'Invoices',
+  'Accounting',
+  'Banking',
+  'Payroll',
+  'TDS',
+  'Income Tax',
+  'MCA Compliance',
+  'Credit Score / Business Intelligence',
+  'Loans / Working Capital',
+  'Insurance',
+  'Exports'
+];
