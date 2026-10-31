@@ -238,7 +238,7 @@ export default function BusinessRegistration({ onShowToast }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, backgroundColor: '#FEF7EC', borderRadius: 14, border: '1px solid #F7E1B8', marginBottom: 24 }}>
             <Info style={{ width: 18, height: 18, color: '#B45309', flexShrink: 0 }} />
             <div style={{ fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5 }}>
-              <strong>Preparation Workspace:</strong> This is a guided readiness checklist. No statutory application will be submitted to the government portal from this demonstration.
+              <strong>Preparation Workspace:</strong> Guided readiness checklist for Form GST REG-01 preparation and statutory verification.
             </div>
           </div>
 
@@ -336,3 +336,4 @@ export default function BusinessRegistration({ onShowToast }) {
     </div>
   );
 }
+

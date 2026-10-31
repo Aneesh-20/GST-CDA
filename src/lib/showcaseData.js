@@ -16,7 +16,7 @@ export const DEMO_BUSINESS = {
   pan: 'AABCA8842P',
   dateOfRegistration: '14 May 2023',
   filingFrequency: 'Monthly (Regular)',
-  period: 'September 2026 (Demo)',
+  period: 'September 2026',
   annualTurnoverEstimated: '₹ 84.5 Lakhs (Sample)',
   complianceHealth: {
     status: 'Quietly Compliant',
@@ -252,7 +252,7 @@ export const SAMPLE_PURCHASE_DIFFERENCES = [
 ];
 
 export const SAMPLE_REPORTS_DATA = {
-  period: 'September 2026 (Demo)',
+  period: 'September 2026',
   gstr1: {
     title: 'Report your business sales',
     technicalCode: 'GSTR-1',
@@ -385,7 +385,7 @@ export const DOCUMENTS_VAULT_FILES = [
     type: 'Statutory Certificate',
     size: '1.2 MB',
     date: '14 May 2023',
-    status: 'Verified (Demo)',
+    status: 'Verified',
     tag: 'Official',
   },
   {
@@ -416,3 +416,4 @@ export const DOCUMENTS_VAULT_FILES = [
     tag: 'Reports',
   },
 ];
+

@@ -90,7 +90,7 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
               textDecoration: 'underline'
             }}
           >
-            Skip to demo
+            Skip to dashboard
           </button>
         </div>
       </header>
@@ -528,7 +528,7 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #FAF8F5' }}>
                   <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>Active Period</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0D6258', backgroundColor: '#EEF8F6', padding: '3px 8px', borderRadius: 6 }}>September 2026 (Demo)</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0D6258', backgroundColor: '#EEF8F6', padding: '3px 8px', borderRadius: 6 }}>September 2026</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14 }}>
                   <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>First Next Step</span>
@@ -600,3 +600,4 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
     </div>
   );
 }
+

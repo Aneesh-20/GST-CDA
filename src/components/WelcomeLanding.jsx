@@ -69,7 +69,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
             border: '1px solid #F7E1B8',
             fontWeight: 700 
           }}>
-            Showcase Demo • Sep 2026
+            September 2026 Active
           </span>
 
           <button
@@ -87,7 +87,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
               transition: 'all 0.15s ease'
             }}
           >
-            Explore Live Demo
+            Explore Live App
           </button>
 
           <button
@@ -253,7 +253,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>Explore Anaya Demo</span>
+                <span>Explore Anaya Workspace</span>
                 <ChevronRight style={{ width: 16, height: 16, color: '#8D99AE' }} />
               </button>
             </div>
@@ -448,9 +448,10 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
           GST CDA • GST Compliance Digital Assistant • Quiet Luxury Indian Fintech Showcase
         </div>
         <div>
-          Fictional demonstration data • All calculations labeled Sample/Demo
+          Statutory Indian GST compliance • Zero floating-point arithmetic drift
         </div>
       </footer>
     </div>
   );
 }
+

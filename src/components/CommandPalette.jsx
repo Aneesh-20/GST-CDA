@@ -141,3 +141,4 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onAskCopil
     </div>
   );
 }
+

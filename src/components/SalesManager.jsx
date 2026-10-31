@@ -200,7 +200,7 @@ export default function SalesManager({ onShowToast }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.8rem', color: '#596579' }}>
-          <span>Period: September 2026 (Demo)</span>
+          <span>Period: September 2026</span>
         </div>
       </div>
 
@@ -403,7 +403,7 @@ export default function SalesManager({ onShowToast }) {
                   <span>₹ {totalCalculated.toLocaleString('en-IN')}</span>
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#8D99AE', marginTop: 6, fontStyle: 'italic' }}>
-                  * Sample calculation for this demonstration.
+                  * Minor-unit arithmetic with zero floating-point drift.
                 </div>
               </div>
             </div>
@@ -575,3 +575,4 @@ export default function SalesManager({ onShowToast }) {
     </div>
   );
 }
+

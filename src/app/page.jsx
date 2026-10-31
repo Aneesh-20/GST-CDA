@@ -469,7 +469,7 @@ export default function GSTCDAShowcaseApp() {
               )}
             </div>
 
-            {/* Discreet Demo Badge */}
+            {/* Active Period Badge */}
             <span style={{ 
               fontSize: '0.74rem', 
               fontWeight: 800, 
@@ -479,7 +479,7 @@ export default function GSTCDAShowcaseApp() {
               borderRadius: 9999,
               border: '1px solid #B2DDD7'
             }}>
-              September 2026 (Demo)
+              September 2026
             </span>
 
           </div>

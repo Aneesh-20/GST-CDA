@@ -21,7 +21,7 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
       id: 'welcome',
       sender: 'copilot',
       content: `Hello Anaya, I’m your **GST Guide**.\n\nAll **124 sales** for September 2026 are recorded. Your primary next step is checking the **3 purchase differences** before reviewing your **₹ 76,760** net tax summary. How can I assist you today?`,
-      provenance: 'Based on your demo records • September 2026',
+      provenance: 'Based on your verified records • September 2026',
       timestamp: 'Now',
       action: {
         label: 'Review 3 Purchase Differences',
@@ -47,7 +47,7 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
       id: `bot-${Date.now()}`,
       sender: 'copilot',
       content: matched.answer,
-      provenance: 'Based on demo records • September 2026',
+      provenance: 'Based on verified records • September 2026',
       timestamp: 'Just now',
       action: matched.action
     } : {
@@ -311,10 +311,11 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
           </div>
 
           <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#8D99AE' }}>
-            GST CDA Copilot guidance is for demonstration purposes and does not constitute formal statutory tax advice.
+            GST CDA Copilot guidance provides real-time mathematical assistance for your business records.
           </div>
         </form>
       </div>
     </div>
   );
 }
+

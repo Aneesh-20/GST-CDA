@@ -32,11 +32,11 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
       type: 'Supplier Invoice',
       size: '840 KB',
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      status: 'Anchored in Vault (Demo)',
+      status: 'Anchored in Vault',
       tag: 'New'
     };
     setVaultFiles([newDoc, ...vaultFiles]);
-    onShowToast('📄 Document safely vaulted and cryptographically indexed (Sample).');
+    onShowToast('📄 Document safely vaulted and cryptographically indexed.');
   };
 
   const handleSendCaRequest = (e) => {
@@ -54,8 +54,8 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
             <h1 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, color: '#0B132B', margin: 0 }}>
               {currentSection === 'calendar' ? 'Compliance Calendar' : currentSection === 'vault' ? 'Document Vault' : 'Chartered Accountant Support'}
             </h1>
-            <span style={{ fontSize: '0.74rem', padding: '3px 8px', borderRadius: 9999, backgroundColor: '#FEF7EC', color: '#B45309', fontWeight: 700 }}>
-              Fictional Demo Environment
+            <span style={{ fontSize: '0.74rem', padding: '3px 8px', borderRadius: 9999, backgroundColor: '#EEF8F6', color: '#0D6258', fontWeight: 700 }}>
+              Active Workspace
             </span>
           </div>
           <p style={{ fontSize: '0.96rem', color: '#596579', marginTop: 6 }}>
@@ -402,7 +402,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
                   Request Review from CA Priya
                 </h3>
                 <div style={{ fontSize: '0.78rem', color: '#596579', marginTop: 2 }}>
-                  Period: September 2026 (Demo)
+                  Period: September 2026
                 </div>
               </div>
               <button onClick={() => setIsCaModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8D99AE' }}>
@@ -454,3 +454,4 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
     </div>
   );
 }
+

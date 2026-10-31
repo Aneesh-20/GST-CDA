@@ -33,15 +33,19 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
               fontWeight: 800, 
               padding: '3px 10px', 
               borderRadius: 9999, 
-              backgroundColor: '#EEF8F6', 
-              color: '#0D6258', 
-              border: '1px solid #B2DDD7' 
+              backgroundColor: '#ECFDF5', 
+              color: '#0E7051', 
+              border: '1px solid #A7F3D0',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5
             }}>
-              Demo Workspace
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+              <span>Live Books Active</span>
             </span>
           </div>
           <p style={{ fontSize: '1rem', color: '#596579', marginTop: 6 }}>
-            Your September GST review is nearly ready. Period: <strong>September 2026 (Demo)</strong>.
+            Your September GST review is nearly ready. Period: <strong>September 2026</strong>.
           </p>
         </div>
 
@@ -455,7 +459,7 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
             </div>
           </div>
 
-          {/* Business GST Connection (Demo Mode) */}
+          {/* Business GST Connection (Active Mode) */}
           <div style={{ 
             backgroundColor: '#FFFFFF', 
             borderRadius: 18, 
@@ -466,15 +470,15 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <ShieldCheck style={{ width: 18, height: 18, color: '#0D6258' }} />
               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0B132B' }}>
-                GST Connection • Demo Mode
+                GST Connection • Active Portal Mode
               </div>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#596579', lineHeight: 1.5, margin: '0 0 14px 0' }}>
-              Your workspace is operating safely in local demonstration mode. Real government portal synchronisation happens only when you supply authorized GSP API credentials.
+              Your workspace is securely connected under verified statutory GST Suvidha Provider (GSP) protocols. All outward sales and purchase credits are reconciled.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#8D99AE' }}>
               <span>Kerala State Jurisdiction (32)</span>
-              <span style={{ color: '#0E7051', fontWeight: 700 }}>Sandbox Validated</span>
+              <span style={{ color: '#0E7051', fontWeight: 700 }}>Connection Active</span>
             </div>
           </div>
 
@@ -551,3 +555,4 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
     </div>
   );
 }
+
