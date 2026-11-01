@@ -2092,6 +2092,20 @@ body {
   padding: 14px 12px 88px !important;
 }
 
+/* 5-Step Plain-Language Model Grid for GST Copilot */
+.copilot-step-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .copilot-step-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
 @media (max-width: 768px) {
   .mobile-simulator-banner {
     display: none !important;

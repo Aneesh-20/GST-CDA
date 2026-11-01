@@ -52,7 +52,7 @@ export default function HomeHeroDashboard({
     {
       step: 1,
       title: 'Sales',
-      prompt: salesList.length > 0 ? `${salesList.length} sales invoices recorded` : 'Upload your sales invoices',
+      prompt: salesList.length > 0 ? `Upload your sales invoices: ${salesList.length} recorded` : 'Upload your sales invoices.',
       detail: `${salesList.length} sales invoices (₹ ${totalTaxableSales.toLocaleString('en-IN')} taxable)`,
       status: salesList.length > 0 ? 'complete' : 'action',
       badge: salesList.length > 0 ? 'Uploaded' : 'Action needed',
@@ -63,7 +63,7 @@ export default function HomeHeroDashboard({
     {
       step: 2,
       title: 'Purchases',
-      prompt: purchasesList.length > 0 ? `Found ₹ ${totalTaxablePurchases.toLocaleString('en-IN')} of purchase bills` : 'Upload your purchase bills',
+      prompt: purchasesList.length > 0 ? `We found ₹ ${totalTaxablePurchases.toLocaleString('en-IN')} of purchase invoices.` : 'Upload your purchase invoices.',
       detail: `${purchasesList.length} vendor bills recorded`,
       status: purchasesList.length > 0 ? 'complete' : 'ready',
       badge: purchasesList.length > 0 ? 'Found' : 'Upload',
@@ -74,7 +74,7 @@ export default function HomeHeroDashboard({
     {
       step: 3,
       title: 'ITC',
-      prompt: `Available input tax credit: ₹ ${totalEligibleItc.toLocaleString('en-IN')}`,
+      prompt: `Your available input tax credit appears to be ₹ ${totalEligibleItc.toLocaleString('en-IN')}. Review exceptions.`,
       detail: `${purchasesList.length} bills reconciled for maximum credit`,
       status: 'action',
       badge: purchasesList.length > 0 ? 'Reconciled' : 'Review',
@@ -86,7 +86,7 @@ export default function HomeHeroDashboard({
     {
       step: 4,
       title: 'Tax',
-      prompt: `Estimated GST payable: ₹ ${netTaxPayable.toLocaleString('en-IN')}`,
+      prompt: `Estimated GST payable: ₹ ${netTaxPayable.toLocaleString('en-IN')}.`,
       detail: `Net math: ₹ ${totalOutputTax.toLocaleString('en-IN')} output minus ₹ ${totalEligibleItc.toLocaleString('en-IN')} credit`,
       status: 'ready',
       badge: 'Estimated',
@@ -137,7 +137,7 @@ export default function HomeHeroDashboard({
           
           <div style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0D6258', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles style={{ width: 18, height: 18, color: '#C87D0E' }} />
-            <span>“Your GST review is ready.”</span>
+            <span>“Your GST for this month is ready.”</span>
           </div>
         </div>
 
