@@ -350,7 +350,7 @@ export default function SalesManager({
       </div>
 
       {/* Summary Facts Chips */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+      <div className="stat-grid-4" style={{ marginBottom: 24 }}>
         <div style={{ padding: '14px 18px', backgroundColor: '#FFFFFF', borderRadius: 14, border: '1px solid #EAE5DC' }}>
           <div style={{ fontSize: '0.74rem', color: '#8D99AE', fontWeight: 600 }}>Total Sales Records</div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>{salesList.length}</div>
@@ -475,85 +475,87 @@ export default function SalesManager({
             )}
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#FAF8F5', borderBottom: '1px solid #EAE5DC', color: '#596579', fontWeight: 700, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                <th style={{ padding: '14px 20px' }}>Invoice ID</th>
-                <th style={{ padding: '14px 16px' }}>Date</th>
-                <th style={{ padding: '14px 16px' }}>Customer / Party</th>
-                <th style={{ padding: '14px 16px' }}>Place of Supply</th>
-                <th style={{ padding: '14px 16px', textAlign: 'right' }}>Taxable Value</th>
-                <th style={{ padding: '14px 16px', textAlign: 'right' }}>GST ({saleForm.ratePercent}%)</th>
-                <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>Status</th>
-                <th style={{ padding: '14px 20px', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSales.map((sale, idx) => (
-                <tr 
-                  key={sale.id + idx}
-                  style={{ 
-                    borderBottom: idx === filteredSales.length - 1 ? 'none' : '1px solid #FAF8F5',
-                    transition: 'background-color 0.12s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FCFAF7'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0B132B', fontFamily: 'monospace' }}>
-                    {sale.id}
-                  </td>
-                  <td style={{ padding: '14px 16px', color: '#596579' }}>
-                    {sale.date}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: 700, color: '#0B132B' }}>{sale.customerName}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#8D99AE', fontFamily: 'monospace' }}>
-                      {sale.customerGstin}
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px', color: '#596579' }}>
-                    <span style={{ fontSize: '0.76rem', color: '#0D6258', backgroundColor: '#EEF8F6', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
-                      {sale.placeOfSupply}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#0B132B' }}>
-                    ₹ {(sale.taxableRupees || 0).toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right', color: '#0D6258', fontWeight: 600 }}>
-                    ₹ {(sale.gstPaise || 0).toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 800, color: '#0B132B' }}>
-                    ₹ {(sale.totalRupees || 0).toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <span style={{ 
-                      padding: '3px 10px', 
-                      borderRadius: 9999, 
-                      fontSize: '0.72rem', 
-                      fontWeight: 700,
-                      backgroundColor: sale.status === 'Draft' ? '#FEF7EC' : '#ECFDF5',
-                      color: sale.status === 'Draft' ? '#B45309' : '#0E7051'
-                    }}>
-                      {sale.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSale(sale.id)}
-                      title="Delete invoice"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8D99AE', padding: 4 }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#8D99AE'}
-                    >
-                      <Trash2 style={{ width: 14, height: 14 }} />
-                    </button>
-                  </td>
+          <div className="table-responsive">
+            <table style={{ width: '100%', minWidth: 680, borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#FAF8F5', borderBottom: '1px solid #EAE5DC', color: '#596579', fontWeight: 700, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <th style={{ padding: '14px 20px' }}>Invoice ID</th>
+                  <th style={{ padding: '14px 16px' }}>Date</th>
+                  <th style={{ padding: '14px 16px' }}>Customer / Party</th>
+                  <th style={{ padding: '14px 16px' }}>Place of Supply</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right' }}>Taxable Value</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right' }}>GST ({saleForm.ratePercent}%)</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Status</th>
+                  <th style={{ padding: '14px 20px', textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale, idx) => (
+                  <tr 
+                    key={sale.id + idx}
+                    style={{ 
+                      borderBottom: idx === filteredSales.length - 1 ? 'none' : '1px solid #FAF8F5',
+                      transition: 'background-color 0.12s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FCFAF7'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0B132B', fontFamily: 'monospace' }}>
+                      {sale.id}
+                    </td>
+                    <td style={{ padding: '14px 16px', color: '#596579' }}>
+                      {sale.date}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: 700, color: '#0B132B' }}>{sale.customerName}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#8D99AE', fontFamily: 'monospace' }}>
+                        {sale.customerGstin}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 16px', color: '#596579' }}>
+                      <span style={{ fontSize: '0.76rem', color: '#0D6258', backgroundColor: '#EEF8F6', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                        {sale.placeOfSupply}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#0B132B' }}>
+                      ₹ {(sale.taxableRupees || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', color: '#0D6258', fontWeight: 600 }}>
+                      ₹ {(sale.gstPaise || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 800, color: '#0B132B' }}>
+                      ₹ {(sale.totalRupees || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                      <span style={{ 
+                        padding: '3px 10px', 
+                        borderRadius: 9999, 
+                        fontSize: '0.72rem', 
+                        fontWeight: 700,
+                        backgroundColor: sale.status === 'Draft' ? '#FEF7EC' : '#ECFDF5',
+                        color: sale.status === 'Draft' ? '#B45309' : '#0E7051'
+                      }}>
+                        {sale.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSale(sale.id)}
+                        title="Delete invoice"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8D99AE', padding: 4 }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#8D99AE'}
+                      >
+                        <Trash2 style={{ width: 14, height: 14 }} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

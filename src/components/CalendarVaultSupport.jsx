@@ -156,7 +156,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
       {/* SECTION 1: CALENDAR & DUE-DATE ENGINE                    */}
       {/* ======================================================== */}
       {currentSection === 'calendar' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 28 }}>
+        <div className="dashboard-two-col">
           
           {/* Interactive Monthly Grid */}
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>
@@ -355,7 +355,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
       {/* SECTION 3: CA / AGENT CONNECT                            */}
       {/* ======================================================== */}
       {currentSection === 'ca-support' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
+        <div className="dashboard-two-col">
           
           {/* Advisor Card */}
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>
@@ -615,7 +615,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
               </h3>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div className="stat-grid-3">
               {KIOSK_SERVICES_DATA.map((srv) => (
                 <div
                   key={srv.id}
@@ -678,7 +678,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
               </h3>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="stat-grid-4">
               {PRICING_STRATEGY_DATA.map((tier) => (
                 <div
                   key={tier.id}

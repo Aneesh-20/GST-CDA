@@ -131,7 +131,7 @@ export default function HomeHeroDashboard({
             </span>
           </div>
 
-          <h1 className="font-editorial" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#0B132B', margin: '4px 0 6px 0', letterSpacing: '-0.02em' }}>
+          <h1 className="font-editorial hero-greeting-title">
             Good day{business.contactName ? `, ${business.contactName}` : (business.tradeName ? `, ${business.tradeName}` : '')}
           </h1>
           
@@ -192,18 +192,7 @@ export default function HomeHeroDashboard({
       {/* ======================================================== */}
       {/* PDF SECTION 3: THE 5-STEP MODEL HERO PANEL              */}
       {/* ======================================================== */}
-      <div style={{ 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 22, 
-        border: '1px solid #EAE5DC', 
-        padding: '28px 32px', 
-        boxShadow: '0 8px 30px -6px rgba(11, 19, 43, 0.06)',
-        marginBottom: 32,
-        display: 'grid',
-        gridTemplateColumns: '1.15fr 0.85fr',
-        gap: 36,
-        alignItems: 'center'
-      }}>
+      <div className="hero-five-step-panel">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <span style={{ 
@@ -234,7 +223,7 @@ export default function HomeHeroDashboard({
               : 'Add your sales invoices and inward purchase bills using CSV, Excel spreadsheets, or PDF invoice scans. All taxes calculate automatically with zero floating-point drift.'}
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => onNavigate(purchasesList.length > 0 ? 'purchases' : 'sales', purchasesList.length > 0 ? 'reconciliation' : undefined)}
@@ -358,7 +347,7 @@ export default function HomeHeroDashboard({
       {/* ======================================================== */}
       {/* 2-COLUMN DASHBOARD GRID                                  */}
       {/* ======================================================== */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 32 }}>
+      <div className="dashboard-two-col">
 
         {/* LEFT COLUMN: AT A GLANCE + GUIDED CHECKLIST + MADE FOR CLARITY */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -378,7 +367,7 @@ export default function HomeHeroDashboard({
               <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>{business.period || 'September 2026'}</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            <div className="stat-grid-3">
               <div style={{ padding: '14px 16px', backgroundColor: '#FAF8F5', borderRadius: 14, border: '1px solid #EAE5DC' }}>
                 <div style={{ fontSize: '0.72rem', color: '#596579', fontWeight: 600 }}>Sales Records</div>
                 <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>{salesList.length}</div>

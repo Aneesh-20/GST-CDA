@@ -1745,20 +1745,259 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border-warm);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 8px 12px 16px;
-  z-index: 999;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 1000;
+  box-shadow: 0 -4px 16px rgba(11, 19, 43, 0.05);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1025px) {
   .mobile-bottom-nav {
-    display: none;
+    display: none !important;
   }
 }
+
+/* ==========================================================================
+   ROBUST RESPONSIVE FINTECH UTILITIES & BREAKPOINTS (MOBILE FIRST)
+   ========================================================================== */
+
+/* Desktop Sidebar Sticky Rail */
+.desktop-sidebar {
+  width: 268px;
+  background-color: #FFFFFF;
+  border-right: 1px solid #EAE5DC;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+/* Visibility toggles for mobile & desktop */
+@media (max-width: 1024px) {
+  .desktop-sidebar,
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .hide-on-desktop {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+  .mobile-drawer-overlay {
+    display: none !important;
+  }
+}
+
+/* Layout Canvas Containers */
+.main-content-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.main-body-container {
+  flex: 1;
+  padding: 32px 32px 48px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-body-container {
+    padding: 16px 14px 92px !important;
+  }
+}
+
+/* Top Sticky Navigation Bar */
+.top-navbar {
+  height: 64px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #EAE5DC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+@media (max-width: 1024px) {
+  .top-navbar {
+    height: 56px !important;
+    padding: 0 14px !important;
+  }
+}
+
+/* Mobile Slide-Over Navigation Drawer */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 19, 43, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-drawer-content {
+  width: 84%;
+  max-width: 320px;
+  background-color: #FFFFFF;
+  height: 100%;
+  box-shadow: 10px 0 35px rgba(11, 19, 43, 0.22);
+  display: flex;
+  flex-direction: column;
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Responsive 5-Step Hero Panel */
+.hero-five-step-panel {
+  background-color: #FFFFFF;
+  border-radius: 22px;
+  border: 1px solid #EAE5DC;
+  padding: 28px 32px;
+  box-shadow: 0 8px 30px -6px rgba(11, 19, 43, 0.06);
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 36px;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .hero-five-step-panel {
+    grid-template-columns: 1fr !important;
+    padding: 20px 16px !important;
+    gap: 22px !important;
+  }
+}
+
+/* Responsive 2-Column Dashboard Grid */
+.dashboard-two-col {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 32px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-two-col {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+}
+
+/* Responsive 4-Card Aggregate Fact Grid */
+.stat-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 1024px) {
+  .stat-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .stat-grid-4 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* Responsive 3-Card Aggregate Fact Grid */
+.stat-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .stat-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* Responsive Table Horizontal Scrolling Wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 680px;
+}
+
+/* Side by side comparison & Form 2-col responsive */
+.side-by-side-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .side-by-side-comparison {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* Responsive Heading Typography */
+.hero-greeting-title {
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: #0B132B;
+  margin: 4px 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .hero-greeting-title {
+    font-size: 1.75rem !important;
+    line-height: 1.25 !important;
+  }
+}
+
 
 

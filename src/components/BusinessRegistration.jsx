@@ -226,7 +226,7 @@ export default function BusinessRegistration({ onShowToast }) {
               </h3>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="stat-grid-4">
               {STARTUP_EXPRESS_DATA.structures.map((s) => {
                 const isSelected = selectedStructure === s.id;
                 return (
@@ -355,7 +355,7 @@ export default function BusinessRegistration({ onShowToast }) {
       {/* TAB 2: BUSINESS PROFILE & MCA INTEGRATION                */}
       {/* ======================================================== */}
       {activeTab === 'profile' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 28 }}>
+        <div className="dashboard-two-col">
           
           {/* Left Column: Entity Details Card */}
           <div style={{ backgroundColor: '#FFFFFF', borderRadius: 20, border: '1px solid #EAE5DC', padding: 28, boxShadow: '0 2px 8px rgba(11, 19, 43, 0.03)' }}>

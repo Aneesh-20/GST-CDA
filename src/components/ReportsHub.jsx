@@ -76,7 +76,7 @@ export default function ReportsHub({
       </div>
 
       {/* Two Prominent Pathways Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
+      <div className="side-by-side-comparison" style={{ marginBottom: 32 }}>
         
         {/* Pathway 1: GSTR-1 */}
         <div 

@@ -116,8 +116,8 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
       </header>
 
       {/* Main Split Hero Canvas */}
-      <main style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px 36px 64px', maxWidth: 1280, margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.08fr 0.92fr', gap: 54, width: '100%', alignItems: 'center' }}>
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '48px 24px 64px', maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+        <div className="dashboard-two-col" style={{ width: '100%', alignItems: 'center' }}>
           
           {/* Left Column: Editorial Value Proposition */}
           <div>

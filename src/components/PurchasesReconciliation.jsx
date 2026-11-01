@@ -427,12 +427,7 @@ export default function PurchasesReconciliation({
       </div>
 
       {/* Top Aggregate Summary Strip */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(4, 1fr)', 
-        gap: 16, 
-        marginBottom: 24 
-      }}>
+      <div className="stat-grid-4" style={{ marginBottom: 24 }}>
         <div style={{ backgroundColor: '#FFFFFF', padding: '16px 20px', borderRadius: 14, border: '1px solid #EAE5DC' }}>
           <div style={{ fontSize: '0.72rem', color: '#596579', fontWeight: 600 }}>Total Purchase Bills</div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 4 }}>{purchasesList.length}</div>
@@ -596,10 +591,7 @@ export default function PurchasesReconciliation({
                   </p>
 
                   {/* Side-by-Side Comparison Box */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
-                    gap: 16, 
+                  <div className="side-by-side-comparison" style={{ 
                     backgroundColor: '#FAF8F5', 
                     padding: 16, 
                     borderRadius: 14, 
@@ -829,62 +821,64 @@ export default function PurchasesReconciliation({
               boxShadow: '0 4px 16px rgba(11, 19, 43, 0.04)',
               overflow: 'hidden'
             }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#FAF8F5', borderBottom: '1px solid #EAE5DC', color: '#596579', fontWeight: 700, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    <th style={{ padding: '14px 20px' }}>Bill No.</th>
-                    <th style={{ padding: '14px 16px' }}>Date</th>
-                    <th style={{ padding: '14px 16px' }}>Supplier / Vendor</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right' }}>Taxable Value</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right' }}>Rate</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right' }}>Tax (ITC)</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center' }}>2B Match</th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPurchases.map((p, idx) => (
-                    <tr 
-                      key={p.id} 
-                      style={{ borderBottom: idx === filteredPurchases.length - 1 ? 'none' : '1px solid #F5F1EA' }}
-                    >
-                      <td style={{ padding: '14px 20px', fontWeight: 700, fontFamily: 'monospace' }}>{p.id}</td>
-                      <td style={{ padding: '14px 16px', color: '#596579' }}>{p.date}</td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontWeight: 700, color: '#0B132B' }}>{p.vendorName || p.customerName}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#8D99AE', fontFamily: 'monospace' }}>{p.vendorGstin || p.customerGstin}</div>
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600 }}>₹ {(p.taxableRupees || 0).toLocaleString('en-IN')}</td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right', color: '#596579' }}>{p.ratePercent || 18}%</td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right', color: '#0D6258', fontWeight: 700 }}>₹ {(p.gstPaise || 0).toLocaleString('en-IN')}</td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 800 }}>₹ {(p.totalRupees || 0).toLocaleString('en-IN')}</td>
-                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                        <span style={{ 
-                          padding: '3px 10px', 
-                          borderRadius: 9999, 
-                          fontSize: '0.72rem', 
-                          fontWeight: 700,
-                          backgroundColor: (p.status || '').includes('Difference') ? '#FEF7EC' : '#ECFDF5',
-                          color: (p.status || '').includes('Difference') ? '#B45309' : '#0E7051'
-                        }}>
-                          {p.status || 'Matched in 2B'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteBill(p.id)}
-                          title="Delete this purchase bill"
-                          style={{ background: 'none', border: 'none', color: '#8D99AE', cursor: 'pointer', padding: 4 }}
-                        >
-                          <Trash2 style={{ width: 14, height: 14 }} />
-                        </button>
-                      </td>
+              <div className="table-responsive">
+                <table style={{ width: '100%', minWidth: 680, borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#FAF8F5', borderBottom: '1px solid #EAE5DC', color: '#596579', fontWeight: 700, fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <th style={{ padding: '14px 20px' }}>Bill No.</th>
+                      <th style={{ padding: '14px 16px' }}>Date</th>
+                      <th style={{ padding: '14px 16px' }}>Supplier / Vendor</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right' }}>Taxable Value</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right' }}>Rate</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right' }}>Tax (ITC)</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>2B Match</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredPurchases.map((p, idx) => (
+                      <tr 
+                        key={p.id} 
+                        style={{ borderBottom: idx === filteredPurchases.length - 1 ? 'none' : '1px solid #F5F1EA' }}
+                      >
+                        <td style={{ padding: '14px 20px', fontWeight: 700, fontFamily: 'monospace' }}>{p.id}</td>
+                        <td style={{ padding: '14px 16px', color: '#596579' }}>{p.date}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ fontWeight: 700, color: '#0B132B' }}>{p.vendorName || p.customerName}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#8D99AE', fontFamily: 'monospace' }}>{p.vendorGstin || p.customerGstin}</div>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600 }}>₹ {(p.taxableRupees || 0).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', color: '#596579' }}>{p.ratePercent || 18}%</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', color: '#0D6258', fontWeight: 700 }}>₹ {(p.gstPaise || 0).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 800 }}>₹ {(p.totalRupees || 0).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <span style={{ 
+                            padding: '3px 10px', 
+                            borderRadius: 9999, 
+                            fontSize: '0.72rem', 
+                            fontWeight: 700,
+                            backgroundColor: (p.status || '').includes('Difference') ? '#FEF7EC' : '#ECFDF5',
+                            color: (p.status || '').includes('Difference') ? '#B45309' : '#0E7051'
+                          }}>
+                            {p.status || 'Matched in 2B'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBill(p.id)}
+                            title="Delete this purchase bill"
+                            style={{ background: 'none', border: 'none', color: '#8D99AE', cursor: 'pointer', padding: 4 }}
+                          >
+                            <Trash2 style={{ width: 14, height: 14 }} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

@@ -64,6 +64,9 @@ export default function GSTCDAShowcaseApp() {
   // Command Palette State
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
+  // Mobile Navigation Drawer State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // In-App Toast State
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -281,17 +284,7 @@ export default function GSTCDAShowcaseApp() {
       {/* ======================================================== */}
       {/* DESKTOP SIDEBAR (ALIGNED WITH PDF MAJOR MODULES)        */}
       {/* ======================================================== */}
-      <aside style={{ 
-        width: 268, 
-        backgroundColor: '#FFFFFF', 
-        borderRight: '1px solid #EAE5DC', 
-        display: 'flex', 
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        zIndex: 40
-      }} className="hide-on-mobile">
+      <aside className="desktop-sidebar hide-on-mobile">
         
         {/* Brand Monogram & Name */}
         <div style={{ padding: '24px 20px 18px', borderBottom: '1px solid #FAF8F5' }}>
@@ -510,37 +503,262 @@ export default function GSTCDAShowcaseApp() {
       </aside>
 
       {/* ======================================================== */}
-      {/* MAIN CONTENT AREA                                        */}
+      {/* MOBILE NAVIGATION DRAWER (OFF-CANVAS FOR MOBILE/TABLET)  */}
       {/* ======================================================== */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        
-        {/* TOP BAR WITH EXPERIENCE CHANNELS */}
-        <header style={{ 
-          height: 68, 
-          backgroundColor: '#FFFFFF', 
-          borderBottom: '1px solid #EAE5DC', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          padding: '0 32px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 30
-        }}>
-          {/* Left: Breadcrumbs & Global Command Trigger */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: '0.84rem', color: '#596579', fontWeight: 600 }}>
-              <span 
+      {isMobileMenuOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+          <div 
+            className="mobile-drawer-content" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header with Close Button */}
+            <div style={{ padding: '18px 16px', borderBottom: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ 
+                  width: 32, 
+                  height: 32, 
+                  borderRadius: 8, 
+                  backgroundColor: '#0D6258', 
+                  color: '#FFFFFF', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 800, 
+                  fontSize: '0.85rem' 
+                }}>
+                  CDA
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0B132B' }}>GST CDA</div>
+                  <div style={{ fontSize: '0.64rem', color: '#596579' }}>Compliance Digital Assistant</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ 
+                  width: 32, 
+                  height: 32, 
+                  borderRadius: 8, 
+                  backgroundColor: '#FAF8F5', 
+                  border: '1px solid #EAE5DC', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  color: '#596579',
+                  cursor: 'pointer'
+                }}
+              >
+                <X style={{ width: 16, height: 16 }} />
+              </button>
+            </div>
+
+            {/* Mobile Business Switcher Card */}
+            <div style={{ padding: '12px 14px 6px' }}>
+              <div 
                 onClick={() => {
                   setEditForm(businessProfile);
                   setIsBusinessModalOpen(true);
+                  setIsMobileMenuOpen(false);
                 }}
-                style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
-                title="Click to edit business profile"
+                style={{ 
+                  padding: '10px 12px', 
+                  backgroundColor: '#FAF8F5', 
+                  borderRadius: 12, 
+                  border: '1px solid #EAE5DC',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
+                }}
               >
-                {businessProfile.tradeName || 'Configure Enterprise'}
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{businessProfile.tradeName || 'Configure Business'}</span>
+                    <Edit2 style={{ width: 10, height: 10, color: '#8D99AE' }} />
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#596579' }}>
+                    {businessProfile.stateName || 'Kerala'} ({businessProfile.stateCode || '32'})
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.66rem', color: '#0D6258', fontWeight: 800, backgroundColor: '#EEF8F6', padding: '2px 6px', borderRadius: 4 }}>
+                  Score: 92
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation Links inside Mobile Drawer */}
+            <nav style={{ flex: 1, padding: '10px 10px', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
+              <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '4px 10px' }}>
+                Core Modules
+              </div>
+              {[
+                { id: 'home', label: 'Compliance Dashboard', icon: LayoutDashboard, pill: `${COMPLIANCE_SCORE.score}/100`, pillColor: '#0E7051' },
+                { id: 'copilot', label: 'GST Copilot', icon: Bot, pill: '5-Step', highlight: true },
+                { id: 'startup-express', label: 'Startup Express', icon: Rocket, pill: 'PAN & MCA' },
+                { id: 'sales', label: 'Invoice Data (Sales)', icon: Receipt, pill: `${salesList.length}` },
+                { id: 'purchases', label: 'GSTR-2B / Reconciliation', icon: ShoppingCart, pill: `${purchasesList.length}`, pillColor: '#B45309' },
+                { id: 'reports', label: 'GSTR-1 & GSTR-3B', icon: FileText, pill: 'Ready' },
+              ].map(item => {
+                const Icon = item.icon;
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveNav(item.id);
+                      if (item.id === 'purchases') setPurchasesSubTab('reconciliation');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '9px 12px',
+                      borderRadius: 10,
+                      border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
+                      backgroundColor: isActive ? '#EEF8F6' : 'transparent',
+                      color: isActive ? '#0D6258' : '#0B132B',
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : '#8D99AE' }} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.pill && (
+                      <span style={{ 
+                        fontSize: '0.64rem', 
+                        fontWeight: 800, 
+                        color: item.pillColor || '#0D6258', 
+                        backgroundColor: item.pillColor ? '#FEF7EC' : '#EEF8F6', 
+                        padding: '2px 6px', 
+                        borderRadius: 9999 
+                      }}>
+                        {item.pill}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '12px 10px 4px' }}>
+                Compliance & Growth
+              </div>
+              {[
+                { id: 'calendar', label: 'Due-Date Engine', icon: CalendarIcon },
+                { id: 'vault', label: 'Document Vault', icon: FolderLock },
+                { id: 'ca-support', label: 'CA / Agent Connect', icon: Users },
+                { id: 'referral', label: 'Referral Engine', icon: Gift, pill: '₹500', pillColor: '#C87D0E' },
+                { id: 'kiosk', label: 'Kiosk Mode', icon: Store },
+                { id: 'pricing', label: 'Pricing & Roadmap', icon: CreditCard },
+              ].map(item => {
+                const Icon = item.icon;
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveNav(item.id);
+                      setCalendarSubSection(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '9px 12px',
+                      borderRadius: 10,
+                      border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
+                      backgroundColor: isActive ? '#EEF8F6' : 'transparent',
+                      color: isActive ? '#0D6258' : '#0B132B',
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : '#8D99AE' }} />
+                      <span>{item.label}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Bottom Signatory in Drawer */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #EAE5DC', backgroundColor: '#FAF8F5' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#0B132B', color: '#FFFFFF', fontWeight: 800, fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {monogram}
+                </div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {businessProfile.contactName || businessProfile.tradeName || 'Authorized Signatory'}
+                  </div>
+                  <div style={{ fontSize: '0.64rem', color: '#8D99AE' }}>
+                    Authorized Signatory
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MAIN CONTENT AREA                                        */}
+      {/* ======================================================== */}
+      <div className="main-content-canvas">
+        
+        {/* TOP BAR WITH EXPERIENCE CHANNELS */}
+        <header className="top-navbar">
+          {/* Left: Hamburger (Mobile) + Breadcrumbs + Search Trigger */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            {/* Mobile Hamburger Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="hide-on-desktop"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #EAE5DC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#0B132B',
+                flexShrink: 0
+              }}
+              aria-label="Open Navigation Menu"
+            >
+              <Menu style={{ width: 18, height: 18 }} />
+            </button>
+
+            <div style={{ fontSize: '0.84rem', color: '#596579', fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+              <span className="hide-on-mobile">
+                <span 
+                  onClick={() => {
+                    setEditForm(businessProfile);
+                    setIsBusinessModalOpen(true);
+                  }}
+                  style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
+                  title="Click to edit business profile"
+                >
+                  {businessProfile.tradeName || 'Configure Enterprise'}
+                </span>
+                <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
               </span>
-              <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
               <span style={{ color: '#0D6258', fontWeight: 700 }}>
                 {activeNav === 'home' ? 'Compliance Dashboard' 
                  : activeNav === 'copilot' ? 'GST Copilot' 
@@ -555,9 +773,10 @@ export default function GSTCDAShowcaseApp() {
               </span>
             </div>
 
-            {/* Global Command Search Box */}
+            {/* Desktop Command Search Box */}
             <div 
               onClick={() => setIsCommandPaletteOpen(true)}
+              className="hide-on-mobile"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -569,7 +788,7 @@ export default function GSTCDAShowcaseApp() {
                 cursor: 'pointer',
                 color: '#8D99AE',
                 fontSize: '0.78rem',
-                minWidth: 200,
+                minWidth: 190,
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
@@ -589,10 +808,33 @@ export default function GSTCDAShowcaseApp() {
                 ⌘K
               </kbd>
             </div>
+
+            {/* Mobile Search Icon Button */}
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="hide-on-desktop"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 8,
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #EAE5DC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#0D6258',
+                flexShrink: 0
+              }}
+              aria-label="Search or Ask GST CDA"
+            >
+              <Search style={{ width: 15, height: 15 }} />
+            </button>
           </div>
 
           {/* Right: Experience Channels & Edit Workspace Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             
             {/* Experience Channels Dropdown - Single Option with Down Arrow */}
             <div style={{ position: 'relative' }}>
@@ -600,8 +842,8 @@ export default function GSTCDAShowcaseApp() {
                 type="button"
                 onClick={() => setIsChannelDropdownOpen(!isChannelDropdownOpen)}
                 style={{
-                  padding: '6px 12px',
-                  fontSize: '0.78rem',
+                  padding: '6px 10px',
+                  fontSize: '0.76rem',
                   fontWeight: 700,
                   color: '#0D6258',
                   backgroundColor: '#FFFFFF',
@@ -610,16 +852,16 @@ export default function GSTCDAShowcaseApp() {
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 8,
+                  gap: 6,
                   boxShadow: '0 1px 4px rgba(11, 19, 43, 0.04)',
                   transition: 'all 0.15s ease'
                 }}
               >
                 <span>{EXPERIENCE_CHANNELS.find(c => c.id === selectedChannel)?.icon || '💻'}</span>
-                <span>{EXPERIENCE_CHANNELS.find(c => c.id === selectedChannel)?.name || 'Web Portal'}</span>
+                <span className="hide-on-mobile">{EXPERIENCE_CHANNELS.find(c => c.id === selectedChannel)?.name || 'Web Portal'}</span>
                 <ChevronDown style={{ 
-                  width: 14, 
-                  height: 14, 
+                  width: 13, 
+                  height: 13, 
                   color: '#0D6258', 
                   transition: 'transform 0.2s ease', 
                   transform: isChannelDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' 
@@ -704,7 +946,7 @@ export default function GSTCDAShowcaseApp() {
                 setIsBusinessModalOpen(true);
               }}
               style={{
-                padding: '5px 12px',
+                padding: '5px 10px',
                 fontSize: '0.74rem',
                 fontWeight: 700,
                 color: '#0D6258',
@@ -716,9 +958,10 @@ export default function GSTCDAShowcaseApp() {
                 alignItems: 'center',
                 gap: 5
               }}
+              title="Edit Business Profile"
             >
               <SettingsIcon style={{ width: 13, height: 13 }} />
-              <span>Workspace Profile</span>
+              <span className="hide-on-mobile">Workspace Profile</span>
             </button>
 
             {/* Notification Bell */}
@@ -727,9 +970,9 @@ export default function GSTCDAShowcaseApp() {
                 type="button"
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 style={{ 
-                  width: 34, 
-                  height: 34, 
-                  borderRadius: 10, 
+                  width: 32, 
+                  height: 32, 
+                  borderRadius: 8, 
                   backgroundColor: '#FAF8F5', 
                   border: '1px solid #EAE5DC', 
                   display: 'flex', 
@@ -740,17 +983,17 @@ export default function GSTCDAShowcaseApp() {
                   position: 'relative'
                 }}
               >
-                <Bell style={{ width: 16, height: 16 }} />
-                <span style={{ position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: '50%', backgroundColor: '#B45309' }} />
+                <Bell style={{ width: 15, height: 15 }} />
+                <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', backgroundColor: '#B45309' }} />
               </button>
 
               {/* Notification Popover */}
               {isNotificationsOpen && (
                 <div style={{
                   position: 'absolute',
-                  top: 42,
+                  top: 40,
                   right: 0,
-                  width: 300,
+                  width: 290,
                   backgroundColor: '#FFFFFF',
                   borderRadius: 14,
                   border: '1px solid #EAE5DC',
@@ -779,7 +1022,7 @@ export default function GSTCDAShowcaseApp() {
         </header>
 
         {/* MAIN BODY CANVAS */}
-        <main style={{ flex: 1, padding: '36px 36px 48px', overflowY: 'auto' }}>
+        <main className="main-body-container">
           
           {activeNav === 'home' && (
             <HomeHeroDashboard 
