@@ -113,11 +113,14 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
           {step === 1 && (
             <div style={{ animation: 'fadeIn 0.2s ease-out' }}>
               <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0D6258', fontWeight: 800, marginBottom: 8 }}>
-                WELCOME TO GST CDA
+                WELCOME TO GST CDA • STARTUP EXPRESS
               </div>
-              <h2 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, lineHeight: 1.15, color: '#0B132B', margin: '0 0 10px 0' }}>
+              <h2 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, lineHeight: 1.15, color: '#0B132B', margin: '0 0 6px 0' }}>
                 Do you already have a business?
               </h2>
+              <div style={{ fontSize: '0.84rem', color: '#0D6258', fontWeight: 600, marginBottom: 12 }}>
+                “From starting your business to filing your GST — one digital platform.”
+              </div>
               <p style={{ fontSize: '0.96rem', color: '#596579', margin: '0 0 28px 0' }}>
                 We tailor our guidance whether you have active transactions or are preparing to launch.
               </p>

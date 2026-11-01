@@ -259,7 +259,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
             </div>
 
             {/* Trust Proof */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 32, fontSize: '0.78rem', color: '#596579' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 24, fontSize: '0.78rem', color: '#596579', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <CheckCircle2 style={{ width: 14, height: 14, color: '#0E7051' }} />
                 <span>Zero floating-point tax errors</span>
@@ -272,6 +272,12 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
                 <HeartHandshake style={{ width: 14, height: 14, color: '#C87D0E' }} />
                 <span>CA collaborative vault</span>
               </div>
+            </div>
+
+            {/* Product Vision Quote from PDF Page 7 */}
+            <div style={{ marginTop: 24, padding: '12px 16px', backgroundColor: '#FFFFFF', borderRadius: 12, border: '1px solid #EAE5DC', fontSize: '0.8rem', color: '#596579', lineHeight: 1.5 }}>
+              <span style={{ color: '#0D6258', fontWeight: 700 }}>Vision: </span>
+              “India&apos;s simplest digital compliance platform for small businesses — helping an entrepreneur start, register, understand, file and remain compliant without needing to become a GST expert.”
             </div>
           </div>
 
