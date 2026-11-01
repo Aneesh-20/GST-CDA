@@ -72,6 +72,7 @@ export default function GSTCDAShowcaseApp() {
 
   // Channel switcher state
   const [selectedChannel, setSelectedChannel] = useState('web');
+  const [isChannelDropdownOpen, setIsChannelDropdownOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   // Business Profile Management (Clean Slate by Default - No Dummy Values)
@@ -593,32 +594,106 @@ export default function GSTCDAShowcaseApp() {
           {/* Right: Experience Channels & Edit Workspace Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             
-            {/* 5 Channels from PDF Page 1 */}
-            <div style={{ display: 'flex', backgroundColor: '#FAF8F5', padding: 3, borderRadius: 10, border: '1px solid #EAE5DC' }}>
-              {EXPERIENCE_CHANNELS.map(ch => (
-                <button
-                  key={ch.id}
-                  type="button"
-                  title={ch.desc}
-                  onClick={() => handleChannelSelect(ch.id)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '0.72rem',
-                    fontWeight: selectedChannel === ch.id ? 800 : 500,
-                    color: selectedChannel === ch.id ? '#0D6258' : '#596579',
-                    backgroundColor: selectedChannel === ch.id ? '#FFFFFF' : 'transparent',
-                    border: selectedChannel === ch.id ? '1px solid #B2DDD7' : 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer',
+            {/* Experience Channels Dropdown - Single Option with Down Arrow */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setIsChannelDropdownOpen(!isChannelDropdownOpen)}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  color: '#0D6258',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #B2DDD7',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 1px 4px rgba(11, 19, 43, 0.04)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{EXPERIENCE_CHANNELS.find(c => c.id === selectedChannel)?.icon || '💻'}</span>
+                <span>{EXPERIENCE_CHANNELS.find(c => c.id === selectedChannel)?.name || 'Web Portal'}</span>
+                <ChevronDown style={{ 
+                  width: 14, 
+                  height: 14, 
+                  color: '#0D6258', 
+                  transition: 'transform 0.2s ease', 
+                  transform: isChannelDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' 
+                }} />
+              </button>
+
+              {isChannelDropdownOpen && (
+                <>
+                  <div 
+                    onClick={() => setIsChannelDropdownOpen(false)} 
+                    style={{ position: 'fixed', inset: 0, zIndex: 45 }} 
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: 38,
+                    right: 0,
+                    width: 210,
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 14,
+                    border: '1px solid #EAE5DC',
+                    boxShadow: '0 12px 32px rgba(11, 19, 43, 0.12)',
+                    padding: 6,
+                    zIndex: 50,
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 4
-                  }}
-                >
-                  <span>{ch.icon}</span>
-                  <span className="hide-on-tablet">{ch.name}</span>
-                </button>
-              ))}
+                    flexDirection: 'column',
+                    gap: 2
+                  }}>
+                    <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '6px 10px 4px' }}>
+                      Switch Channel
+                    </div>
+                    {EXPERIENCE_CHANNELS.map(ch => {
+                      const isSelected = selectedChannel === ch.id;
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => {
+                            handleChannelSelect(ch.id);
+                            setIsChannelDropdownOpen(false);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 10px',
+                            borderRadius: 8,
+                            border: isSelected ? '1px solid #B2DDD7' : '1px solid transparent',
+                            backgroundColor: isSelected ? '#EEF8F6' : 'transparent',
+                            color: isSelected ? '#0D6258' : '#0B132B',
+                            fontWeight: isSelected ? 700 : 500,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            width: '100%',
+                            transition: 'all 0.12s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.backgroundColor = '#FAF8F5';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span>{ch.icon}</span>
+                            <span>{ch.name}</span>
+                          </div>
+                          {isSelected && <Check style={{ width: 14, height: 14, color: '#0D6258' }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Quick Workspace Switcher Button */}
