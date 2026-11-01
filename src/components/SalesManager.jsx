@@ -23,7 +23,7 @@ import { SAMPLE_SALES_TABLE } from '../lib/showcaseData.js';
 import { parseCsvText, getSalesCsvTemplate, triggerBrowserDownload } from '../lib/realtimeData.js';
 
 export default function SalesManager({ 
-  salesList = SAMPLE_SALES_TABLE, 
+  salesList = [], 
   setSalesList, 
   onShowToast 
 }) {
@@ -38,16 +38,16 @@ export default function SalesManager({
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
 
-  // Form State for Add Sale Drawer
+  // Form State for Add Sale Drawer (Clean Slate, No Pre-filled Dummy Data)
   const [saleForm, setSaleForm] = useState({
     customerName: '',
     customerGstin: '',
-    invoiceNumber: `INV-2026-${(salesList.length + 1).toString().padStart(3, '0')}`,
+    invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
     supplyType: 'Intra-State',
-    taxableRupees: '35000',
+    taxableRupees: '',
     ratePercent: 18,
-    category: 'Commercial Sales',
+    category: '',
   });
 
   const taxableNum = parseFloat(saleForm.taxableRupees) || 0;
@@ -68,8 +68,9 @@ export default function SalesManager({
       alert('Please enter a customer or counter name.');
       return;
     }
+    const invId = saleForm.invoiceNumber.trim() || `INV-${Date.now().toString().slice(-5)}`;
     const newRecord = {
-      id: saleForm.invoiceNumber,
+      id: invId,
       date: saleForm.date,
       customerName: saleForm.customerName,
       customerGstin: saleForm.customerGstin || 'Unregistered Consumer',
@@ -80,7 +81,7 @@ export default function SalesManager({
       gstPaise: gstCalculated,
       totalRupees: totalCalculated,
       status: isDraft ? 'Draft' : 'Ready',
-      category: saleForm.category,
+      category: saleForm.category || 'General Sales',
     };
     if (setSalesList) {
       setSalesList([newRecord, ...salesList]);
@@ -602,6 +603,7 @@ export default function SalesManager({
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#0B132B', marginBottom: 6 }}>Invoice Number</label>
                   <input
                     type="text"
+                    placeholder="e.g. INV-001"
                     value={saleForm.invoiceNumber}
                     onChange={(e) => setSaleForm({ ...saleForm, invoiceNumber: e.target.value })}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #DCD5C9', fontSize: '0.88rem', fontFamily: 'monospace' }}
@@ -623,6 +625,7 @@ export default function SalesManager({
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#0B132B', marginBottom: 6 }}>Taxable Value (₹)</label>
                   <input
                     type="number"
+                    placeholder="e.g. 50000"
                     value={saleForm.taxableRupees}
                     onChange={(e) => setSaleForm({ ...saleForm, taxableRupees: e.target.value })}
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #DCD5C9', fontSize: '0.88rem', fontWeight: 700 }}

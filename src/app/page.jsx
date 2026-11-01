@@ -50,7 +50,7 @@ import CopilotConcierge from '../components/CopilotConcierge.jsx';
 import BusinessRegistration from '../components/BusinessRegistration.jsx';
 import CalendarVaultSupport from '../components/CalendarVaultSupport.jsx';
 import { COMPLIANCE_SCORE, EXPERIENCE_CHANNELS, SAMPLE_SALES_TABLE } from '../lib/showcaseData.js';
-import { DEFAULT_BUSINESS, SAMPLE_PURCHASE_TABLE } from '../lib/realtimeData.js';
+import { BLANK_BUSINESS, STARTER_BUSINESS, SAMPLE_PURCHASE_TABLE } from '../lib/realtimeData.js';
 
 export default function GSTCDAShowcaseApp() {
   // Main view state: 'app' (default hero showcase) | 'landing' | 'onboarding'
@@ -74,36 +74,69 @@ export default function GSTCDAShowcaseApp() {
   const [selectedChannel, setSelectedChannel] = useState('web');
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
-  // Business Profile Management (Editable Real Workspace)
+  // Business Profile Management (Clean Slate by Default - No Dummy Values)
   const [businessProfile, setBusinessProfile] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('gst_cda_business_profile');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.tradeName && parsed.tradeName !== 'My Enterprise' && !parsed.tradeName.includes('Anaya')) {
+            return parsed;
+          }
+          localStorage.removeItem('gst_cda_business_profile');
+        } catch (e) {}
       }
     }
-    return DEFAULT_BUSINESS;
+    return BLANK_BUSINESS;
   });
 
-  // Sales and Purchases Registers
+  // Sales and Purchases Registers (Empty Arrays by Default - No Sample Rows)
   const [salesList, setSalesList] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('gst_cda_sales_list');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const hasDummy = parsed.some(s => 
+              s.customerName === 'Cochin Living Boutique' || 
+              s.id === 'INV-2026-SEP-02' ||
+              s.customerName === 'Bengaluru Studio Homes'
+            );
+            if (hasDummy) {
+              localStorage.removeItem('gst_cda_sales_list');
+              return [];
+            }
+            return parsed;
+          }
+        } catch (e) {}
       }
     }
-    return SAMPLE_SALES_TABLE;
+    return [];
   });
 
   const [purchasesList, setPurchasesList] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('gst_cda_purchases_list');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const hasDummy = parsed.some(p => 
+              p.vendorName === 'Kerala Handloom Weavers' || 
+              p.id === 'HND-2026-901'
+            );
+            if (hasDummy) {
+              localStorage.removeItem('gst_cda_purchases_list');
+              return [];
+            }
+            return parsed;
+          }
+        } catch (e) {}
       }
     }
-    return SAMPLE_PURCHASE_TABLE;
+    return [];
   });
 
   // Business Switcher / Edit Modal State
@@ -142,31 +175,25 @@ export default function GSTCDAShowcaseApp() {
     e.preventDefault();
     updateBusinessProfile(editForm);
     setIsBusinessModalOpen(false);
-    showToast(`🏢 Business details updated for ${editForm.tradeName}.`);
+    showToast(`🏢 Business details updated for ${editForm.tradeName || 'your enterprise'}.`);
   };
 
   const handleResetToCleanSlate = () => {
     if (confirm('Start a completely clean workspace? All current sales and purchase rows will be cleared so you can upload your real records.')) {
       updateSalesList([]);
       updatePurchasesList([]);
-      const cleanProfile = {
-        ...businessProfile,
-        tradeName: editForm.tradeName || 'My Enterprise',
-        legalName: editForm.legalName || 'My Enterprise LLP',
-        gstin: editForm.gstin || '32AABCA8842P1Z9',
-      };
-      updateBusinessProfile(cleanProfile);
-      setEditForm(cleanProfile);
+      updateBusinessProfile(BLANK_BUSINESS);
+      setEditForm(BLANK_BUSINESS);
       setIsBusinessModalOpen(false);
-      showToast('✨ Switched to Clean Slate workspace (0 sales, 0 purchases).');
+      showToast('✨ Reset to clean slate (0 sales, 0 purchases, blank business details).');
     }
   };
 
   const handleLoadSampleStarterData = () => {
     updateSalesList(SAMPLE_SALES_TABLE);
     updatePurchasesList(SAMPLE_PURCHASE_TABLE);
-    updateBusinessProfile(DEFAULT_BUSINESS);
-    setEditForm(DEFAULT_BUSINESS);
+    updateBusinessProfile(STARTER_BUSINESS);
+    setEditForm(STARTER_BUSINESS);
     setIsBusinessModalOpen(false);
     showToast('📦 Loaded sample starter records for preview.');
   };
@@ -242,13 +269,9 @@ export default function GSTCDAShowcaseApp() {
     );
   }
 
-  const monogram = (businessProfile.tradeName || 'ME')
-    .split(' ')
-    .map(w => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const monogram = businessProfile.tradeName
+    ? businessProfile.tradeName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+    : 'GST';
 
   // MAIN APPLICATION SHELL
   return (
@@ -321,11 +344,11 @@ export default function GSTCDAShowcaseApp() {
           >
             <div style={{ overflow: 'hidden' }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>{businessProfile.tradeName}</span>
+                <span>{businessProfile.tradeName || 'Configure Business'}</span>
                 <Edit2 style={{ width: 10, height: 10, color: '#8D99AE' }} />
               </div>
               <div style={{ fontSize: '0.68rem', color: '#596579' }}>
-                {businessProfile.city}, {businessProfile.stateName} ({businessProfile.stateCode})
+                {businessProfile.city ? `${businessProfile.city}, ` : ''}{businessProfile.stateName || 'Kerala'} ({businessProfile.stateCode || '32'})
               </div>
             </div>
             <span style={{ fontSize: '0.66rem', color: '#0D6258', fontWeight: 800, backgroundColor: '#EEF8F6', padding: '2px 6px', borderRadius: 4 }}>
@@ -474,7 +497,7 @@ export default function GSTCDAShowcaseApp() {
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {businessProfile.contactName || businessProfile.tradeName}
+                {businessProfile.contactName || businessProfile.tradeName || 'Authorized Signatory'}
               </div>
               <div style={{ fontSize: '0.68rem', color: '#8D99AE' }}>
                 Authorized Signatory
@@ -514,7 +537,7 @@ export default function GSTCDAShowcaseApp() {
                 style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
                 title="Click to edit business profile"
               >
-                {businessProfile.tradeName}
+                {businessProfile.tradeName || 'Configure Enterprise'}
               </span>
               <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
               <span style={{ color: '#0D6258', fontWeight: 700 }}>
@@ -801,7 +824,7 @@ export default function GSTCDAShowcaseApp() {
                 </label>
                 <input 
                   type="text" 
-                  value={editForm.tradeName}
+                  value={editForm.tradeName || ''}
                   onChange={e => setEditForm({ ...editForm, tradeName: e.target.value })}
                   placeholder="e.g. Apex Hardware & Electricals"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
@@ -815,7 +838,7 @@ export default function GSTCDAShowcaseApp() {
                   </label>
                   <input 
                     type="text" 
-                    value={editForm.legalName}
+                    value={editForm.legalName || ''}
                     onChange={e => setEditForm({ ...editForm, legalName: e.target.value })}
                     placeholder="e.g. Apex Enterprises LLP"
                     style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
@@ -843,9 +866,9 @@ export default function GSTCDAShowcaseApp() {
                   </label>
                   <input 
                     type="text" 
-                    value={editForm.gstin}
+                    value={editForm.gstin || ''}
                     onChange={e => setEditForm({ ...editForm, gstin: e.target.value.toUpperCase() })}
-                    placeholder="32AABCA8842P1Z9"
+                    placeholder="e.g. 32AABCA8842P1Z9"
                     style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem', fontFamily: 'monospace' }}
                   />
                 </div>
@@ -856,7 +879,7 @@ export default function GSTCDAShowcaseApp() {
                   </label>
                   <input 
                     type="text" 
-                    value={editForm.period}
+                    value={editForm.period || ''}
                     onChange={e => setEditForm({ ...editForm, period: e.target.value })}
                     placeholder="e.g. October 2026"
                     style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
@@ -870,7 +893,7 @@ export default function GSTCDAShowcaseApp() {
                     State & Jurisdiction
                   </label>
                   <select
-                    value={`${editForm.stateCode}-${editForm.stateName}`}
+                    value={`${editForm.stateCode || '32'}-${editForm.stateName || 'Kerala'}`}
                     onChange={e => {
                       const [code, name] = e.target.value.split('-');
                       setEditForm({ ...editForm, stateCode: code, stateName: name });
@@ -892,7 +915,7 @@ export default function GSTCDAShowcaseApp() {
                   </label>
                   <input 
                     type="text" 
-                    value={editForm.city}
+                    value={editForm.city || ''}
                     onChange={e => setEditForm({ ...editForm, city: e.target.value })}
                     placeholder="e.g. Kochi"
                     style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}

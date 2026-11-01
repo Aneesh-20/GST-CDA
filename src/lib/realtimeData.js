@@ -4,10 +4,38 @@
  * Minor-unit integer arithmetic with zero floating-point drift
  */
 
-export const DEFAULT_BUSINESS = {
-  legalName: 'Your Business Enterprise LLP',
-  tradeName: 'My Enterprise',
-  contactName: 'Entrepreneur',
+export const BLANK_BUSINESS = {
+  legalName: '',
+  tradeName: '',
+  contactName: '',
+  gstin: '',
+  stateCode: '32',
+  stateName: 'Kerala',
+  city: '',
+  constitution: '',
+  pan: '',
+  dateOfRegistration: '',
+  filingFrequency: 'Monthly (Regular GST)',
+  period: '',
+  annualTurnoverEstimated: '',
+  isCustomWorkspace: true,
+  advisor: {
+    name: '',
+    firm: '',
+    city: '',
+    phone: '',
+    email: '',
+    membershipNo: '',
+    avatarInitials: '',
+  }
+};
+
+export const DEFAULT_BUSINESS = BLANK_BUSINESS;
+
+export const STARTER_BUSINESS = {
+  legalName: 'Apex Enterprises LLP',
+  tradeName: 'Apex Hardware & Electricals',
+  contactName: 'Suresh Kumar',
   gstin: '32AABCA8842P1Z9',
   stateCode: '32',
   stateName: 'Kerala',
@@ -16,11 +44,11 @@ export const DEFAULT_BUSINESS = {
   pan: 'AABCA8842P',
   dateOfRegistration: '01 Apr 2024',
   filingFrequency: 'Monthly (Regular GST)',
-  period: 'September 2026',
+  period: 'October 2026',
   annualTurnoverEstimated: '₹ 1.2 Crore',
   isCustomWorkspace: true,
   advisor: {
-    name: 'Assigned Tax Advisor, FCA',
+    name: 'Tax Advisor, FCA',
     firm: 'GST Compliance Services',
     city: 'Kochi Jurisdiction',
     phone: '+91 98000 00000',

@@ -45,7 +45,7 @@ export default function ReportsHub({
               GST Reports & Summaries
             </h1>
             <span style={{ fontSize: '0.74rem', padding: '3px 10px', borderRadius: 9999, backgroundColor: '#EEF8F6', color: '#0D6258', fontWeight: 700 }}>
-              Period: {business.period || 'September 2026'}
+              Period: {business.period || 'Current Tax Period'}
             </span>
           </div>
           <p style={{ fontSize: '0.96rem', color: '#596579', marginTop: 6 }}>
@@ -179,7 +179,7 @@ export default function ReportsHub({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: '0.78rem', color: '#596579', backgroundColor: '#FAF8F5', border: '1px solid #EAE5DC', padding: '6px 14px', borderRadius: 8 }}>
-              {business.tradeName} • <span style={{ fontFamily: 'monospace' }}>{business.gstin}</span>
+              {business.tradeName || 'Your Business'} • <span style={{ fontFamily: 'monospace' }}>{business.gstin || 'GSTIN Not Configured'}</span>
             </span>
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function ReportsHub({
                   NET TAX SETTLEMENT SUMMARY
                 </div>
                 <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>
-                  Net Cash Required to Settle {business.period || 'September 2026'}
+                  Net Cash Required to Settle {business.period || 'Current Tax Period'}
                 </div>
               </div>
 
@@ -310,7 +310,7 @@ export default function ReportsHub({
             </div>
 
             <p style={{ fontSize: '0.92rem', color: '#596579', lineHeight: 1.6, margin: '0 0 20px 0' }}>
-              <strong>Return Verification Ready:</strong> All outward sales and eligible input tax credits for <strong>{business.period || 'this period'}</strong> for <strong>{business.legalName}</strong> (GSTIN: {business.gstin}) are mathematically verified and reconciled.
+              <strong>Return Verification Ready:</strong> All outward sales and eligible input tax credits for <strong>{business.period || 'this period'}</strong> for <strong>{business.legalName || business.tradeName || 'your business'}</strong> (GSTIN: {business.gstin || 'Not configured'}) are mathematically verified and reconciled.
             </p>
 
             <div style={{ padding: '12px 16px', backgroundColor: '#FAF8F5', borderRadius: 12, border: '1px solid #EAE5DC', fontSize: '0.8rem', color: '#0B132B', marginBottom: 24 }}>

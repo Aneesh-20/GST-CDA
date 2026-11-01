@@ -44,13 +44,9 @@ export default function HomeHeroDashboard({
   const netTaxPayable = Math.max(0, totalOutputTax - totalEligibleItc);
 
   const advisor = business.advisor || DEFAULT_BUSINESS.advisor;
-  const initials = (business.tradeName || 'ME')
-    .split(' ')
-    .map(w => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = business.tradeName
+    ? business.tradeName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+    : 'GST';
 
   const dynamic5Steps = [
     {
@@ -131,17 +127,17 @@ export default function HomeHeroDashboard({
               GST Made Simple. Business Made Easy.
             </span>
             <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>
-              Period: {business.period || 'September 2026'}
+              Period: {business.period || 'Current Tax Period'}
             </span>
           </div>
 
           <h1 className="font-editorial" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#0B132B', margin: '4px 0 6px 0', letterSpacing: '-0.02em' }}>
-            Good day, {business.contactName || business.tradeName || 'Enterprise'}
+            Good day{business.contactName ? `, ${business.contactName}` : (business.tradeName ? `, ${business.tradeName}` : '')}
           </h1>
           
           <div style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0D6258', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles style={{ width: 18, height: 18, color: '#C87D0E' }} />
-            <span>“Your GST review for {business.period || 'this month'} is ready.”</span>
+            <span>“Your GST review is ready.”</span>
           </div>
         </div>
 
@@ -180,14 +176,14 @@ export default function HomeHeroDashboard({
           </div>
           <div>
             <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0B132B', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>{business.tradeName}</span>
+              <span>{business.tradeName || 'Configure Your Business'}</span>
               <span style={{ fontSize: '0.64rem', color: '#0D6258', backgroundColor: '#EEF8F6', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <Edit2 style={{ width: 10, height: 10 }} />
-                <span>Edit</span>
+                <span>{business.tradeName ? 'Edit' : 'Setup'}</span>
               </span>
             </div>
             <div style={{ fontSize: '0.72rem', color: '#596579' }}>
-              {business.city || 'Kochi'}, {business.stateName || 'Kerala'} ({business.stateCode || '32'}) • GSTIN: <span style={{ fontFamily: 'monospace' }}>{business.gstin}</span>
+              {business.city ? `${business.city}, ` : ''}{business.stateName || 'Kerala'} ({business.stateCode || '32'}) • GSTIN: <span style={{ fontFamily: 'monospace' }}>{business.gstin || 'Not configured'}</span>
             </div>
           </div>
         </div>

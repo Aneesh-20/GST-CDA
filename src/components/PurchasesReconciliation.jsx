@@ -29,7 +29,7 @@ import { SAMPLE_PURCHASE_DIFFERENCES } from '../lib/showcaseData.js';
 import { SAMPLE_PURCHASE_TABLE, parseCsvText, getPurchasesCsvTemplate, triggerBrowserDownload } from '../lib/realtimeData.js';
 
 export default function PurchasesReconciliation({ 
-  purchasesList = SAMPLE_PURCHASE_TABLE,
+  purchasesList = [],
   setPurchasesList,
   initialSubTab = 'reconciliation', 
   onShowToast, 
@@ -37,7 +37,7 @@ export default function PurchasesReconciliation({
   onRequestCaSupport 
 }) {
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab); // 'all-purchases' | 'reconciliation'
-  const [differences, setDifferences] = useState(SAMPLE_PURCHASE_DIFFERENCES);
+  const [differences, setDifferences] = useState([]);
   const [reviewedIds, setReviewedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -51,16 +51,16 @@ export default function PurchasesReconciliation({
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
 
-  // Manual Inward Bill Form State
+  // Manual Inward Bill Form State (Clean Slate, No Pre-filled Dummy Data)
   const [billForm, setBillForm] = useState({
     supplierName: '',
     supplierGstin: '',
-    billNumber: `BILL-2026-${(purchasesList.length + 1).toString().padStart(3, '0')}`,
+    billNumber: '',
     date: new Date().toISOString().split('T')[0],
     supplyType: 'Intra-State',
-    taxableRupees: '45000',
+    taxableRupees: '',
     ratePercent: 18,
-    category: 'Raw Materials & Supplies',
+    category: '',
   });
 
   const taxableNum = parseFloat(billForm.taxableRupees) || 0;
@@ -91,8 +91,9 @@ export default function PurchasesReconciliation({
       alert('Please enter a supplier or vendor name.');
       return;
     }
+    const billId = billForm.billNumber.trim() || `BILL-${Date.now().toString().slice(-5)}`;
     const newRecord = {
-      id: billForm.billNumber,
+      id: billId,
       date: billForm.date,
       vendorName: billForm.supplierName,
       customerName: billForm.supplierName,
@@ -106,7 +107,7 @@ export default function PurchasesReconciliation({
       totalRupees: totalCalculated,
       status: 'Matched in 2B',
       itcEligible: true,
-      category: billForm.category,
+      category: billForm.category || 'Supplies',
     };
     if (setPurchasesList) {
       setPurchasesList([newRecord, ...purchasesList]);
@@ -950,6 +951,7 @@ export default function PurchasesReconciliation({
                   </label>
                   <input 
                     type="text" 
+                    placeholder="e.g. BILL-001"
                     value={billForm.billNumber}
                     onChange={e => setBillForm({ ...billForm, billNumber: e.target.value })}
                     style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem', fontFamily: 'monospace' }}
@@ -992,6 +994,7 @@ export default function PurchasesReconciliation({
                   </label>
                   <input 
                     type="number" 
+                    placeholder="e.g. 45000"
                     value={billForm.taxableRupees}
                     onChange={e => setBillForm({ ...billForm, taxableRupees: e.target.value })}
                     style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
