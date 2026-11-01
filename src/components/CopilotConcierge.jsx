@@ -14,20 +14,33 @@ import {
   User,
   Info
 } from 'lucide-react';
-import { COPILOT_KNOWLEDGE, DEMO_BUSINESS, COPILOT_5_STEPS } from '../lib/showcaseData.js';
+import { COPILOT_KNOWLEDGE } from '../lib/showcaseData.js';
+import { DEFAULT_BUSINESS } from '../lib/realtimeData.js';
 
-export default function CopilotConcierge({ initialQuestion, onNavigate }) {
+export default function CopilotConcierge({ 
+  business = DEFAULT_BUSINESS,
+  salesList = [],
+  purchasesList = [],
+  initialQuestion, 
+  onNavigate 
+}) {
+  const totalTaxableSales = salesList.reduce((acc, s) => acc + (s.taxableRupees || 0), 0);
+  const totalOutputTax = salesList.reduce((acc, s) => acc + (s.gstPaise || 0), 0);
+  const totalTaxablePurchases = purchasesList.reduce((acc, p) => acc + (p.taxableRupees || 0), 0);
+  const totalEligibleItc = purchasesList.reduce((acc, p) => acc + (p.gstPaise || 0), 0);
+  const netTaxPayable = Math.max(0, totalOutputTax - totalEligibleItc);
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       sender: 'copilot',
-      content: `Hello Anaya, I’m your **GST Copilot**.\n\n### “Your GST for this month is ready.”\n\nHere is your current 5-step status for **September 2026**:\n- **Step 1 — Sales**: 124 sales invoices uploaded (₹ 8,42,000 taxable)\n- **Step 2 — Purchases**: We found ₹ 4,85,000 of purchase invoices (86 bills)\n- **Step 3 — ITC**: Your available input tax credit appears to be ₹ 74,800. Review 3 exceptions.\n- **Step 4 — Tax**: Estimated GST payable: **₹ 76,760**.\n- **Step 5 — File**: Your return is ready. Review and authorise filing.\n\nHow can I help you understand your GST compliance today?`,
-      provenance: 'Deterministic GST Engine • September 2026',
+      content: `Hello ${business.contactName || business.tradeName}, I’m your **GST Copilot**.\n\n### “Your GST for ${business.period || 'this month'} is ready.”\n\nHere is your current 5-step status:\n- **Step 1 — Sales**: ${salesList.length} sales invoices (₹ ${totalTaxableSales.toLocaleString('en-IN')} taxable)\n- **Step 2 — Purchases**: ${purchasesList.length} purchase bills recorded (₹ ${totalTaxablePurchases.toLocaleString('en-IN')})\n- **Step 3 — ITC**: Your available input tax credit appears to be ₹ ${totalEligibleItc.toLocaleString('en-IN')}.\n- **Step 4 — Tax**: Estimated net GST payable: **₹ ${netTaxPayable.toLocaleString('en-IN')}**.\n- **Step 5 — File**: Your return is ready. Review and authorise filing.\n\nHow can I help you understand your GST compliance today?`,
+      provenance: `Deterministic GST Engine • ${business.period || 'Current Period'}`,
       timestamp: 'Now',
       action: {
-        label: 'Review 3 Purchase Differences',
+        label: 'Review Inward Bills',
         tab: 'purchases',
-        subTab: 'reconciliation'
+        subTab: 'all-purchases'
       }
     }
   ]);
@@ -47,18 +60,18 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
     const botReply = matched ? {
       id: `bot-${Date.now()}`,
       sender: 'copilot',
-      content: matched.answer,
+      content: matched.answer.replace(/Anaya/g, business.contactName || business.tradeName),
       provenance: 'Deterministic Rules & Statutory GSP/GSTN Integration',
       timestamp: 'Just now',
       action: matched.action
     } : {
       id: `bot-${Date.now()}`,
       sender: 'copilot',
-      content: `Regarding **"${qText}"** for **${DEMO_BUSINESS.tradeName}**:\n\nUnder Indian GST rules for Kerala entities, your outward sales and input tax credits are calculated strictly with integer paise arithmetic. For September 2026, all **124 sales** and **86 purchase bills** are reconciled to safeguard your **₹ 74,800** credit claim without notice risk.`,
+      content: `Regarding **"${qText}"** for **${business.tradeName}**:\n\nUnder Indian GST rules for ${business.stateName || 'state'} entities (${business.stateCode || '32'}), your outward sales and input tax credits are calculated strictly with integer paise arithmetic. In your current register, **${salesList.length} sales** and **${purchasesList.length} purchase bills** are reconciled to safeguard your **₹ ${totalEligibleItc.toLocaleString('en-IN')}** tax credit without notice risk.`,
       provenance: 'Deterministic Rules & Statutory GSP/GSTN Integration',
       timestamp: 'Just now',
       action: {
-        label: 'View September GSTR-3B Summary',
+        label: `View ${business.period || 'Monthly'} GSTR-3B Summary`,
         tab: 'reports'
       }
     };
@@ -98,84 +111,68 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
         <h1 className="font-editorial" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#0B132B', margin: '4px 0 0 0' }}>
           GST Copilot
         </h1>
-        <p style={{ fontSize: '1rem', color: '#596579', maxWidth: 600, margin: '8px auto 0' }}>
-          Instead of complicated GST terminology, we guide you through what matters in natural language.
+        <p style={{ fontSize: '0.96rem', color: '#596579', maxWidth: 600, margin: '6px auto 0' }}>
+          Conversational compliance guide. Answers the exact questions entrepreneurs face in plain business language with verified mathematical provenance.
         </p>
       </div>
 
-      {/* PDF Page 3 Architectural Safeguard Callout */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 12, 
-        padding: '12px 18px', 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 14, 
-        border: '1px solid #EAE5DC', 
-        marginBottom: 24,
-        boxShadow: '0 2px 6px rgba(11, 19, 43, 0.02)'
-      }}>
-        <ShieldCheck style={{ width: 20, height: 20, color: '#0D6258', flexShrink: 0 }} />
-        <div style={{ fontSize: '0.78rem', color: '#596579', lineHeight: 1.5 }}>
-          <strong>Deterministic Tax Guard:</strong> AI explains and assists, but all tax computations, eligibility rules, and GSP filings are governed by deterministic rules and authorized GSTN integrations — not hallucinating LLM responses.
+      {/* Scripted Question Chips (The exact 7 from PDF Page 3) */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>
+          FREQUENT QUESTIONS (TAP TO ASK)
         </div>
-      </div>
-
-      {/* 7 Suggested Question Chips from PDF Page 3 */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, textAlign: 'center', marginBottom: 10 }}>
-          Quick Questions Handled by GST Copilot
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {COPILOT_KNOWLEDGE.map(k => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+          {COPILOT_KNOWLEDGE.map((item) => (
             <button
-              key={k.id}
+              key={item.id}
               type="button"
-              onClick={() => handleAskQuestion(k.question)}
+              onClick={() => handleAskQuestion(item.question)}
               style={{
-                padding: '7px 14px',
-                fontSize: '0.8rem',
+                padding: '6px 14px',
+                fontSize: '0.78rem',
                 fontWeight: 600,
-                color: '#0D6258',
+                color: '#0B132B',
                 backgroundColor: '#FFFFFF',
-                border: '1px solid #B2DDD7',
+                border: '1px solid #DCD5C9',
                 borderRadius: 9999,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 2px 6px rgba(13, 98, 88, 0.05)',
-                transition: 'all 0.15s ease'
+                boxShadow: '0 2px 6px rgba(11, 19, 43, 0.02)',
+                transition: 'all 0.12s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#EEF8F6';
                 e.currentTarget.style.borderColor = '#0D6258';
+                e.currentTarget.style.backgroundColor = '#EEF8F6';
               }}
               onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#DCD5C9';
                 e.currentTarget.style.backgroundColor = '#FFFFFF';
-                e.currentTarget.style.borderColor = '#B2DDD7';
               }}
             >
               <Sparkles style={{ width: 12, height: 12, color: '#C87D0E' }} />
-              <span>{k.question}</span>
+              <span>{item.question}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Chat Messages Canvas */}
+      {/* Main Conversation Stream */}
       <div style={{ 
         backgroundColor: '#FFFFFF', 
         borderRadius: 22, 
         border: '1px solid #EAE5DC', 
-        boxShadow: '0 4px 20px rgba(11, 19, 43, 0.04)',
+        padding: '24px 28px', 
+        minHeight: 460,
+        boxShadow: '0 8px 30px -6px rgba(11, 19, 43, 0.05)',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: 460,
-        overflow: 'hidden'
+        justifyContent: 'space-between',
+        gap: 20
       }}>
-        {/* Messages Scroll Area */}
-        <div style={{ flex: 1, padding: 28, display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto' }}>
+        {/* Messages List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, overflowY: 'auto' }}>
           {messages.map((m) => {
             const isBot = m.sender === 'copilot';
             return (
@@ -183,29 +180,28 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
                 key={m.id}
                 style={{
                   display: 'flex',
-                  gap: 14,
+                  gap: 12,
                   alignItems: 'flex-start',
-                  maxWidth: isBot ? '85%' : '75%',
                   alignSelf: isBot ? 'flex-start' : 'flex-end',
-                  flexDirection: isBot ? 'row' : 'row-reverse'
+                  maxWidth: isBot ? '88%' : '75%'
                 }}
               >
-                {/* Avatar */}
-                <div style={{ 
-                  width: 34, 
-                  height: 34, 
-                  borderRadius: 10, 
-                  backgroundColor: isBot ? '#0D6258' : '#0B132B', 
-                  color: '#FFFFFF', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  flexShrink: 0 
-                }}>
-                  {isBot ? <Bot style={{ width: 18, height: 18 }} /> : <User style={{ width: 16, height: 16 }} />}
-                </div>
+                {isBot && (
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: 10, 
+                    backgroundColor: '#EEF8F6', 
+                    color: '#0D6258', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Bot style={{ width: 16, height: 16 }} />
+                  </div>
+                )}
 
-                {/* Message Bubble */}
                 <div>
                   <div style={{
                     padding: '16px 20px',
@@ -213,33 +209,33 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
                     backgroundColor: isBot ? '#FAF8F5' : '#0D6258',
                     color: isBot ? '#0B132B' : '#FFFFFF',
                     border: isBot ? '1px solid #EAE5DC' : 'none',
-                    fontSize: '0.88rem',
+                    fontSize: '0.9rem',
                     lineHeight: 1.6,
-                    whiteSpace: 'pre-line',
-                    boxShadow: isBot ? '0 2px 8px rgba(11, 19, 43, 0.02)' : '0 4px 14px rgba(13, 98, 88, 0.25)'
+                    whiteSpace: 'pre-wrap'
                   }}>
                     {m.content}
                   </div>
 
-                  {/* Provenance note & contextual action button */}
+                  {/* Bot Provenance & Inline Action */}
                   {isBot && (
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <span style={{ fontSize: '0.7rem', color: '#8D99AE' }}>
-                        ✓ {m.provenance}
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#8D99AE', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ShieldCheck style={{ width: 12, height: 12, color: '#0D6258' }} />
+                        <span>{m.provenance}</span>
                       </span>
 
-                      {m.action && (
+                      {m.action && onNavigate && (
                         <button
                           type="button"
                           onClick={() => onNavigate(m.action.tab, m.action.subTab)}
                           style={{
-                            padding: '4px 10px',
+                            padding: '4px 12px',
                             fontSize: '0.74rem',
                             fontWeight: 700,
                             color: '#0D6258',
                             backgroundColor: '#EEF8F6',
                             border: '1px solid #B2DDD7',
-                            borderRadius: 6,
+                            borderRadius: 8,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -258,22 +254,28 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
           })}
         </div>
 
-        {/* Input Composer Field */}
-        <div style={{ padding: 18, borderTop: '1px solid #EAE5DC', backgroundColor: '#FAF8F5' }}>
-          <form onSubmit={handleSend} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Input Form */}
+        <form onSubmit={handleSend} style={{ borderTop: '1px solid #FAF8F5', paddingTop: 16 }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 10, 
+            padding: '8px 12px 8px 16px', 
+            backgroundColor: '#FAF8F5', 
+            borderRadius: 14, 
+            border: '1px solid #EAE5DC' 
+          }}>
             <input 
-              type="text"
+              type="text" 
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask anything in plain English: 'Why is my ITC different?' or 'How much tax do I owe?'"
-              style={{
-                flex: 1,
-                padding: '12px 18px',
-                fontSize: '0.88rem',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #DCD5C9',
-                borderRadius: 14,
-                outline: 'none',
+              placeholder="Ask anything about your sales, purchase credit, or tax deadline..." 
+              style={{ 
+                flex: 1, 
+                border: 'none', 
+                backgroundColor: 'transparent', 
+                outline: 'none', 
+                fontSize: '0.9rem',
                 color: '#0B132B'
               }}
             />
@@ -282,28 +284,26 @@ export default function CopilotConcierge({ initialQuestion, onNavigate }) {
               type="submit"
               disabled={!inputValue.trim()}
               style={{
-                padding: '12px 20px',
-                fontSize: '0.88rem',
+                padding: '10px 18px',
+                fontSize: '0.86rem',
                 fontWeight: 700,
                 color: '#FFFFFF',
-                backgroundColor: inputValue.trim() ? '#0D6258' : '#8D99AE',
+                backgroundColor: inputValue.trim() ? '#0D6258' : '#DCD5C9',
                 border: 'none',
-                borderRadius: 12,
+                borderRadius: 10,
                 cursor: inputValue.trim() ? 'pointer' : 'default',
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: inputValue.trim() ? '0 4px 14px rgba(13, 98, 88, 0.25)' : 'none'
+                transition: 'all 0.15s ease'
               }}
             >
-              <span>Send</span>
-              <Send style={{ width: 15, height: 15 }} />
+              <span>Ask</span>
+              <Send style={{ width: 14, height: 14 }} />
             </button>
-          </form>
-        </div>
-
+          </div>
+        </form>
       </div>
-
     </div>
   );
 }

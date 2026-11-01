@@ -509,7 +509,7 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
                 Your space is ready.
               </h2>
               <p style={{ fontSize: '0.96rem', color: '#596579', margin: '0 0 28px 0' }}>
-                We have configured your digital desk for <strong>Anaya Home & Living</strong> based in Kochi, Kerala.
+                We have configured your digital desk for <strong>Your Business Enterprise</strong> based in Kochi, Kerala.
               </p>
 
               {/* Personalized Readiness Summary Card */}
@@ -523,7 +523,7 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14, borderBottom: '1px solid #FAF8F5' }}>
                   <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>Legal Entity</span>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0B132B' }}>Anaya Home & Living LLP</span>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0B132B' }}>Your Business Enterprise LLP</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #FAF8F5' }}>
                   <span style={{ fontSize: '0.82rem', color: '#8D99AE', fontWeight: 600 }}>Jurisdiction</span>

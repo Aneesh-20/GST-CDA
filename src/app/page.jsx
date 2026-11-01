@@ -32,7 +32,11 @@ import {
   PhoneCall,
   Smartphone,
   Laptop,
-  MessageSquare
+  MessageSquare,
+  Edit2,
+  Check,
+  Trash2,
+  Database
 } from 'lucide-react';
 
 import WelcomeLanding from '../components/WelcomeLanding.jsx';
@@ -45,7 +49,8 @@ import ReportsHub from '../components/ReportsHub.jsx';
 import CopilotConcierge from '../components/CopilotConcierge.jsx';
 import BusinessRegistration from '../components/BusinessRegistration.jsx';
 import CalendarVaultSupport from '../components/CalendarVaultSupport.jsx';
-import { DEMO_BUSINESS, COMPLIANCE_SCORE, EXPERIENCE_CHANNELS } from '../lib/showcaseData.js';
+import { COMPLIANCE_SCORE, EXPERIENCE_CHANNELS, SAMPLE_SALES_TABLE } from '../lib/showcaseData.js';
+import { DEFAULT_BUSINESS, SAMPLE_PURCHASE_TABLE } from '../lib/realtimeData.js';
 
 export default function GSTCDAShowcaseApp() {
   // Main view state: 'app' (default hero showcase) | 'landing' | 'onboarding'
@@ -69,11 +74,101 @@ export default function GSTCDAShowcaseApp() {
   const [selectedChannel, setSelectedChannel] = useState('web');
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
+  // Business Profile Management (Editable Real Workspace)
+  const [businessProfile, setBusinessProfile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gst_cda_business_profile');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+    }
+    return DEFAULT_BUSINESS;
+  });
+
+  // Sales and Purchases Registers
+  const [salesList, setSalesList] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gst_cda_sales_list');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+    }
+    return SAMPLE_SALES_TABLE;
+  });
+
+  const [purchasesList, setPurchasesList] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gst_cda_purchases_list');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+    }
+    return SAMPLE_PURCHASE_TABLE;
+  });
+
+  // Business Switcher / Edit Modal State
+  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState(businessProfile);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
+  };
+
+  const updateBusinessProfile = (newProfile) => {
+    setBusinessProfile(newProfile);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gst_cda_business_profile', JSON.stringify(newProfile));
+    }
+  };
+
+  const updateSalesList = (newList) => {
+    setSalesList(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gst_cda_sales_list', JSON.stringify(newList));
+    }
+  };
+
+  const updatePurchasesList = (newList) => {
+    setPurchasesList(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gst_cda_purchases_list', JSON.stringify(newList));
+    }
+  };
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    updateBusinessProfile(editForm);
+    setIsBusinessModalOpen(false);
+    showToast(`🏢 Business details updated for ${editForm.tradeName}.`);
+  };
+
+  const handleResetToCleanSlate = () => {
+    if (confirm('Start a completely clean workspace? All current sales and purchase rows will be cleared so you can upload your real records.')) {
+      updateSalesList([]);
+      updatePurchasesList([]);
+      const cleanProfile = {
+        ...businessProfile,
+        tradeName: editForm.tradeName || 'My Enterprise',
+        legalName: editForm.legalName || 'My Enterprise LLP',
+        gstin: editForm.gstin || '32AABCA8842P1Z9',
+      };
+      updateBusinessProfile(cleanProfile);
+      setEditForm(cleanProfile);
+      setIsBusinessModalOpen(false);
+      showToast('✨ Switched to Clean Slate workspace (0 sales, 0 purchases).');
+    }
+  };
+
+  const handleLoadSampleStarterData = () => {
+    updateSalesList(SAMPLE_SALES_TABLE);
+    updatePurchasesList(SAMPLE_PURCHASE_TABLE);
+    updateBusinessProfile(DEFAULT_BUSINESS);
+    setEditForm(DEFAULT_BUSINESS);
+    setIsBusinessModalOpen(false);
+    showToast('📦 Loaded sample starter records for preview.');
   };
 
   const handleNavigate = (tab, subTab, action) => {
@@ -137,7 +232,7 @@ export default function GSTCDAShowcaseApp() {
         onComplete={(state) => {
           setViewMode('app');
           setActiveNav('home');
-          showToast('🎉 Welcome to Anaya Home & Living! Your September 2026 space is ready.');
+          showToast(`🎉 Welcome to ${businessProfile.tradeName}! Your workspace is ready.`);
         }}
         onCancel={() => {
           setViewMode('app');
@@ -146,6 +241,14 @@ export default function GSTCDAShowcaseApp() {
       />
     );
   }
+
+  const monogram = (businessProfile.tradeName || 'ME')
+    .split(' ')
+    .map(w => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   // MAIN APPLICATION SHELL
   return (
@@ -195,22 +298,34 @@ export default function GSTCDAShowcaseApp() {
           </div>
 
           {/* Business Switcher Card */}
-          <div style={{ 
-            marginTop: 14, 
-            padding: '8px 12px', 
-            backgroundColor: '#FAF8F5', 
-            borderRadius: 12, 
-            border: '1px solid #EAE5DC',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
+          <div 
+            onClick={() => {
+              setEditForm(businessProfile);
+              setIsBusinessModalOpen(true);
+            }}
+            title="Click to edit company details or switch workspace"
+            style={{ 
+              marginTop: 14, 
+              padding: '8px 12px', 
+              backgroundColor: '#FAF8F5', 
+              borderRadius: 12, 
+              border: '1px solid #EAE5DC',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              transition: 'border-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
+          >
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {DEMO_BUSINESS.tradeName}
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{businessProfile.tradeName}</span>
+                <Edit2 style={{ width: 10, height: 10, color: '#8D99AE' }} />
               </div>
               <div style={{ fontSize: '0.68rem', color: '#596579' }}>
-                Kochi, Kerala (32)
+                {businessProfile.city}, {businessProfile.stateName} ({businessProfile.stateCode})
               </div>
             </div>
             <span style={{ fontSize: '0.66rem', color: '#0D6258', fontWeight: 800, backgroundColor: '#EEF8F6', padding: '2px 6px', borderRadius: 4 }}>
@@ -230,8 +345,8 @@ export default function GSTCDAShowcaseApp() {
             { id: 'home', label: 'Compliance Dashboard', icon: LayoutDashboard, pill: `${COMPLIANCE_SCORE.score}/100`, pillColor: '#0E7051' },
             { id: 'copilot', label: 'GST Copilot', icon: Bot, pill: '5-Step', highlight: true },
             { id: 'startup-express', label: 'Startup Express', icon: Rocket, pill: 'PAN & MCA' },
-            { id: 'sales', label: 'Invoice Data (Sales)', icon: Receipt, pill: '124' },
-            { id: 'purchases', label: 'GSTR-2B / Reconciliation', icon: ShoppingCart, pill: '3 diffs', pillColor: '#B45309' },
+            { id: 'sales', label: 'Invoice Data (Sales)', icon: Receipt, pill: `${salesList.length}` },
+            { id: 'purchases', label: 'GSTR-2B / Reconciliation', icon: ShoppingCart, pill: `${purchasesList.length}`, pillColor: '#B45309' },
             { id: 'reports', label: 'GSTR-1 & GSTR-3B', icon: FileText, pill: 'Ready' },
           ].map(item => {
             const Icon = item.icon;
@@ -355,14 +470,14 @@ export default function GSTCDAShowcaseApp() {
               alignItems: 'center', 
               justifyContent: 'center' 
             }}>
-              AN
+              {monogram}
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                Anaya Nair
+                {businessProfile.contactName || businessProfile.tradeName}
               </div>
               <div style={{ fontSize: '0.68rem', color: '#8D99AE' }}>
-                Designated Partner
+                Authorized Signatory
               </div>
             </div>
           </div>
@@ -391,9 +506,18 @@ export default function GSTCDAShowcaseApp() {
           {/* Left: Breadcrumbs & Global Command Trigger */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ fontSize: '0.84rem', color: '#596579', fontWeight: 600 }}>
-              <span style={{ color: '#8D99AE' }}>Anaya Home & Living</span>
+              <span 
+                onClick={() => {
+                  setEditForm(businessProfile);
+                  setIsBusinessModalOpen(true);
+                }}
+                style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
+                title="Click to edit business profile"
+              >
+                {businessProfile.tradeName}
+              </span>
               <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
-              <span style={{ color: '#0B132B', fontWeight: 700 }}>
+              <span style={{ color: '#0D6258', fontWeight: 700 }}>
                 {activeNav === 'home' ? 'Compliance Dashboard' 
                  : activeNav === 'copilot' ? 'GST Copilot' 
                  : activeNav === 'startup-express' ? 'Startup Express'
@@ -443,7 +567,7 @@ export default function GSTCDAShowcaseApp() {
             </div>
           </div>
 
-          {/* Right: Experience Channels (PDF Page 1) & View Mode */}
+          {/* Right: Experience Channels & Edit Workspace Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             
             {/* 5 Channels from PDF Page 1 */}
@@ -474,30 +598,30 @@ export default function GSTCDAShowcaseApp() {
               ))}
             </div>
 
-            {/* Showcase View Switcher */}
-            <div style={{ display: 'flex', backgroundColor: '#FAF8F5', padding: 3, borderRadius: 10, border: '1px solid #EAE5DC' }}>
-              <button
-                type="button"
-                onClick={() => setViewMode('landing')}
-                style={{ padding: '4px 8px', fontSize: '0.7rem', fontWeight: 600, color: '#596579', background: 'none', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-              >
-                Welcome
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('onboarding')}
-                style={{ padding: '4px 8px', fontSize: '0.7rem', fontWeight: 600, color: '#596579', background: 'none', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-              >
-                Onboarding
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('app')}
-                style={{ padding: '4px 8px', fontSize: '0.7rem', fontWeight: 800, color: '#0D6258', backgroundColor: '#EEF8F6', border: '1px solid #B2DDD7', borderRadius: 6, cursor: 'pointer' }}
-              >
-                App
-              </button>
-            </div>
+            {/* Quick Workspace Switcher Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setEditForm(businessProfile);
+                setIsBusinessModalOpen(true);
+              }}
+              style={{
+                padding: '5px 12px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#0D6258',
+                backgroundColor: '#EEF8F6',
+                border: '1px solid #B2DDD7',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5
+              }}
+            >
+              <SettingsIcon style={{ width: 13, height: 13 }} />
+              <span>Workspace Profile</span>
+            </button>
 
             {/* Notification Bell */}
             <div style={{ position: 'relative' }}>
@@ -528,43 +652,30 @@ export default function GSTCDAShowcaseApp() {
                   position: 'absolute',
                   top: 42,
                   right: 0,
-                  width: 320,
+                  width: 300,
                   backgroundColor: '#FFFFFF',
-                  borderRadius: 16,
+                  borderRadius: 14,
                   border: '1px solid #EAE5DC',
                   boxShadow: '0 10px 30px rgba(11, 19, 43, 0.12)',
                   padding: 16,
                   zIndex: 50
                 }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0B132B', marginBottom: 10 }}>
-                    Compliance Checkpoints (Due-Date Engine)
+                    Compliance Notifications
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ padding: 10, backgroundColor: '#FEF7EC', borderRadius: 10, border: '1px solid #F7E1B8' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#B45309' }}>Review 3 purchase differences</div>
-                      <div style={{ fontSize: '0.7rem', color: '#596579', marginTop: 2 }}>Ready before September GSTR-3B settlement (20 Oct).</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.78rem' }}>
+                    <div style={{ padding: 8, backgroundColor: '#FAF8F5', borderRadius: 8 }}>
+                      <span style={{ fontWeight: 700, color: '#0D6258' }}>GSTR-1 Due Soon</span>
+                      <div style={{ color: '#596579', marginTop: 2 }}>Submission cut-off on 11th of this month.</div>
                     </div>
-                    <div style={{ padding: 10, backgroundColor: '#FAF8F5', borderRadius: 10, border: '1px solid #EAE5DC' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0B132B' }}>124 Sales Invoices Compiled</div>
-                      <div style={{ fontSize: '0.7rem', color: '#596579', marginTop: 2 }}>All September sales verified with zero math drift.</div>
+                    <div style={{ padding: 8, backgroundColor: '#FAF8F5', borderRadius: 8 }}>
+                      <span style={{ fontWeight: 700, color: '#B45309' }}>2B Reconciled</span>
+                      <div style={{ color: '#596579', marginTop: 2 }}>{purchasesList.length} inward bills synced with supplier filings.</div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Active Period Badge */}
-            <span style={{ 
-              fontSize: '0.74rem', 
-              fontWeight: 800, 
-              color: '#0D6258', 
-              backgroundColor: '#EEF8F6', 
-              padding: '4px 10px', 
-              borderRadius: 9999,
-              border: '1px solid #B2DDD7'
-            }}>
-              September 2026
-            </span>
 
           </div>
         </header>
@@ -574,6 +685,9 @@ export default function GSTCDAShowcaseApp() {
           
           {activeNav === 'home' && (
             <HomeHeroDashboard 
+              business={businessProfile}
+              salesList={salesList}
+              purchasesList={purchasesList}
               onNavigate={handleNavigate}
               onAskCopilot={(q) => {
                 setActiveNav('copilot');
@@ -582,11 +696,18 @@ export default function GSTCDAShowcaseApp() {
                 setActiveNav('ca-support');
                 setCalendarSubSection('ca-support');
               }}
+              onOpenBusinessModal={() => {
+                setEditForm(businessProfile);
+                setIsBusinessModalOpen(true);
+              }}
             />
           )}
 
           {activeNav === 'copilot' && (
             <CopilotConcierge 
+              business={businessProfile}
+              salesList={salesList}
+              purchasesList={purchasesList}
               onNavigate={handleNavigate}
             />
           )}
@@ -596,11 +717,17 @@ export default function GSTCDAShowcaseApp() {
           )}
 
           {activeNav === 'sales' && (
-            <SalesManager onShowToast={showToast} />
+            <SalesManager 
+              salesList={salesList}
+              setSalesList={updateSalesList}
+              onShowToast={showToast} 
+            />
           )}
 
           {activeNav === 'purchases' && (
             <PurchasesReconciliation 
+              purchasesList={purchasesList}
+              setPurchasesList={updatePurchasesList}
               initialSubTab={purchasesSubTab}
               onShowToast={showToast}
               onAskCopilot={(q) => setActiveNav('copilot')}
@@ -613,6 +740,9 @@ export default function GSTCDAShowcaseApp() {
 
           {activeNav === 'reports' && (
             <ReportsHub 
+              business={businessProfile}
+              salesList={salesList}
+              purchasesList={purchasesList}
               onShowToast={showToast}
               onAskCopilot={(q) => setActiveNav('copilot')}
             />
@@ -635,6 +765,214 @@ export default function GSTCDAShowcaseApp() {
 
         </main>
       </div>
+
+      {/* ======================================================== */}
+      {/* MODAL: EDIT WORKSPACE & ENTITY PROFILE                   */}
+      {/* ======================================================== */}
+      {isBusinessModalOpen && (
+        <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <div style={{ width: '100%', maxWidth: 540, backgroundColor: '#FFFFFF', borderRadius: 22, padding: 30, boxShadow: '0 25px 60px rgba(11, 19, 43, 0.25)', border: '1px solid #EAE5DC' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#EEF8F6', color: '#0D6258', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 style={{ width: 22, height: 22 }} />
+                </div>
+                <div>
+                  <h3 className="font-editorial" style={{ fontSize: '1.45rem', fontWeight: 500, color: '#0B132B', margin: 0 }}>
+                    Workspace & Entity Setup
+                  </h3>
+                  <span style={{ fontSize: '0.76rem', color: '#8D99AE' }}>Configure your real business details</span>
+                </div>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => setIsBusinessModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#8D99AE', cursor: 'pointer' }}
+              >
+                <X style={{ width: 20, height: 20 }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                  Trade / Display Name *
+                </label>
+                <input 
+                  type="text" 
+                  value={editForm.tradeName}
+                  onChange={e => setEditForm({ ...editForm, tradeName: e.target.value })}
+                  placeholder="e.g. Apex Hardware & Electricals"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    Legal Registered Name
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.legalName}
+                    onChange={e => setEditForm({ ...editForm, legalName: e.target.value })}
+                    placeholder="e.g. Apex Enterprises LLP"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    Contact Person Name
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.contactName || ''}
+                    onChange={e => setEditForm({ ...editForm, contactName: e.target.value })}
+                    placeholder="e.g. Suresh Kumar"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    GSTIN (15 Chars)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.gstin}
+                    onChange={e => setEditForm({ ...editForm, gstin: e.target.value.toUpperCase() })}
+                    placeholder="32AABCA8842P1Z9"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    Filing Tax Period
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.period}
+                    onChange={e => setEditForm({ ...editForm, period: e.target.value })}
+                    placeholder="e.g. October 2026"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    State & Jurisdiction
+                  </label>
+                  <select
+                    value={`${editForm.stateCode}-${editForm.stateName}`}
+                    onChange={e => {
+                      const [code, name] = e.target.value.split('-');
+                      setEditForm({ ...editForm, stateCode: code, stateName: name });
+                    }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                  >
+                    <option value="32-Kerala">Kerala (32)</option>
+                    <option value="29-Karnataka">Karnataka (29)</option>
+                    <option value="33-Tamil Nadu">Tamil Nadu (33)</option>
+                    <option value="27-Maharashtra">Maharashtra (27)</option>
+                    <option value="07-Delhi">Delhi (07)</option>
+                    <option value="19-West Bengal">West Bengal (19)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
+                    City
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.city}
+                    onChange={e => setEditForm({ ...editForm, city: e.target.value })}
+                    placeholder="e.g. Kochi"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #DCD5C9', fontSize: '0.86rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* Quick Actions Row */}
+              <div style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF8F5', borderRadius: 12, border: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0B132B' }}>Workspace Mode</div>
+                  <div style={{ fontSize: '0.7rem', color: '#8D99AE' }}>
+                    {salesList.length} sales • {purchasesList.length} purchase bills loaded
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={handleResetToCleanSlate}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      color: '#B91C1C',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #FECACA',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <Trash2 style={{ width: 12, height: 12 }} />
+                    <span>Clean Slate (0 records)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLoadSampleStarterData}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      color: '#0D6258',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #B2DDD7',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <Database style={{ width: 12, height: 12 }} />
+                    <span>Starter Data</span>
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsBusinessModalOpen(false)}
+                  style={{ padding: '9px 16px', fontSize: '0.84rem', fontWeight: 600, color: '#596579', background: 'none', border: '1px solid #DCD5C9', borderRadius: 10, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '9px 22px', fontSize: '0.84rem', fontWeight: 700, color: '#FFFFFF', backgroundColor: '#0D6258', border: 'none', borderRadius: 10, cursor: 'pointer', boxShadow: '0 4px 14px rgba(13, 98, 88, 0.25)' }}
+                >
+                  Save Business Details
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* GLOBAL COMMAND PALETTE (CMD + K)                         */}
@@ -679,21 +1017,21 @@ export default function GSTCDAShowcaseApp() {
               </div>
               
               <div style={{ alignSelf: 'flex-start', maxWidth: '85%', padding: '10px 14px', backgroundColor: '#FFFFFF', borderRadius: '0 12px 12px 12px', fontSize: '0.84rem', color: '#0B132B', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                Namaste Anaya! Your **September 2026** GST review is ready. 
+                Namaste {businessProfile.contactName || businessProfile.tradeName}! Your **{businessProfile.period || 'current period'}** GST review is ready. 
                 <br /><br />
-                - 124 sales uploaded
-                - Net tax estimate: **₹ 76,760**
-                - GSTR-3B deadline: **20 October**
+                - {salesList.length} sales recorded
+                - {purchasesList.length} purchase bills recorded
+                - Net tax estimate: **₹ {Math.max(0, salesList.reduce((acc, s) => acc + (s.gstPaise || 0), 0) - purchasesList.reduce((acc, p) => acc + (p.gstPaise || 0), 0)).toLocaleString('en-IN')}**
                 <br /><br />
                 Reply **1** to review purchase differences, or send a voice note with your questions!
               </div>
 
               <div style={{ alignSelf: 'flex-end', maxWidth: '80%', padding: '8px 12px', backgroundColor: '#DCF8C6', borderRadius: '12px 0 12px 12px', fontSize: '0.84rem', color: '#0B132B', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                Why do I have 3 purchase differences?
+                Why do I have purchase differences?
               </div>
 
               <div style={{ alignSelf: 'flex-start', maxWidth: '85%', padding: '10px 14px', backgroundColor: '#FFFFFF', borderRadius: '0 12px 12px 12px', fontSize: '0.84rem', color: '#0B132B', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                Calicut Packaging gave a ₹2,000 trade discount on bill #CPS-8842. Under Section 16(2)(aa), we adjusted this so you claim full credit without notice risk.
+                Vendor trade discounts or delayed supplier filings are normal. Under Section 16(2)(aa), we protect your credits so you claim full credit without notice risk.
               </div>
             </div>
 
@@ -752,31 +1090,30 @@ export default function GSTCDAShowcaseApp() {
       </div>
 
       {/* ======================================================== */}
-      {/* LUXURY IN-APP TOAST NOTIFICATION                         */}
+      {/* IN-APP TOAST                                             */}
       {/* ======================================================== */}
       {toastMessage && (
         <div style={{
           position: 'fixed',
-          bottom: 28,
-          right: 28,
-          zIndex: 99999,
+          bottom: 24,
+          right: 24,
+          padding: '12px 20px',
           backgroundColor: '#0B132B',
           color: '#FFFFFF',
-          padding: '12px 22px',
-          borderRadius: 14,
-          boxShadow: '0 16px 36px -4px rgba(11, 19, 43, 0.4)',
-          border: '1px solid rgba(13, 98, 88, 0.4)',
+          borderRadius: 12,
+          fontSize: '0.86rem',
+          fontWeight: 600,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          zIndex: 100,
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          fontSize: '0.86rem',
-          fontWeight: 600,
-          animation: 'fadeIn 0.2s ease-out'
+          animation: 'fadeIn 0.2s ease'
         }}>
-          <CheckCircle2 style={{ width: 17, height: 17, color: '#34D399', flexShrink: 0 }} />
           <span>{toastMessage}</span>
         </div>
       )}
+
     </div>
   );
 }

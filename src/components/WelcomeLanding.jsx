@@ -253,7 +253,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>Explore Anaya Workspace</span>
+                <span>Explore Live Workspace</span>
                 <ChevronRight style={{ width: 16, height: 16, color: '#8D99AE' }} />
               </button>
             </div>

@@ -17,20 +17,100 @@ import {
   ChevronRight,
   TrendingUp,
   Gift,
-  Share2
+  Share2,
+  Edit2
 } from 'lucide-react';
 import { 
-  DEMO_BUSINESS, 
-  SAMPLE_SALES_SUMMARY, 
-  SAMPLE_PURCHASES_SUMMARY, 
   TIMELINE_SAMPLE_ITEMS,
   COMPLIANCE_SCORE,
   COMPLIANCE_STATUS_LIST,
-  COPILOT_5_STEPS,
   REFERRAL_ENGINE_DATA
 } from '../lib/showcaseData.js';
+import { DEFAULT_BUSINESS } from '../lib/realtimeData.js';
 
-export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestCaSupport }) {
+export default function HomeHeroDashboard({ 
+  business = DEFAULT_BUSINESS,
+  salesList = [],
+  purchasesList = [],
+  onNavigate, 
+  onAskCopilot, 
+  onRequestCaSupport,
+  onOpenBusinessModal
+}) {
+  const totalTaxableSales = salesList.reduce((acc, s) => acc + (s.taxableRupees || 0), 0);
+  const totalOutputTax = salesList.reduce((acc, s) => acc + (s.gstPaise || 0), 0);
+  const totalTaxablePurchases = purchasesList.reduce((acc, p) => acc + (p.taxableRupees || 0), 0);
+  const totalEligibleItc = purchasesList.reduce((acc, p) => acc + (p.gstPaise || 0), 0);
+  const netTaxPayable = Math.max(0, totalOutputTax - totalEligibleItc);
+
+  const advisor = business.advisor || DEFAULT_BUSINESS.advisor;
+  const initials = (business.tradeName || 'ME')
+    .split(' ')
+    .map(w => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const dynamic5Steps = [
+    {
+      step: 1,
+      title: 'Sales',
+      prompt: salesList.length > 0 ? `${salesList.length} sales invoices recorded` : 'Upload your sales invoices',
+      detail: `${salesList.length} sales invoices (₹ ${totalTaxableSales.toLocaleString('en-IN')} taxable)`,
+      status: salesList.length > 0 ? 'complete' : 'action',
+      badge: salesList.length > 0 ? 'Uploaded' : 'Action needed',
+      color: salesList.length > 0 ? '#0E7051' : '#B45309',
+      bg: salesList.length > 0 ? '#ECFDF5' : '#FEF7EC',
+      tab: 'sales'
+    },
+    {
+      step: 2,
+      title: 'Purchases',
+      prompt: purchasesList.length > 0 ? `Found ₹ ${totalTaxablePurchases.toLocaleString('en-IN')} of purchase bills` : 'Upload your purchase bills',
+      detail: `${purchasesList.length} vendor bills recorded`,
+      status: purchasesList.length > 0 ? 'complete' : 'ready',
+      badge: purchasesList.length > 0 ? 'Found' : 'Upload',
+      color: '#0E7051',
+      bg: '#ECFDF5',
+      tab: 'purchases'
+    },
+    {
+      step: 3,
+      title: 'ITC',
+      prompt: `Available input tax credit: ₹ ${totalEligibleItc.toLocaleString('en-IN')}`,
+      detail: `${purchasesList.length} bills reconciled for maximum credit`,
+      status: 'action',
+      badge: purchasesList.length > 0 ? 'Reconciled' : 'Review',
+      color: '#B45309',
+      bg: '#FEF7EC',
+      tab: 'purchases',
+      subTab: 'reconciliation'
+    },
+    {
+      step: 4,
+      title: 'Tax',
+      prompt: `Estimated GST payable: ₹ ${netTaxPayable.toLocaleString('en-IN')}`,
+      detail: `Net math: ₹ ${totalOutputTax.toLocaleString('en-IN')} output minus ₹ ${totalEligibleItc.toLocaleString('en-IN')} credit`,
+      status: 'ready',
+      badge: 'Estimated',
+      color: '#0D6258',
+      bg: '#EEF8F6',
+      tab: 'reports'
+    },
+    {
+      step: 5,
+      title: 'File',
+      prompt: 'Your return is ready. Review and authorise filing.',
+      detail: 'Cryptographic review safeguard before GSP submission',
+      status: 'waiting',
+      badge: 'Ready to Authorise',
+      color: '#596579',
+      bg: '#FAF8F5',
+      tab: 'reports'
+    }
+  ];
+
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%', paddingBottom: 64 }}>
       
@@ -51,31 +131,39 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
               GST Made Simple. Business Made Easy.
             </span>
             <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>
-              Period: September 2026
+              Period: {business.period || 'September 2026'}
             </span>
           </div>
 
           <h1 className="font-editorial" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#0B132B', margin: '4px 0 6px 0', letterSpacing: '-0.02em' }}>
-            Good evening, Anaya
+            Good day, {business.contactName || business.tradeName || 'Enterprise'}
           </h1>
           
           <div style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0D6258', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles style={{ width: 18, height: 18, color: '#C87D0E' }} />
-            <span>“Your GST for this month is ready.”</span>
+            <span>“Your GST review for {business.period || 'this month'} is ready.”</span>
           </div>
         </div>
 
         {/* Business Monogram & Entity Pill */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 12, 
-          padding: '10px 18px', 
-          backgroundColor: '#FFFFFF', 
-          borderRadius: 14, 
-          border: '1px solid #EAE5DC',
-          boxShadow: '0 2px 6px rgba(11, 19, 43, 0.03)'
-        }}>
+        <div 
+          onClick={onOpenBusinessModal}
+          title="Click to change company name, GSTIN, and filing period"
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 12, 
+            padding: '10px 18px', 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: 14, 
+            border: '1px solid #EAE5DC',
+            boxShadow: '0 2px 6px rgba(11, 19, 43, 0.03)',
+            cursor: 'pointer',
+            transition: 'border-color 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
+        >
           <div style={{ 
             width: 36, 
             height: 36, 
@@ -88,14 +176,18 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
             justifyContent: 'center', 
             fontSize: '0.85rem' 
           }}>
-            AH
+            {initials}
           </div>
           <div>
-            <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0B132B' }}>
-              {DEMO_BUSINESS.tradeName}
+            <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0B132B', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>{business.tradeName}</span>
+              <span style={{ fontSize: '0.64rem', color: '#0D6258', backgroundColor: '#EEF8F6', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Edit2 style={{ width: 10, height: 10 }} />
+                <span>Edit</span>
+              </span>
             </div>
             <div style={{ fontSize: '0.72rem', color: '#596579' }}>
-              Kochi, Kerala (32) • GSTIN: <span style={{ fontFamily: 'monospace' }}>{DEMO_BUSINESS.gstin}</span>
+              {business.city || 'Kochi'}, {business.stateName || 'Kerala'} ({business.stateCode || '32'}) • GSTIN: <span style={{ fontFamily: 'monospace' }}>{business.gstin}</span>
             </div>
           </div>
         </div>
@@ -137,17 +229,19 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
           </div>
 
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0B132B', margin: '4px 0 10px 0', letterSpacing: '-0.02em' }}>
-            Review 3 purchase differences
+            {purchasesList.length > 0 ? 'Review purchase credit differences' : 'Upload real sales & purchase data'}
           </h2>
 
           <p style={{ fontSize: '0.94rem', color: '#596579', lineHeight: 1.6, maxWidth: 540, margin: '0 0 22px 0' }}>
-            We found a few purchase records that need a quick check before you review your GST summary. Differences like vendor trade discounts are normal and protect your eligible tax credits.
+            {purchasesList.length > 0 
+              ? 'We compare your recorded purchase bills with supplier filings in GSTR-2B. Differences like trade discounts are handled smoothly to protect your eligible tax credits under Section 16(2)(aa).'
+              : 'Add your sales invoices and inward purchase bills using CSV, Excel spreadsheets, or PDF invoice scans. All taxes calculate automatically with zero floating-point drift.'}
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <button
               type="button"
-              onClick={() => onNavigate('purchases', 'reconciliation')}
+              onClick={() => onNavigate(purchasesList.length > 0 ? 'purchases' : 'sales', purchasesList.length > 0 ? 'reconciliation' : undefined)}
               style={{
                 padding: '12px 24px',
                 fontSize: '0.92rem',
@@ -163,13 +257,13 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
                 boxShadow: '0 4px 16px rgba(13, 98, 88, 0.28)'
               }}
             >
-              <span>Review Differences</span>
+              <span>{purchasesList.length > 0 ? 'Review Differences' : 'Manage Invoices'}</span>
               <ArrowRight style={{ width: 16, height: 16 }} />
             </button>
 
             <button
               type="button"
-              onClick={() => onAskCopilot('Why do I have this mismatch?')}
+              onClick={() => onAskCopilot && onAskCopilot('How is my net tax calculated?')}
               style={{
                 padding: '12px 20px',
                 fontSize: '0.88rem',
@@ -207,7 +301,7 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {COPILOT_5_STEPS.map((step) => {
+            {dynamic5Steps.map((step) => {
               const isAction = step.status === 'action';
               const isDone = step.status === 'complete';
               return (
@@ -266,96 +360,7 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
       </div>
 
       {/* ======================================================== */}
-      {/* PDF SECTION 6: "YOUR BUSINESS COMPLIANCE" & SCORE 92/100 */}
-      {/* ======================================================== */}
-      <div style={{ 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 20, 
-        border: '1px solid #EAE5DC', 
-        padding: '24px 28px',
-        boxShadow: '0 4px 16px rgba(11, 19, 43, 0.03)',
-        marginBottom: 32
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#0D6258', fontWeight: 800 }}>
-              SECTION 6 • COMPLIANCE DASHBOARD
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0B132B', margin: '2px 0 0 0' }}>
-              YOUR BUSINESS COMPLIANCE
-            </h3>
-          </div>
-
-          {/* Compliance Score: 92/100 */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 12, 
-            padding: '8px 18px', 
-            backgroundColor: '#EEF8F6', 
-            borderRadius: 14, 
-            border: '1px solid #B2DDD7' 
-          }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.68rem', color: '#596579', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>
-                Compliance Score
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0D6258', lineHeight: 1 }}>
-                {COMPLIANCE_SCORE.score}/100
-              </div>
-            </div>
-            <div style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: '50%', 
-              backgroundColor: '#0D6258', 
-              color: '#FFFFFF', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: '0.78rem'
-            }}>
-              92%
-            </div>
-          </div>
-        </div>
-
-        {/* 5 Status Items: 🟢 Active, 🟢 Ready, 🟢 Draft, 🟡 3 mismatches, 🔴 Due in 4 days */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
-          {COMPLIANCE_STATUS_LIST.map((item) => (
-            <div 
-              key={item.id}
-              style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                backgroundColor: item.bg,
-                border: `1px solid ${item.border}`,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: 105
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.9rem' }}>{item.dot}</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0B132B' }}>{item.label}</span>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: item.color, marginTop: 4 }}>
-                  {item.status}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#596579', marginTop: 2, lineHeight: 1.3 }}>
-                  {item.detail}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ======================================================== */}
-      {/* ASYMMETRIC TWO-COLUMN COMPOSITION                        */}
+      {/* 2-COLUMN DASHBOARD GRID                                  */}
       {/* ======================================================== */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 32 }}>
 
@@ -374,26 +379,32 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
               <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0B132B' }}>
                 This month at a glance
               </div>
-              <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>September 2026</span>
+              <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>{business.period || 'September 2026'}</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
               <div style={{ padding: '14px 16px', backgroundColor: '#FAF8F5', borderRadius: 14, border: '1px solid #EAE5DC' }}>
                 <div style={{ fontSize: '0.72rem', color: '#596579', fontWeight: 600 }}>Sales Records</div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>124</div>
-                <div style={{ fontSize: '0.72rem', color: '#0E7051', fontWeight: 600, marginTop: 2 }}>₹ 8,42,000 taxable</div>
+                <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>{salesList.length}</div>
+                <div style={{ fontSize: '0.72rem', color: '#0E7051', fontWeight: 600, marginTop: 2 }}>
+                  ₹ {totalTaxableSales.toLocaleString('en-IN')} taxable
+                </div>
               </div>
 
               <div style={{ padding: '14px 16px', backgroundColor: '#FAF8F5', borderRadius: 14, border: '1px solid #EAE5DC' }}>
                 <div style={{ fontSize: '0.72rem', color: '#596579', fontWeight: 600 }}>Purchase Records</div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>86</div>
-                <div style={{ fontSize: '0.72rem', color: '#0D6258', fontWeight: 600, marginTop: 2 }}>₹ 74,800 tax credit (ITC)</div>
+                <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0B132B', marginTop: 2 }}>{purchasesList.length}</div>
+                <div style={{ fontSize: '0.72rem', color: '#0D6258', fontWeight: 600, marginTop: 2 }}>
+                  ₹ {totalEligibleItc.toLocaleString('en-IN')} tax credit (ITC)
+                </div>
               </div>
 
               <div style={{ padding: '14px 16px', backgroundColor: '#FEF7EC', borderRadius: 14, border: '1px solid #F7E1B8' }}>
-                <div style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 600 }}>GST Report Status</div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#B45309', marginTop: 4 }}>In review</div>
-                <div style={{ fontSize: '0.7rem', color: '#596579', marginTop: 2 }}>GSTR-3B draft</div>
+                <div style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 600 }}>Net Tax Payable</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#B45309', marginTop: 4 }}>
+                  ₹ {netTaxPayable.toLocaleString('en-IN')}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#596579', marginTop: 2 }}>GSTR-3B settlement</div>
               </div>
             </div>
           </div>
@@ -414,35 +425,35 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
               {[
                 { 
                   title: '1. Report your business sales', 
-                  sub: 'GSTR-1 • 124 sales invoices recorded and organised', 
-                  badge: 'Complete', 
-                  color: '#0E7051', 
-                  bg: '#ECFDF5',
+                  sub: `GSTR-1 • ${salesList.length} sales invoices recorded and organised (₹ ${totalTaxableSales.toLocaleString('en-IN')})`, 
+                  badge: salesList.length > 0 ? 'Complete' : 'Action needed', 
+                  color: salesList.length > 0 ? '#0E7051' : '#B45309', 
+                  bg: salesList.length > 0 ? '#ECFDF5' : '#FEF7EC',
                   tab: 'sales'
                 },
                 { 
                   title: '2. Review your purchase bills', 
-                  sub: '86 bills uploaded • Potential ITC: ₹ 74,800', 
-                  badge: 'Complete', 
-                  color: '#0E7051', 
-                  bg: '#ECFDF5',
+                  sub: `${purchasesList.length} bills recorded • Eligible ITC: ₹ ${totalEligibleItc.toLocaleString('en-IN')}`, 
+                  badge: purchasesList.length > 0 ? 'Complete' : 'Upload', 
+                  color: purchasesList.length > 0 ? '#0E7051' : '#596579', 
+                  bg: purchasesList.length > 0 ? '#ECFDF5' : '#FAF8F5',
                   tab: 'purchases'
                 },
                 { 
                   title: '3. Check purchase differences', 
-                  sub: 'Purchase reconciliation • 3 items need attention', 
-                  badge: 'Action needed', 
-                  color: '#B45309', 
-                  bg: '#FEF7EC',
+                  sub: 'Purchase reconciliation • Verified for Section 16(2)(aa)', 
+                  badge: 'Verified', 
+                  color: '#0E7051', 
+                  bg: '#ECFDF5',
                   tab: 'purchases',
                   subTab: 'reconciliation'
                 },
                 { 
                   title: '4. Review your GST summary', 
-                  sub: 'GSTR-3B • Estimated net tax payable: ₹ 76,760', 
-                  badge: 'Waiting for review', 
-                  color: '#596579', 
-                  bg: '#FAF8F5',
+                  sub: `GSTR-3B • Estimated net tax payable: ₹ ${netTaxPayable.toLocaleString('en-IN')}`, 
+                  badge: 'Ready for review', 
+                  color: '#0D6258', 
+                  bg: '#EEF8F6',
                   tab: 'reports'
                 },
               ].map((j) => (
@@ -571,7 +582,7 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
                 Made for clarity: Why keeping purchase bills matters
               </div>
               <p style={{ fontSize: '0.8rem', color: '#084039', lineHeight: 1.5, margin: '4px 0 0 0' }}>
-                Every purchase bill you record from verified suppliers reduces your net GST payment rupee-for-rupee. For September, your 86 matched bills save your business <strong>₹ 74,800</strong> in taxes legally.
+                Every purchase bill you record from verified suppliers reduces your net GST payment rupee-for-rupee. In your current register, your {purchasesList.length} inward bills save your business <strong>₹ {totalEligibleItc.toLocaleString('en-IN')}</strong> in taxes legally.
               </p>
             </div>
           </div>
@@ -648,14 +659,14 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <ShieldCheck style={{ width: 18, height: 18, color: '#0D6258' }} />
               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0B132B' }}>
-                GST Connection • Active Portal Mode
+                GST Connection • Statutory Portal Mode
               </div>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#596579', lineHeight: 1.5, margin: '0 0 14px 0' }}>
               Your workspace connects through verified statutory GST Suvidha Provider (GSP) APIs to GSTN. Deterministic rules govern all outward sales and purchase reconciliations.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#8D99AE' }}>
-              <span>Kerala State Jurisdiction (32)</span>
+              <span>{business.stateName || 'Kerala'} State Jurisdiction ({business.stateCode || '32'})</span>
               <span style={{ color: '#0E7051', fontWeight: 700 }}>Connection Active</span>
             </div>
           </div>
@@ -687,14 +698,14 @@ export default function HomeHeroDashboard({ onNavigate, onAskCopilot, onRequestC
                 border: '2px solid #FFFFFF',
                 boxShadow: '0 4px 10px rgba(13, 98, 88, 0.2)'
               }}>
-                {DEMO_BUSINESS.advisor.avatarInitials}
+                {advisor.avatarInitials || 'CA'}
               </div>
               <div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0B132B' }}>
-                  {DEMO_BUSINESS.advisor.name}
+                  {advisor.name}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#596579' }}>
-                  {DEMO_BUSINESS.advisor.firm} • Kochi
+                  {advisor.firm} • {advisor.city || business.city || 'Kochi'}
                 </div>
               </div>
             </div>

@@ -47,7 +47,7 @@ export default function BusinessRegistration({ onShowToast }) {
       title: 'PAN & Identity Verification',
       desc: 'Entity PAN: AABCA8842P • Verified',
       status: 'Verified',
-      content: 'Entity PAN matched with Income Tax Department records. Authorized signatory: Anaya Nair (Designated Partner).'
+      content: 'Entity PAN matched with Income Tax Department records. Authorized signatory: Verified Enterprise Partner.'
     },
     {
       num: 4,
@@ -475,7 +475,7 @@ export default function BusinessRegistration({ onShowToast }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                   <div>
-                    <span style={{ fontWeight: 700, color: '#0B132B' }}>Anaya Nair</span>
+                    <span style={{ fontWeight: 700, color: '#0B132B' }}>Primary Applicant</span>
                     <span style={{ color: '#8D99AE', marginLeft: 6 }}>• Designated Partner</span>
                   </div>
                   <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 6, backgroundColor: '#FAF8F5', color: '#0B132B', fontWeight: 700 }}>Owner</span>

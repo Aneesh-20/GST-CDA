@@ -384,7 +384,7 @@ export const COPILOT_KNOWLEDGE = [
     id: 'q1',
     question: 'Do I need to file this month?',
     badge: 'Filing Obligation',
-    answer: `Yes, Anaya. As an active regular GST taxpayer in Kerala, you have two monthly filing milestones for **September 2026**:
+    answer: `Yes. As an active regular GST taxpayer in Kerala, you have two monthly filing milestones for **September 2026**:
     
 1. **GSTR-1 (Outward Sales)**: Due on **11 Oct 2026** — 124 invoices are already verified and ready.
 2. **GSTR-3B (Summary & Settlement)**: Due on **20 Oct 2026** — Net tax payable is **₹ 76,760**.
@@ -661,7 +661,7 @@ export const PRICING_STRATEGY_DATA = [
       'Reports & audit-ready exports',
       'AI GST assistant (unlimited questions)'
     ],
-    cta: 'Active on Anaya Workspace',
+    cta: 'Active on Your Workspace',
     highlight: true,
   },
   {
