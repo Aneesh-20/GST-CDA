@@ -73,8 +73,16 @@ export default function GSTCDAShowcaseApp() {
   // Notifications popover toggle
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  // Channel switcher state
-  const [selectedChannel, setSelectedChannel] = useState('web');
+  // Channel switcher state (Web Portal vs Mobile App vs Kiosk vs CA)
+  const [selectedChannel, setSelectedChannel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gst_cda_selected_channel');
+      if (saved && ['web', 'mobile', 'kiosk', 'ca_desk', 'voice_wa'].includes(saved)) {
+        return saved;
+      }
+    }
+    return 'web';
+  });
   const [isChannelDropdownOpen, setIsChannelDropdownOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
@@ -222,6 +230,9 @@ export default function GSTCDAShowcaseApp() {
 
   const handleChannelSelect = (channelId) => {
     setSelectedChannel(channelId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gst_cda_selected_channel', channelId);
+    }
     if (channelId === 'kiosk') {
       setActiveNav('kiosk');
       setCalendarSubSection('kiosk');
@@ -233,7 +244,7 @@ export default function GSTCDAShowcaseApp() {
     } else if (channelId === 'voice_wa') {
       setIsWhatsAppModalOpen(true);
     } else if (channelId === 'mobile') {
-      showToast('📱 Switched to Mobile companion view.');
+      showToast('📱 Switched to Mobile App mode.');
     } else {
       showToast('💻 Switched to Web Portal view.');
     }
@@ -277,230 +288,272 @@ export default function GSTCDAShowcaseApp() {
     ? businessProfile.tradeName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
     : 'GST';
 
+  const isMobileView = selectedChannel === 'mobile';
+
   // MAIN APPLICATION SHELL
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#FAF8F5', color: '#0B132B' }}>
+    <div style={{ display: 'flex', flexDirection: isMobileView ? 'column' : 'row', minHeight: '100vh', backgroundColor: isMobileView ? '#EDE9E1' : '#FAF8F5', color: '#0B132B' }}>
       
+      {/* Top Banner when in Mobile Companion Simulator Mode */}
+      {isMobileView && (
+        <div className="mobile-simulator-banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.05rem' }}>📱</span>
+            <span style={{ fontWeight: 700, fontSize: '0.84rem' }}>Mobile App Companion Mode</span>
+            <span style={{ fontSize: '0.68rem', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: 9999, fontWeight: 700 }}>
+              Active
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: '0.78rem', color: '#94A3B8' }} className="hide-on-mobile">
+              Touch-first companion for small business owners
+            </span>
+            <button
+              type="button"
+              onClick={() => handleChannelSelect('web')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: '#FFFFFF',
+                color: '#0B132B',
+                padding: '6px 14px',
+                borderRadius: 8,
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                border: 'none',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+              }}
+            >
+              <span>💻 Switch to Web Portal</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ======================================================== */}
       {/* DESKTOP SIDEBAR (ALIGNED WITH PDF MAJOR MODULES)        */}
       {/* ======================================================== */}
-      <aside className="desktop-sidebar hide-on-mobile">
-        
-        {/* Brand Monogram & Name */}
-        <div style={{ padding: '24px 20px 18px', borderBottom: '1px solid #FAF8F5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ 
-              width: 34, 
-              height: 34, 
-              borderRadius: 10, 
-              backgroundColor: '#0D6258', 
-              color: '#FFFFFF', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              fontWeight: 800, 
-              fontSize: '0.88rem',
-              boxShadow: '0 4px 12px rgba(13, 98, 88, 0.25)'
-            }}>
-              CDA
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '0.98rem', letterSpacing: '-0.02em', color: '#0B132B' }}>
-                GST CDA
-              </div>
-              <div style={{ fontSize: '0.66rem', color: '#596579' }}>
-                GST Compliance Digital Assistant
-              </div>
-            </div>
-          </div>
-
-          {/* Business Switcher Card */}
-          <div 
-            onClick={() => {
-              setEditForm(businessProfile);
-              setIsBusinessModalOpen(true);
-            }}
-            title="Click to edit company details or switch workspace"
-            style={{ 
-              marginTop: 14, 
-              padding: '8px 12px', 
-              backgroundColor: '#FAF8F5', 
-              borderRadius: 12, 
-              border: '1px solid #EAE5DC',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              transition: 'border-color 0.15s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
-          >
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>{businessProfile.tradeName || 'Configure Business'}</span>
-                <Edit2 style={{ width: 10, height: 10, color: '#8D99AE' }} />
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#596579' }}>
-                {businessProfile.city ? `${businessProfile.city}, ` : ''}{businessProfile.stateName || 'Kerala'} ({businessProfile.stateCode || '32'})
-              </div>
-            </div>
-            <span style={{ fontSize: '0.66rem', color: '#0D6258', fontWeight: 800, backgroundColor: '#EEF8F6', padding: '2px 6px', borderRadius: 4 }}>
-              Score: 92
-            </span>
-          </div>
-        </div>
-
-        {/* Navigation Items List (PDF Major Modules 1-18) */}
-        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
+      {!isMobileView && (
+        <aside className="desktop-sidebar hide-on-mobile">
           
-          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '4px 12px' }}>
-            Core Modules
-          </div>
-
-          {[
-            { id: 'home', label: 'Compliance Dashboard', icon: LayoutDashboard, pill: `${COMPLIANCE_SCORE.score}/100`, pillColor: '#0E7051' },
-            { id: 'copilot', label: 'GST Copilot', icon: Bot, pill: '5-Step', highlight: true },
-            { id: 'startup-express', label: 'Startup Express', icon: Rocket, pill: 'PAN & MCA' },
-            { id: 'sales', label: 'Invoice Data (Sales)', icon: Receipt, pill: `${salesList.length}` },
-            { id: 'purchases', label: 'GSTR-2B / Reconciliation', icon: ShoppingCart, pill: `${purchasesList.length}`, pillColor: '#B45309' },
-            { id: 'reports', label: 'GSTR-1 & GSTR-3B', icon: FileText, pill: 'Ready' },
-          ].map(item => {
-            const Icon = item.icon;
-            const isActive = activeNav === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setActiveNav(item.id);
-                  if (item.id === 'purchases') setPurchasesSubTab('reconciliation');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
-                  backgroundColor: isActive ? '#EEF8F6' : item.highlight ? '#FCFAF7' : 'transparent',
-                  color: isActive ? '#0D6258' : '#596579',
-                  fontWeight: isActive ? 700 : 500,
-                  fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.12s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : item.highlight ? '#C87D0E' : '#8D99AE' }} />
-                  <span>{item.label}</span>
-                </div>
-                {item.pill && (
-                  <span style={{ 
-                    fontSize: '0.66rem', 
-                    fontWeight: 800, 
-                    color: item.pillColor || '#0D6258', 
-                    backgroundColor: item.pillColor ? '#FEF7EC' : '#EEF8F6', 
-                    padding: '2px 6px', 
-                    borderRadius: 9999 
-                  }}>
-                    {item.pill}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '14px 12px 4px' }}>
-            Compliance & Growth Modules
-          </div>
-
-          {[
-            { id: 'calendar', label: 'Due-Date Engine', icon: CalendarIcon },
-            { id: 'vault', label: 'Document Vault', icon: FolderLock },
-            { id: 'ca-support', label: 'CA / Agent Connect', icon: Users },
-            { id: 'referral', label: 'Referral Engine', icon: Gift, pill: '₹500 Credit', pillColor: '#C87D0E' },
-            { id: 'kiosk', label: 'Kiosk Mode', icon: Store },
-            { id: 'pricing', label: 'Pricing & Roadmap', icon: CreditCard },
-          ].map(item => {
-            const Icon = item.icon;
-            const isActive = activeNav === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setActiveNav(item.id);
-                  setCalendarSubSection(item.id);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
-                  backgroundColor: isActive ? '#EEF8F6' : 'transparent',
-                  color: isActive ? '#0D6258' : '#596579',
-                  fontWeight: isActive ? 700 : 500,
-                  fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.12s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : '#8D99AE' }} />
-                  <span>{item.label}</span>
-                </div>
-                {item.pill && (
-                  <span style={{ 
-                    fontSize: '0.66rem', 
-                    fontWeight: 800, 
-                    color: item.pillColor || '#0D6258', 
-                    backgroundColor: item.pillColor ? '#FEF7EC' : '#EEF8F6', 
-                    padding: '2px 6px', 
-                    borderRadius: 9999 
-                  }}>
-                    {item.pill}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-        </nav>
-
-        {/* Bottom Profile Area */}
-        <div style={{ padding: 14, borderTop: '1px solid #EAE5DC', backgroundColor: '#FAF8F5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ 
-              width: 32, 
-              height: 32, 
-              borderRadius: '50%', 
-              backgroundColor: '#0B132B', 
-              color: '#FFFFFF', 
-              fontWeight: 800, 
-              fontSize: '0.78rem', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}>
-              {monogram}
-            </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {businessProfile.contactName || businessProfile.tradeName || 'Authorized Signatory'}
+          {/* Brand Monogram & Name */}
+          <div style={{ padding: '24px 20px 18px', borderBottom: '1px solid #FAF8F5' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ 
+                width: 34, 
+                height: 34, 
+                borderRadius: 10, 
+                backgroundColor: '#0D6258', 
+                color: '#FFFFFF', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontWeight: 800, 
+                fontSize: '0.88rem',
+                boxShadow: '0 4px 12px rgba(13, 98, 88, 0.25)'
+              }}>
+                CDA
               </div>
-              <div style={{ fontSize: '0.68rem', color: '#8D99AE' }}>
-                Authorized Signatory
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.98rem', letterSpacing: '-0.02em', color: '#0B132B' }}>
+                  GST CDA
+                </div>
+                <div style={{ fontSize: '0.66rem', color: '#596579' }}>
+                  GST Compliance Digital Assistant
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-      </aside>
+            {/* Business Switcher Card */}
+            <div 
+              onClick={() => {
+                setEditForm(businessProfile);
+                setIsBusinessModalOpen(true);
+              }}
+              title="Click to edit company details or switch workspace"
+              style={{ 
+                marginTop: 14, 
+                padding: '8px 12px', 
+                backgroundColor: '#FAF8F5', 
+                borderRadius: 12, 
+                border: '1px solid #EAE5DC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
+            >
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>{businessProfile.tradeName || 'Configure Business'}</span>
+                  <Edit2 style={{ width: 10, height: 10, color: '#8D99AE' }} />
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#596579' }}>
+                  {businessProfile.city ? `${businessProfile.city}, ` : ''}{businessProfile.stateName || 'Kerala'} ({businessProfile.stateCode || '32'})
+                </div>
+              </div>
+              <span style={{ fontSize: '0.66rem', color: '#0D6258', fontWeight: 800, backgroundColor: '#EEF8F6', padding: '2px 6px', borderRadius: 4 }}>
+                Score: 92
+              </span>
+            </div>
+          </div>
+
+          {/* Navigation Items List (PDF Major Modules 1-18) */}
+          <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
+            
+            <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '4px 12px' }}>
+              Core Modules
+            </div>
+
+            {[
+              { id: 'home', label: 'Compliance Dashboard', icon: LayoutDashboard, pill: `${COMPLIANCE_SCORE.score}/100`, pillColor: '#0E7051' },
+              { id: 'copilot', label: 'GST Copilot', icon: Bot, pill: '5-Step', highlight: true },
+              { id: 'startup-express', label: 'Startup Express', icon: Rocket, pill: 'PAN & MCA' },
+              { id: 'sales', label: 'Invoice Data (Sales)', icon: Receipt, pill: `${salesList.length}` },
+              { id: 'purchases', label: 'GSTR-2B / Reconciliation', icon: ShoppingCart, pill: `${purchasesList.length}`, pillColor: '#B45309' },
+              { id: 'reports', label: 'GSTR-1 & GSTR-3B', icon: FileText, pill: 'Ready' },
+            ].map(item => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    if (item.id === 'purchases') setPurchasesSubTab('reconciliation');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
+                    backgroundColor: isActive ? '#EEF8F6' : item.highlight ? '#FCFAF7' : 'transparent',
+                    color: isActive ? '#0D6258' : '#596579',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : item.highlight ? '#C87D0E' : '#8D99AE' }} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.pill && (
+                    <span style={{ 
+                      fontSize: '0.66rem', 
+                      fontWeight: 800, 
+                      color: item.pillColor || '#0D6258', 
+                      backgroundColor: item.pillColor ? '#FEF7EC' : '#EEF8F6', 
+                      padding: '2px 6px', 
+                      borderRadius: 9999 
+                    }}>
+                      {item.pill}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8D99AE', fontWeight: 800, padding: '14px 12px 4px' }}>
+              Compliance & Growth Modules
+            </div>
+
+            {[
+              { id: 'calendar', label: 'Due-Date Engine', icon: CalendarIcon },
+              { id: 'vault', label: 'Document Vault', icon: FolderLock },
+              { id: 'ca-support', label: 'CA / Agent Connect', icon: Users },
+              { id: 'referral', label: 'Referral Engine', icon: Gift, pill: '₹500 Credit', pillColor: '#C87D0E' },
+              { id: 'kiosk', label: 'Kiosk Mode', icon: Store },
+              { id: 'pricing', label: 'Pricing & Roadmap', icon: CreditCard },
+            ].map(item => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    setCalendarSubSection(item.id);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
+                    backgroundColor: isActive ? '#EEF8F6' : 'transparent',
+                    color: isActive ? '#0D6258' : '#596579',
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Icon style={{ width: 16, height: 16, color: isActive ? '#0D6258' : '#8D99AE' }} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.pill && (
+                    <span style={{ 
+                      fontSize: '0.66rem', 
+                      fontWeight: 800, 
+                      color: item.pillColor || '#0D6258', 
+                      backgroundColor: item.pillColor ? '#FEF7EC' : '#EEF8F6', 
+                      padding: '2px 6px', 
+                      borderRadius: 9999 
+                    }}>
+                      {item.pill}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+          </nav>
+
+          {/* Bottom Profile Area */}
+          <div style={{ padding: 14, borderTop: '1px solid #EAE5DC', backgroundColor: '#FAF8F5' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ 
+                width: 32, 
+                height: 32, 
+                borderRadius: '50%', 
+                backgroundColor: '#0B132B', 
+                color: '#FFFFFF', 
+                fontWeight: 800, 
+                fontSize: '0.78rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}>
+                {monogram}
+              </div>
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0B132B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {businessProfile.contactName || businessProfile.tradeName || 'Authorized Signatory'}
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#8D99AE' }}>
+                  Authorized Signatory
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+      )}
 
       {/* ======================================================== */}
       {/* MOBILE NAVIGATION DRAWER (OFF-CANVAS FOR MOBILE/TABLET)  */}
@@ -714,124 +767,142 @@ export default function GSTCDAShowcaseApp() {
       )}
 
       {/* ======================================================== */}
-      {/* MAIN CONTENT AREA                                        */}
+      {/* MAIN CONTENT AREA / MOBILE PHONE SIMULATOR               */}
       {/* ======================================================== */}
-      <div className="main-content-canvas">
+      <div className={isMobileView ? "mobile-simulator-canvas" : "main-content-canvas"}>
         
-        {/* TOP BAR WITH EXPERIENCE CHANNELS */}
-        <header className="top-navbar">
-          {/* Left: Hamburger (Mobile) + Breadcrumbs + Search Trigger */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            {/* Mobile Hamburger Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="hide-on-desktop"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                backgroundColor: '#FAF8F5',
-                border: '1px solid #EAE5DC',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#0B132B',
-                flexShrink: 0
-              }}
-              aria-label="Open Navigation Menu"
-            >
-              <Menu style={{ width: 18, height: 18 }} />
-            </button>
+        <div className={isMobileView ? "mobile-phone-frame" : "main-content-canvas"}>
+          
+          {/* Status Bar inside phone frame */}
+          {isMobileView && (
+            <div className="mobile-status-bar">
+              <span>9:41</span>
+              <div className="mobile-dynamic-island" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#0B132B' }}>
+                <span>5G</span>
+                <span>100%</span>
+              </div>
+            </div>
+          )}
 
-            <div style={{ fontSize: '0.84rem', color: '#596579', fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-              <span className="hide-on-mobile">
-                <span 
-                  onClick={() => {
-                    setEditForm(businessProfile);
-                    setIsBusinessModalOpen(true);
-                  }}
-                  style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
-                  title="Click to edit business profile"
-                >
-                  {businessProfile.tradeName || 'Configure Enterprise'}
+          {/* TOP BAR WITH EXPERIENCE CHANNELS */}
+          <header className="top-navbar">
+            {/* Left: Hamburger (Mobile) + Breadcrumbs + Search Trigger */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              {/* Mobile Hamburger Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className={isMobileView ? "" : "hide-on-desktop"}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  backgroundColor: '#FAF8F5',
+                  border: '1px solid #EAE5DC',
+                  display: isMobileView ? 'flex' : undefined,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#0B132B',
+                  flexShrink: 0
+                }}
+                aria-label="Open Navigation Menu"
+              >
+                <Menu style={{ width: 18, height: 18 }} />
+              </button>
+
+              <div style={{ fontSize: '0.84rem', color: '#596579', fontWeight: 600, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                {!isMobileView && (
+                  <span className="hide-on-mobile">
+                    <span 
+                      onClick={() => {
+                        setEditForm(businessProfile);
+                        setIsBusinessModalOpen(true);
+                      }}
+                      style={{ color: '#0B132B', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
+                      title="Click to edit business profile"
+                    >
+                      {businessProfile.tradeName || 'Configure Enterprise'}
+                    </span>
+                    <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
+                  </span>
+                )}
+                <span style={{ color: '#0D6258', fontWeight: 700 }}>
+                  {activeNav === 'home' ? 'Compliance Dashboard' 
+                   : activeNav === 'copilot' ? 'GST Copilot' 
+                   : activeNav === 'startup-express' ? 'Startup Express'
+                   : activeNav === 'sales' ? 'Invoice Data (Sales)' 
+                   : activeNav === 'purchases' ? 'GSTR-2B Reconciliation' 
+                   : activeNav === 'reports' ? 'GSTR-1 & GSTR-3B' 
+                   : activeNav === 'referral' ? 'Referral Engine'
+                   : activeNav === 'kiosk' ? 'Kiosk Mode'
+                   : activeNav === 'pricing' ? 'Pricing & MSME OS'
+                   : activeNav}
                 </span>
-                <span style={{ margin: '0 6px', color: '#DCD5C9' }}>/</span>
-              </span>
-              <span style={{ color: '#0D6258', fontWeight: 700 }}>
-                {activeNav === 'home' ? 'Compliance Dashboard' 
-                 : activeNav === 'copilot' ? 'GST Copilot' 
-                 : activeNav === 'startup-express' ? 'Startup Express'
-                 : activeNav === 'sales' ? 'Invoice Data (Sales)' 
-                 : activeNav === 'purchases' ? 'GSTR-2B Reconciliation' 
-                 : activeNav === 'reports' ? 'GSTR-1 & GSTR-3B' 
-                 : activeNav === 'referral' ? 'Referral Engine'
-                 : activeNav === 'kiosk' ? 'Kiosk Mode'
-                 : activeNav === 'pricing' ? 'Pricing & MSME OS'
-                 : activeNav}
-              </span>
-            </div>
+              </div>
 
-            {/* Desktop Command Search Box */}
-            <div 
-              onClick={() => setIsCommandPaletteOpen(true)}
-              className="hide-on-mobile"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 14px',
-                backgroundColor: '#FAF8F5',
-                border: '1px solid #EAE5DC',
-                borderRadius: 9999,
-                cursor: 'pointer',
-                color: '#8D99AE',
-                fontSize: '0.78rem',
-                minWidth: 190,
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
-            >
-              <Search style={{ width: 14, height: 14, color: '#0D6258' }} />
-              <span style={{ flex: 1 }}>Ask GST CDA...</span>
-              <kbd style={{ 
-                fontSize: '0.68rem', 
-                backgroundColor: '#FFFFFF', 
-                border: '1px solid #DCD5C9', 
-                padding: '1px 5px', 
-                borderRadius: 4, 
-                fontWeight: 700, 
-                color: '#596579' 
-              }}>
-                ⌘K
-              </kbd>
-            </div>
+              {/* Desktop Command Search Box */}
+              {!isMobileView && (
+                <div 
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  className="hide-on-mobile"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 14px',
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #EAE5DC',
+                    borderRadius: 9999,
+                    cursor: 'pointer',
+                    color: '#8D99AE',
+                    fontSize: '0.78rem',
+                    minWidth: 190,
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D6258'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
+                >
+                  <Search style={{ width: 14, height: 14, color: '#0D6258' }} />
+                  <span style={{ flex: 1 }}>Ask GST CDA...</span>
+                  <kbd style={{ 
+                    fontSize: '0.68rem', 
+                    backgroundColor: '#FFFFFF', 
+                    border: '1px solid #DCD5C9', 
+                    padding: '1px 5px', 
+                    borderRadius: 4, 
+                    fontWeight: 700, 
+                    color: '#596579' 
+                  }}>
+                    ⌘K
+                  </kbd>
+                </div>
+              )}
 
-            {/* Mobile Search Icon Button */}
-            <button
-              type="button"
-              onClick={() => setIsCommandPaletteOpen(true)}
-              className="hide-on-desktop"
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 8,
-                backgroundColor: '#FAF8F5',
-                border: '1px solid #EAE5DC',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#0D6258',
-                flexShrink: 0
-              }}
-              aria-label="Search or Ask GST CDA"
-            >
-              <Search style={{ width: 15, height: 15 }} />
-            </button>
-          </div>
+              {/* Mobile Search Icon Button */}
+              <button
+                type="button"
+                onClick={() => setIsCommandPaletteOpen(true)}
+                className={isMobileView ? "" : "hide-on-desktop"}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  backgroundColor: '#FAF8F5',
+                  border: '1px solid #EAE5DC',
+                  display: isMobileView ? 'flex' : undefined,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#0D6258',
+                  flexShrink: 0
+                }}
+                aria-label="Search or Ask GST CDA"
+              >
+                <Search style={{ width: 15, height: 15 }} />
+              </button>
+            </div>
 
           {/* Right: Experience Channels & Edit Workspace Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -1105,7 +1176,45 @@ export default function GSTCDAShowcaseApp() {
           )}
 
         </main>
+
+        {/* ======================================================== */}
+        {/* MOBILE BOTTOM NAVIGATION                                 */}
+        {/* ======================================================== */}
+        <div className="mobile-bottom-nav">
+          {[
+            { id: 'home', label: 'Home', icon: LayoutDashboard },
+            { id: 'sales', label: 'Sales', icon: Receipt },
+            { id: 'purchases', label: 'Purchases', icon: ShoppingCart },
+            { id: 'copilot', label: 'Copilot', icon: Bot },
+            { id: 'reports', label: 'Reports', icon: FileText },
+          ].map(m => {
+            const Icon = m.icon;
+            const isActive = activeNav === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setActiveNav(m.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                  color: isActive ? '#0D6258' : '#8D99AE',
+                  cursor: 'pointer'
+                }}
+              >
+                <Icon style={{ width: 20, height: 20 }} />
+                <span style={{ fontSize: '0.68rem', fontWeight: isActive ? 800 : 500 }}>{m.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
       </div>
+    </div>
 
       {/* ======================================================== */}
       {/* MODAL: EDIT WORKSPACE & ENTITY PROFILE                   */}
@@ -1393,42 +1502,6 @@ export default function GSTCDAShowcaseApp() {
           </div>
         </div>
       )}
-
-      {/* ======================================================== */}
-      {/* MOBILE BOTTOM NAVIGATION                                 */}
-      {/* ======================================================== */}
-      <div className="mobile-bottom-nav">
-        {[
-          { id: 'home', label: 'Home', icon: LayoutDashboard },
-          { id: 'sales', label: 'Sales', icon: Receipt },
-          { id: 'purchases', label: 'Purchases', icon: ShoppingCart },
-          { id: 'copilot', label: 'Copilot', icon: Bot },
-          { id: 'reports', label: 'Reports', icon: FileText },
-        ].map(m => {
-          const Icon = m.icon;
-          const isActive = activeNav === m.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setActiveNav(m.id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                color: isActive ? '#0D6258' : '#8D99AE',
-                cursor: 'pointer'
-              }}
-            >
-              <Icon style={{ width: 20, height: 20 }} />
-              <span style={{ fontSize: '0.68rem', fontWeight: isActive ? 800 : 500 }}>{m.label}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {/* ======================================================== */}
       {/* IN-APP TOAST                                             */}

@@ -1999,5 +1999,122 @@ body {
   }
 }
 
+/* ==========================================================================
+   MOBILE APP COMPANION SIMULATOR STYLES
+   ========================================================================== */
+.mobile-simulator-banner {
+  width: 100%;
+  background: #0B132B;
+  color: #FFFFFF;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-simulator-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 24px 20px 48px;
+  background: radial-gradient(circle at 50% 20%, #EDE9E1 0%, #D8D2C4 100%);
+  width: 100%;
+}
+
+.mobile-phone-frame {
+  width: 412px;
+  height: 844px;
+  max-height: 90vh;
+  background-color: #FAF8F5;
+  border-radius: 46px;
+  border: 11px solid #0B132B;
+  box-shadow: 0 25px 70px -10px rgba(11, 19, 43, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.mobile-status-bar {
+  height: 42px;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #0B132B;
+  border-bottom: 1px solid #FAF8F5;
+  flex-shrink: 0;
+  z-index: 35;
+}
+
+.mobile-dynamic-island {
+  width: 90px;
+  height: 22px;
+  background-color: #0B132B;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-phone-frame .mobile-bottom-nav {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  z-index: 40 !important;
+}
+
+.mobile-phone-frame .mobile-drawer-overlay {
+  position: absolute !important;
+  border-radius: 36px;
+  overflow: hidden;
+}
+
+.mobile-phone-frame .top-navbar {
+  height: 54px !important;
+  padding: 0 14px !important;
+}
+
+.mobile-phone-frame .main-body-container {
+  padding: 14px 12px 88px !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-simulator-banner {
+    display: none !important;
+  }
+  .mobile-simulator-canvas {
+    padding: 0 !important;
+    background: #FAF8F5 !important;
+    min-height: 100vh !important;
+  }
+  .mobile-phone-frame {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .mobile-status-bar {
+    display: none !important;
+  }
+}
+
+
 
 
