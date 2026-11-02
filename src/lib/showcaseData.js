@@ -727,11 +727,10 @@ export const KIOSK_SERVICES_DATA = [
 ];
 
 /**
- * PDF Section 1: Experience Channels
+ * PDF Section 1: Experience Channels (Assisted Modes)
+ * Note: Web and Mobile layouts adapt automatically via responsive design.
  */
 export const EXPERIENCE_CHANNELS = [
-  { id: 'web', name: 'Web Portal', icon: '💻', desc: 'Full-featured desktop workspace' },
-  { id: 'mobile', name: 'Mobile App', icon: '📱', desc: 'Concise touch-first companion' },
   { id: 'kiosk', name: 'Assisted Kiosk', icon: '🏢', desc: 'Physical touchpoint for small towns' },
   { id: 'voice_wa', name: 'Voice / WhatsApp', icon: '📞', desc: 'Conversational compliance updates' },
   { id: 'ca_desk', name: 'CA Dashboard', icon: '👨‍💼', desc: 'Professional review & audit console' },
