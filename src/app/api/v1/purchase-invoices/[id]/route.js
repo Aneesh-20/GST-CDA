@@ -1,4 +1,5 @@
 // GET, PATCH, DELETE /api/v1/purchase-invoices/:id
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { InvoicePatchSchema } from '../../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../../lib/security/context.js';
@@ -11,7 +12,7 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const invoice = TenantStore.getPurchaseInvoiceById(ctx.organizationId, id);
+    const invoice = await TenantStore.getPurchaseInvoiceById(ctx.organizationId, id);
     if (!invoice) {
       throw notFound('Purchase invoice not found in this organization');
     }
@@ -47,7 +48,7 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const validated = InvoicePatchSchema.parse(body);
 
-    const result = TenantStore.updatePurchaseInvoice(ctx.organizationId, id, expectedVersion, validated);
+    const result = await TenantStore.updatePurchaseInvoice(ctx.organizationId, id, expectedVersion, validated);
     if (result.notFound) {
       throw notFound('Purchase invoice not found in this organization');
     }
@@ -55,7 +56,7 @@ export async function PATCH(request, { params }) {
       throw preconditionFailed(`Invoice has been modified by another operation (current version: ${result.currentVersion})`);
     }
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'PURCHASE_INVOICE_UPDATED',
@@ -86,12 +87,12 @@ export async function DELETE(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const deleted = TenantStore.deletePurchaseInvoice(ctx.organizationId, id);
+    const deleted = await TenantStore.deletePurchaseInvoice(ctx.organizationId, id);
     if (!deleted) {
       throw notFound('Purchase invoice not found in this organization');
     }
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'PURCHASE_INVOICE_DELETED',

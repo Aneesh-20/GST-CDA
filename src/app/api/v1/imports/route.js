@@ -1,7 +1,8 @@
 // POST /api/v1/imports - Asynchronous Ingestion Job Submission
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
-import { createProblemResponse, badRequest } from '../../../../lib/security/errors.js';
+import { createProblemResponse } from '../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../lib/services/tenantStore.js';
 
 export async function POST(request) {
@@ -10,13 +11,13 @@ export async function POST(request) {
     const body = await request.json();
     const { entityType = 'SALES', filename = 'import.xlsx' } = body;
 
-    const job = TenantStore.createImportJob({
+    const job = await TenantStore.createImportJob({
       organizationId: ctx.organizationId,
       entityType,
       filename
     });
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'IMPORT_JOB_CREATED',

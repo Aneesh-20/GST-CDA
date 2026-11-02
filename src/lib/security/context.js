@@ -1,17 +1,22 @@
 // GST CDA - Security Context & BFF Policy Enforcement
+import crypto from 'node:crypto';
 import { getSessionFromRequest } from './session.js';
 import { unauthorized, forbidden } from './errors.js';
+import { validateCsrf } from './csrf.js';
 import { TenantStore, withTenantContext } from '../services/tenantStore.js';
-import { hasPermission } from '../../../packages/authz/roles.ts';
+import { hasPermission } from '../../../packages/authz/roles.js';
 
 export async function requireAuthContext(request, requiredPermission = null) {
-  const session = getSessionFromRequest(request);
+  // Enforce CSRF protection for state-mutating requests
+  validateCsrf(request);
+
+  const session = await getSessionFromRequest(request);
   if (!session || !session.userId || !session.organizationId) {
     throw unauthorized('Valid session or bearer token required to access this API');
   }
 
   // Verify membership and active status in organization
-  const membership = TenantStore.getMembership(session.organizationId, session.userId);
+  const membership = await TenantStore.getMembership(session.organizationId, session.userId);
   if (!membership || membership.status !== 'ACTIVE') {
     throw forbidden('User is not an active member of the requested organization');
   }
@@ -24,7 +29,7 @@ export async function requireAuthContext(request, requiredPermission = null) {
   }
 
   // Get active organization
-  const organization = TenantStore.getOrganizationById(session.organizationId);
+  const organization = await TenantStore.getOrganizationById(session.organizationId);
   if (!organization || !organization.is_active) {
     throw forbidden('Organization is inactive or suspended');
   }
@@ -32,9 +37,9 @@ export async function requireAuthContext(request, requiredPermission = null) {
   // Resolve default or active GST registration if available
   let activeRegistration = null;
   if (session.gstRegistrationId) {
-    activeRegistration = TenantStore.getGSTRegistrationById(session.organizationId, session.gstRegistrationId);
+    activeRegistration = await TenantStore.getGSTRegistrationById(session.organizationId, session.gstRegistrationId);
   } else {
-    const regs = TenantStore.getGSTRegistrations(session.organizationId);
+    const regs = await TenantStore.getGSTRegistrations(session.organizationId);
     if (regs.length > 0) {
       activeRegistration = regs[0];
     }
@@ -42,13 +47,15 @@ export async function requireAuthContext(request, requiredPermission = null) {
 
   let activeLegalEntity = null;
   if (activeRegistration) {
-    activeLegalEntity = TenantStore.getLegalEntityById(session.organizationId, activeRegistration.legal_entity_id);
+    activeLegalEntity = await TenantStore.getLegalEntityById(session.organizationId, activeRegistration.legal_entity_id);
   } else {
-    const entities = TenantStore.getLegalEntities(session.organizationId);
+    const entities = await TenantStore.getLegalEntities(session.organizationId);
     if (entities.length > 0) {
       activeLegalEntity = entities[0];
     }
   }
+
+  const correlationId = request.headers.get('x-correlation-id') || crypto.randomUUID();
 
   return {
     userId: session.userId,
@@ -61,6 +68,7 @@ export async function requireAuthContext(request, requiredPermission = null) {
     organization,
     activeRegistration,
     activeLegalEntity,
+    correlationId,
     
     // Scoped executor that wraps DB calls in transaction/tenant context
     runScoped(fn) {

@@ -1,4 +1,5 @@
 // GET, POST /api/v1/purchase-invoices - Purchase Books & ITC Register
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { PurchaseInvoiceCreateSchema } from '../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
@@ -14,7 +15,7 @@ export async function GET(request) {
     const status = searchParams.get('status');
     const gstRegistrationId = searchParams.get('gstRegistrationId') || ctx.gstRegistrationId;
 
-    const result = TenantStore.getPurchaseInvoices(ctx.organizationId, {
+    const result = await TenantStore.getPurchaseInvoices(ctx.organizationId, {
       gstRegistrationId,
       cursor,
       limit,
@@ -45,7 +46,7 @@ export async function POST(request) {
       throw badRequest('No active GST registration in current session');
     }
 
-    const invoice = TenantStore.createPurchaseInvoice({
+    const invoice = await TenantStore.createPurchaseInvoice({
       organizationId: ctx.organizationId,
       legalEntityId: ctx.legalEntityId,
       gstRegistrationId,
@@ -62,11 +63,11 @@ export async function POST(request) {
       sgstPaise: validated.sgstPaise,
       igstPaise: validated.igstPaise,
       totalPaise: validated.totalPaise,
-      itcEligibility: validated.itcEligibility,
+      itcEligibility: validated.itcEligibility, // defaults to 'NEEDS_REVIEW'
       status: validated.status
     });
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'PURCHASE_INVOICE_CREATED',

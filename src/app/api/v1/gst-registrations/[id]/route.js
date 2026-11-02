@@ -1,4 +1,5 @@
 // GET, PATCH /api/v1/gst-registrations/:id
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { GSTRegistrationPatchSchema } from '../../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../../lib/security/context.js';
@@ -11,7 +12,7 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const registration = TenantStore.getGSTRegistrationById(ctx.organizationId, id);
+    const registration = await TenantStore.getGSTRegistrationById(ctx.organizationId, id);
     if (!registration) {
       throw notFound('GST registration not found in this organization');
     }
@@ -31,12 +32,12 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const validated = GSTRegistrationPatchSchema.parse(body);
 
-    const updated = TenantStore.updateGSTRegistration(ctx.organizationId, id, validated);
+    const updated = await TenantStore.updateGSTRegistration(ctx.organizationId, id, validated);
     if (!updated) {
       throw notFound('GST registration not found in this organization');
     }
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'GST_REGISTRATION_UPDATED',

@@ -87,7 +87,7 @@ export const PurchaseInvoiceCreateSchema = z.object({
   sgstPaise: z.union([z.string(), z.number(), z.bigint()]).transform(v => BigInt(v)).default(0n),
   igstPaise: z.union([z.string(), z.number(), z.bigint()]).transform(v => BigInt(v)).default(0n),
   totalPaise: z.union([z.string(), z.number(), z.bigint()]).transform(v => BigInt(v)),
-  itcEligibility: z.enum(['ELIGIBLE', 'INELIGIBLE', 'BLOCKED']).default('ELIGIBLE'),
+  itcEligibility: z.enum(['NEEDS_REVIEW', 'ELIGIBLE', 'INELIGIBLE', 'BLOCKED']).default('NEEDS_REVIEW'),
   status: z.enum(['DRAFT', 'CONFIRMED', 'CANCELLED']).default('CONFIRMED')
 });
 
@@ -102,7 +102,7 @@ export const InvoicePatchSchema = z.object({
   igstPaise: z.union([z.string(), z.number(), z.bigint()]).transform(v => BigInt(v)).optional(),
   totalPaise: z.union([z.string(), z.number(), z.bigint()]).transform(v => BigInt(v)).optional(),
   status: z.enum(['DRAFT', 'CONFIRMED', 'CANCELLED']).optional(),
-  itcEligibility: z.enum(['ELIGIBLE', 'INELIGIBLE', 'BLOCKED']).optional()
+  itcEligibility: z.enum(['NEEDS_REVIEW', 'ELIGIBLE', 'INELIGIBLE', 'BLOCKED']).optional()
 });
 
 // 4. Reconciliation & Exceptions
@@ -137,3 +137,4 @@ export const FilingSubmitSchema = z.object({
   authMethod: z.enum(['OTP', 'EVC', 'DSC']).default('OTP'),
   authCode: z.string().min(4, 'Auth verification code is required')
 });
+

@@ -1,4 +1,5 @@
 // GET, POST /api/v1/gst-registrations
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { GSTRegistrationCreateSchema } from '../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
@@ -11,7 +12,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const legalEntityId = searchParams.get('legalEntityId');
 
-    const registrations = TenantStore.getGSTRegistrations(ctx.organizationId, legalEntityId);
+    const registrations = await TenantStore.getGSTRegistrations(ctx.organizationId, legalEntityId);
     return NextResponse.json({ success: true, registrations });
   } catch (error) {
     return createProblemResponse(error, request);
@@ -25,12 +26,12 @@ export async function POST(request) {
     const validated = GSTRegistrationCreateSchema.parse(body);
 
     // Verify legalEntity belongs to organization
-    const entity = TenantStore.getLegalEntityById(ctx.organizationId, validated.legalEntityId);
+    const entity = await TenantStore.getLegalEntityById(ctx.organizationId, validated.legalEntityId);
     if (!entity) {
       throw forbidden('Legal entity does not belong to this organization');
     }
 
-    const registration = TenantStore.createGSTRegistration({
+    const registration = await TenantStore.createGSTRegistration({
       organizationId: ctx.organizationId,
       legalEntityId: validated.legalEntityId,
       gstin: validated.gstin,
@@ -39,7 +40,7 @@ export async function POST(request) {
       registrationType: validated.registrationType
     });
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'GST_REGISTRATION_CREATED',

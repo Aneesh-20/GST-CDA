@@ -1,4 +1,4 @@
-// GST CDA - Multi-Tenant Relational Repository with Tenant Scoping & RLS Context
+// GST CDA - Multi-Tenant Relational Repository with Session Persistence & RLS Support
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,11 +18,11 @@ export function getTenantDb() {
   }
 
   dbInstance = new DatabaseSync(DB_PATH);
-  initMultiTenantSchema(dbInstance);
+  initSchema(dbInstance);
   return dbInstance;
 }
 
-function initMultiTenantSchema(db) {
+function initSchema(db) {
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA busy_timeout = 5000;
@@ -58,6 +58,17 @@ function initMultiTenantSchema(db) {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       UNIQUE (organization_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      role TEXT NOT NULL,
+      revoked INTEGER NOT NULL DEFAULT 0,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS invitations (
@@ -154,7 +165,7 @@ function initMultiTenantSchema(db) {
       sgst_paise TEXT NOT NULL DEFAULT '0',
       igst_paise TEXT NOT NULL DEFAULT '0',
       total_paise TEXT NOT NULL,
-      itc_eligibility TEXT NOT NULL DEFAULT 'ELIGIBLE',
+      itc_eligibility TEXT NOT NULL DEFAULT 'NEEDS_REVIEW',
       status TEXT NOT NULL DEFAULT 'CONFIRMED',
       version INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
@@ -198,7 +209,8 @@ function initMultiTenantSchema(db) {
       period_key TEXT NOT NULL,
       return_type TEXT NOT NULL,
       idempotency_key TEXT UNIQUE NOT NULL,
-      status TEXT NOT NULL DEFAULT 'PREPARED',
+      provider_tracking_id TEXT,
+      status TEXT NOT NULL DEFAULT 'SUBMISSION_PENDING',
       arn TEXT,
       payload_hash TEXT NOT NULL,
       response_hash TEXT,
@@ -236,13 +248,11 @@ function initMultiTenantSchema(db) {
 
     CREATE INDEX IF NOT EXISTS idx_v2_sales_org ON sales_invoices(organization_id, gst_registration_id);
     CREATE INDEX IF NOT EXISTS idx_v2_purchases_org ON purchase_invoices(organization_id, gst_registration_id);
+    CREATE INDEX IF NOT EXISTS idx_v2_sessions_token ON auth_sessions(token_hash);
     CREATE INDEX IF NOT EXISTS idx_v2_audit_org ON audit_events(organization_id, created_at DESC);
   `);
 }
 
-// -------------------------------------------------------------
-// Transaction / RLS Emulation Context
-// -------------------------------------------------------------
 let activeOrganizationContext = null;
 
 export function withTenantContext(organizationId, callback) {
@@ -258,17 +268,9 @@ export function withTenantContext(organizationId, callback) {
   }
 }
 
-export function getActiveTenantScope() {
-  return activeOrganizationContext;
-}
-
-// -------------------------------------------------------------
-// Repository Operations Scoped by Organization ID
-// -------------------------------------------------------------
-
 export const TenantStore = {
   // Organizations
-  createOrganization({ name, slug, plan = 'STANDARD' }) {
+  async createOrganization({ name, slug, plan = 'STANDARD' }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -279,20 +281,20 @@ export const TenantStore = {
     return { id, name, slug, plan, isActive: true, createdAt: now, updatedAt: now };
   },
 
-  getOrganizationById(id) {
+  async getOrganizationById(id) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM organizations WHERE id = ?`).get(id);
     return row || null;
   },
 
-  getOrganizationBySlug(slug) {
+  async getOrganizationBySlug(slug) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM organizations WHERE slug = ?`).get(slug);
     return row || null;
   },
 
   // Users & Memberships
-  createUser({ email, password, fullName, phone = null }) {
+  async createUser({ email, password, fullName, phone = null }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const passwordHash = hashPassword(password);
@@ -304,19 +306,19 @@ export const TenantStore = {
     return { id, email: email.toLowerCase(), fullName, phone, isActive: true, createdAt: now };
   },
 
-  getUserByEmail(email) {
+  async getUserByEmail(email) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email.toLowerCase());
     return row || null;
   },
 
-  getUserById(id) {
+  async getUserById(id) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(id);
     return row || null;
   },
 
-  createMembership({ organizationId, userId, role = 'OWNER', status = 'ACTIVE' }) {
+  async createMembership({ organizationId, userId, role = 'OWNER', status = 'ACTIVE' }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -327,7 +329,7 @@ export const TenantStore = {
     return { id, organizationId, userId, role, status, createdAt: now };
   },
 
-  getUserMemberships(userId) {
+  async getUserMemberships(userId) {
     const db = getTenantDb();
     return db.prepare(`
       SELECT m.*, o.name as organization_name, o.slug as organization_slug, o.plan as organization_plan
@@ -337,7 +339,7 @@ export const TenantStore = {
     `).all(userId);
   },
 
-  getMembership(organizationId, userId) {
+  async getMembership(organizationId, userId) {
     const db = getTenantDb();
     return db.prepare(`
       SELECT * FROM organization_memberships
@@ -345,8 +347,43 @@ export const TenantStore = {
     `).get(organizationId, userId);
   },
 
+  // Persistent Auth Sessions
+  async saveSessionRecord({ id, userId, organizationId, tokenHash, role, expiresAt }) {
+    const db = getTenantDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO auth_sessions (id, user_id, organization_id, token_hash, role, revoked, expires_at, created_at)
+      VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+    `).run(id, userId, organizationId, tokenHash, role, expiresAt, now);
+  },
+
+  async getSessionRecordByTokenHash(tokenHash) {
+    const db = getTenantDb();
+    return db.prepare(`
+      SELECT s.*, u.email, u.full_name as name
+      FROM auth_sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.token_hash = ? AND s.revoked = 0
+    `).get(tokenHash);
+  },
+
+  async getSessionRecordById(id) {
+    const db = getTenantDb();
+    return db.prepare(`
+      SELECT s.*, u.email, u.full_name as name
+      FROM auth_sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.id = ? AND s.revoked = 0
+    `).get(id);
+  },
+
+  async revokeSession(id) {
+    const db = getTenantDb();
+    db.prepare(`UPDATE auth_sessions SET revoked = 1 WHERE id = ?`).run(id);
+  },
+
   // Invitations
-  createInvitation({ organizationId, email, role, invitedBy }) {
+  async createInvitation({ organizationId, email, role, invitedBy }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const token = crypto.randomBytes(32).toString('hex');
@@ -363,7 +400,7 @@ export const TenantStore = {
   },
 
   // Legal Entities
-  createLegalEntity({ organizationId, legalName, tradeName, pan, entityType, isDemo = false }) {
+  async createLegalEntity({ organizationId, legalName, tradeName, pan, entityType, isDemo = false }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -374,14 +411,14 @@ export const TenantStore = {
     return { id, organizationId, legalName, tradeName: tradeName || legalName, pan: pan.toUpperCase(), entityType, isDemo, createdAt: now };
   },
 
-  getLegalEntities(organizationId) {
+  async getLegalEntities(organizationId) {
     const db = getTenantDb();
     return db.prepare(`
       SELECT * FROM legal_entities WHERE organization_id = ? ORDER BY created_at ASC
     `).all(organizationId);
   },
 
-  getLegalEntityById(organizationId, id) {
+  async getLegalEntityById(organizationId, id) {
     const db = getTenantDb();
     return db.prepare(`
       SELECT * FROM legal_entities WHERE organization_id = ? AND id = ?
@@ -389,7 +426,7 @@ export const TenantStore = {
   },
 
   // GST Registrations
-  createGSTRegistration({ organizationId, legalEntityId, gstin, stateCode, stateName, registrationType = 'REGULAR' }) {
+  async createGSTRegistration({ organizationId, legalEntityId, gstin, stateCode, stateName, registrationType = 'REGULAR' }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -400,7 +437,7 @@ export const TenantStore = {
     return { id, organizationId, legalEntityId, gstin: gstin.toUpperCase(), stateCode, stateName, registrationType, status: 'ACTIVE', createdAt: now };
   },
 
-  getGSTRegistrations(organizationId, legalEntityId = null) {
+  async getGSTRegistrations(organizationId, legalEntityId = null) {
     const db = getTenantDb();
     if (legalEntityId) {
       return db.prepare(`
@@ -412,14 +449,14 @@ export const TenantStore = {
     `).all(organizationId);
   },
 
-  getGSTRegistrationById(organizationId, id) {
+  async getGSTRegistrationById(organizationId, id) {
     const db = getTenantDb();
     return db.prepare(`
       SELECT * FROM gst_registrations WHERE organization_id = ? AND id = ?
     `).get(organizationId, id);
   },
 
-  updateGSTRegistration(organizationId, id, updates) {
+  async updateGSTRegistration(organizationId, id, updates) {
     const db = getTenantDb();
     const existing = db.prepare(`SELECT * FROM gst_registrations WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     if (!existing) return null;
@@ -439,7 +476,7 @@ export const TenantStore = {
   },
 
   // Sales Invoices
-  createSalesInvoice({
+  async createSalesInvoice({
     organizationId,
     legalEntityId,
     gstRegistrationId,
@@ -479,7 +516,7 @@ export const TenantStore = {
     return this.getSalesInvoiceById(organizationId, id);
   },
 
-  getSalesInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
+  async getSalesInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
     const db = getTenantDb();
     let query = `SELECT * FROM sales_invoices WHERE organization_id = ?`;
     const params = [organizationId];
@@ -512,13 +549,13 @@ export const TenantStore = {
     };
   },
 
-  getSalesInvoiceById(organizationId, id) {
+  async getSalesInvoiceById(organizationId, id) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM sales_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     return row ? mapInvoiceRow(row) : null;
   },
 
-  updateSalesInvoice(organizationId, id, expectedVersion, updates) {
+  async updateSalesInvoice(organizationId, id, expectedVersion, updates) {
     const db = getTenantDb();
     const existing = db.prepare(`SELECT * FROM sales_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     if (!existing) return { notFound: true };
@@ -551,17 +588,17 @@ export const TenantStore = {
       organizationId, id
     );
 
-    return { invoice: this.getSalesInvoiceById(organizationId, id) };
+    return { invoice: await this.getSalesInvoiceById(organizationId, id) };
   },
 
-  deleteSalesInvoice(organizationId, id) {
+  async deleteSalesInvoice(organizationId, id) {
     const db = getTenantDb();
     const res = db.prepare(`DELETE FROM sales_invoices WHERE organization_id = ? AND id = ?`).run(organizationId, id);
     return res.changes > 0;
   },
 
-  // Purchase Invoices
-  createPurchaseInvoice({
+  // Purchase Invoices (Default ITC: NEEDS_REVIEW)
+  async createPurchaseInvoice({
     organizationId,
     legalEntityId,
     gstRegistrationId,
@@ -578,7 +615,7 @@ export const TenantStore = {
     sgstPaise = 0n,
     igstPaise = 0n,
     totalPaise,
-    itcEligibility = 'ELIGIBLE',
+    itcEligibility = 'NEEDS_REVIEW',
     status = 'CONFIRMED'
   }) {
     const db = getTenantDb();
@@ -602,7 +639,7 @@ export const TenantStore = {
     return this.getPurchaseInvoiceById(organizationId, id);
   },
 
-  getPurchaseInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
+  async getPurchaseInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
     const db = getTenantDb();
     let query = `SELECT * FROM purchase_invoices WHERE organization_id = ?`;
     const params = [organizationId];
@@ -635,13 +672,13 @@ export const TenantStore = {
     };
   },
 
-  getPurchaseInvoiceById(organizationId, id) {
+  async getPurchaseInvoiceById(organizationId, id) {
     const db = getTenantDb();
     const row = db.prepare(`SELECT * FROM purchase_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     return row ? mapInvoiceRow(row) : null;
   },
 
-  updatePurchaseInvoice(organizationId, id, expectedVersion, updates) {
+  async updatePurchaseInvoice(organizationId, id, expectedVersion, updates) {
     const db = getTenantDb();
     const existing = db.prepare(`SELECT * FROM purchase_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     if (!existing) return { notFound: true };
@@ -675,44 +712,36 @@ export const TenantStore = {
       organizationId, id
     );
 
-    return { invoice: this.getPurchaseInvoiceById(organizationId, id) };
+    return { invoice: await this.getPurchaseInvoiceById(organizationId, id) };
   },
 
-  deletePurchaseInvoice(organizationId, id) {
+  async deletePurchaseInvoice(organizationId, id) {
     const db = getTenantDb();
     const res = db.prepare(`DELETE FROM purchase_invoices WHERE organization_id = ? AND id = ?`).run(organizationId, id);
     return res.changes > 0;
   },
 
   // Reconciliation Runs & Exceptions
-  createReconciliationRun({ organizationId, gstRegistrationId, periodKey, ruleVersion = 'v1.0.0' }) {
+  async createReconciliationRun({ organizationId, gstRegistrationId, periodKey, ruleVersion = 'v1.0.0' }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Query purchases for this period
     const purchases = db.prepare(`
       SELECT * FROM purchase_invoices 
       WHERE organization_id = ? AND gst_registration_id = ?
     `).all(organizationId, gstRegistrationId);
 
-    // Compute deterministic match buckets
     const matchedCount = purchases.filter(p => p.party_gstin && p.status === 'CONFIRMED').length;
     const mismatchedCount = purchases.filter(p => !p.party_gstin).length;
-    const missingIn2BCount = 0;
-    const missingInBooksCount = 0;
 
     db.prepare(`
       INSERT INTO reconciliation_runs (
         id, organization_id, gst_registration_id, period_key, rule_version,
         matched_count, mismatched_count, missing_in_2b_count, missing_in_books_count, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED', ?)
-    `).run(
-      id, organizationId, gstRegistrationId, periodKey, ruleVersion,
-      matchedCount, mismatchedCount, missingIn2BCount, missingInBooksCount, now
-    );
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 'COMPLETED', ?)
+    `).run(id, organizationId, gstRegistrationId, periodKey, ruleVersion, matchedCount, mismatchedCount, now);
 
-    // Insert sample exception cases if mismatched
     if (mismatchedCount > 0) {
       const mismatched = purchases.find(p => !p.party_gstin);
       if (mismatched) {
@@ -729,7 +758,7 @@ export const TenantStore = {
     return db.prepare(`SELECT * FROM reconciliation_runs WHERE organization_id = ? AND id = ?`).get(organizationId, id);
   },
 
-  getExceptionCases(organizationId, status = null) {
+  async getExceptionCases(organizationId, status = null) {
     const db = getTenantDb();
     if (status) {
       return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND status = ? ORDER BY created_at DESC`).all(organizationId, status);
@@ -737,7 +766,7 @@ export const TenantStore = {
     return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? ORDER BY created_at DESC`).all(organizationId);
   },
 
-  updateExceptionCase(organizationId, id, { action, notes }) {
+  async updateExceptionCase(organizationId, id, { action, notes }) {
     const db = getTenantDb();
     const existing = db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND id = ?`).get(organizationId, id);
     if (!existing) return null;
@@ -754,8 +783,8 @@ export const TenantStore = {
     return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND id = ?`).get(organizationId, id);
   },
 
-  // Filings
-  createFilingAttempt({ organizationId, gstRegistrationId, periodKey, returnType, idempotencyKey, authorizedBy }) {
+  // Statutory Filing State Machine (No Fake ARNs)
+  async createFilingAttempt({ organizationId, gstRegistrationId, periodKey, returnType, idempotencyKey, providerTrackingId, status = 'SUBMITTED', arn = null, authorizedBy }) {
     const db = getTenantDb();
     
     // Idempotency check
@@ -765,32 +794,31 @@ export const TenantStore = {
     }
 
     const id = crypto.randomUUID();
-    const arn = `AA${new Date().getFullYear()}${Math.floor(100000000 + Math.random() * 900000000)}Z`;
     const payloadHash = crypto.createHash('sha256').update(`${organizationId}:${gstRegistrationId}:${periodKey}:${returnType}`).digest('hex');
-    const responseHash = crypto.createHash('sha256').update(`${arn}:${payloadHash}`).digest('hex');
+    const responseHash = crypto.createHash('sha256').update(`${providerTrackingId}:${payloadHash}`).digest('hex');
     const now = new Date().toISOString();
 
     db.prepare(`
       INSERT INTO filing_attempts (
         id, organization_id, gst_registration_id, period_key, return_type,
-        idempotency_key, status, arn, payload_hash, response_hash, authorized_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'FILED', ?, ?, ?, ?, ?, ?)
+        idempotency_key, provider_tracking_id, status, arn, payload_hash, response_hash, authorized_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id, organizationId, gstRegistrationId, periodKey, returnType,
-      idempotencyKey, arn, payloadHash, responseHash, authorizedBy, now, now
+      idempotencyKey, providerTrackingId, status, arn, payloadHash, responseHash, authorizedBy, now, now
     );
 
     const filing = db.prepare(`SELECT * FROM filing_attempts WHERE id = ?`).get(id);
     return { isDuplicate: false, filing };
   },
 
-  getFilingAttemptById(organizationId, id) {
+  async getFilingAttemptById(organizationId, id) {
     const db = getTenantDb();
     return db.prepare(`SELECT * FROM filing_attempts WHERE organization_id = ? AND id = ?`).get(organizationId, id);
   },
 
   // Imports
-  createImportJob({ organizationId, entityType, filename }) {
+  async createImportJob({ organizationId, entityType, filename }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -803,18 +831,17 @@ export const TenantStore = {
     return db.prepare(`SELECT * FROM import_jobs WHERE id = ?`).get(id);
   },
 
-  getImportJobById(organizationId, id) {
+  async getImportJobById(organizationId, id) {
     const db = getTenantDb();
     return db.prepare(`SELECT * FROM import_jobs WHERE organization_id = ? AND id = ?`).get(organizationId, id);
   },
 
   // Audit Trail (Chained Tamper-Evident SHA-256)
-  appendAuditEvent({ organizationId, actorId, action, entityType, entityId, correlationId, metadata = {} }) {
+  async appendAuditEvent({ organizationId, actorId, action, entityType, entityId, correlationId, metadata = {} }) {
     const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Fetch previous event hash for this organization
     const lastEvent = db.prepare(`
       SELECT event_hash FROM audit_events 
       WHERE organization_id = ? 
@@ -841,7 +868,7 @@ export const TenantStore = {
     return { id, organizationId, actorId, action, entityType, entityId, prevHash, eventHash, correlationId, createdAt: now };
   },
 
-  getAuditEvents(organizationId, limit = 50) {
+  async getAuditEvents(organizationId, limit = 50) {
     const db = getTenantDb();
     const rows = db.prepare(`
       SELECT * FROM audit_events WHERE organization_id = ? ORDER BY created_at DESC LIMIT ?

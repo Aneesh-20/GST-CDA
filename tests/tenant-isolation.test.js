@@ -3,9 +3,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { TenantStore } from '../src/lib/services/tenantStore.js';
-import { createSession, verifyToken } from '../src/lib/security/session.js';
+import { createSession, verifyToken, getSession } from '../src/lib/security/session.js';
 import { hashPassword, verifyPassword } from '../src/lib/security/password.js';
-import { hasPermission } from '../packages/authz/roles.ts';
+import { hasPermission } from '../packages/authz/roles.js';
 
 function generateTestPAN() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -31,46 +31,60 @@ test('1. Security: Password Hashing & Verification with PBKDF2', () => {
   assert.strictEqual(verifyPassword('', hash), false, 'Empty password must fail');
 });
 
-test('2. Security: Session Token Signing & Constant-Time Verification', () => {
-  const session = createSession({
-    userId: crypto.randomUUID(),
-    organizationId: crypto.randomUUID(),
-    legalEntityId: crypto.randomUUID(),
-    gstRegistrationId: crypto.randomUUID(),
+test('2. Security: Persistent Hashed Session Token Signing & Revocation', async () => {
+  const org = await TenantStore.createOrganization({ name: 'Session Org', slug: `sess-${Date.now()}` });
+  const user = await TenantStore.createUser({ email: `sess-${Date.now()}@test.in`, password: 'Password123!', fullName: 'Session User' });
+  await TenantStore.createMembership({ organizationId: org.id, userId: user.id, role: 'OWNER' });
+
+  const session = await createSession({
+    userId: user.id,
+    organizationId: org.id,
+    legalEntityId: null,
+    gstRegistrationId: null,
     role: 'OWNER',
-    email: 'owner@test.in',
-    name: 'Test Owner'
+    email: user.email,
+    name: user.fullName
   });
 
   assert.ok(session.token, 'Must return signed token');
   const verified = verifyToken(session.token);
-  assert.ok(verified, 'Token must verify');
-  assert.strictEqual(verified.email, 'owner@test.in');
+  assert.ok(verified, 'Token must verify cryptographically');
+  assert.strictEqual(verified.email, user.email);
 
-  // Tamper with token
+  // Database session check
+  const activeSession = await getSession(session.token);
+  assert.ok(activeSession, 'Must find active unrevoked session in database');
+  assert.strictEqual(activeSession.userId, user.id);
+
+  // Revoke session
+  await TenantStore.revokeSession(session.sessionId);
+  const revokedSession = await getSession(session.token);
+  assert.strictEqual(revokedSession, null, 'Revoked session must be rejected');
+
+  // Tamper with token signature
   const [data] = session.token.split('.');
   const tampered = `${data}.tamperedSignature`;
   assert.strictEqual(verifyToken(tampered), null, 'Tampered token must be rejected');
 });
 
-test('3. Tenancy & Isolation: Org A cannot read or mutate Org B data', () => {
+test('3. Tenancy & Isolation: Org A cannot read or mutate Org B data', async () => {
   const nonce = crypto.randomUUID().substring(0, 8);
   // Setup Org A
-  const orgA = TenantStore.createOrganization({ name: `Alpha Traders ${nonce}`, slug: `alpha-${nonce}` });
-  const userA = TenantStore.createUser({ email: `alpha-${nonce}@test.in`, password: 'Password123!', fullName: 'Alpha Owner' });
-  TenantStore.createMembership({ organizationId: orgA.id, userId: userA.id, role: 'OWNER' });
-  const entA = TenantStore.createLegalEntity({ organizationId: orgA.id, legalName: 'Alpha Pvt Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
-  const regA = TenantStore.createGSTRegistration({ organizationId: orgA.id, legalEntityId: entA.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
+  const orgA = await TenantStore.createOrganization({ name: `Alpha Traders ${nonce}`, slug: `alpha-${nonce}` });
+  const userA = await TenantStore.createUser({ email: `alpha-${nonce}@test.in`, password: 'Password123!', fullName: 'Alpha Owner' });
+  await TenantStore.createMembership({ organizationId: orgA.id, userId: userA.id, role: 'OWNER' });
+  const entA = await TenantStore.createLegalEntity({ organizationId: orgA.id, legalName: 'Alpha Pvt Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
+  const regA = await TenantStore.createGSTRegistration({ organizationId: orgA.id, legalEntityId: entA.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
 
   // Setup Org B
-  const orgB = TenantStore.createOrganization({ name: `Beta Logistics ${nonce}`, slug: `beta-${nonce}` });
-  const userB = TenantStore.createUser({ email: `beta-${nonce}@test.in`, password: 'Password123!', fullName: 'Beta Owner' });
-  TenantStore.createMembership({ organizationId: orgB.id, userId: userB.id, role: 'OWNER' });
-  const entB = TenantStore.createLegalEntity({ organizationId: orgB.id, legalName: 'Beta Logistics LLP', pan: generateTestPAN(), entityType: 'LLP' });
-  const regB = TenantStore.createGSTRegistration({ organizationId: orgB.id, legalEntityId: entB.id, gstin: generateTestGSTIN('29'), stateCode: '29', stateName: 'Karnataka' });
+  const orgB = await TenantStore.createOrganization({ name: `Beta Logistics ${nonce}`, slug: `beta-${nonce}` });
+  const userB = await TenantStore.createUser({ email: `beta-${nonce}@test.in`, password: 'Password123!', fullName: 'Beta Owner' });
+  await TenantStore.createMembership({ organizationId: orgB.id, userId: userB.id, role: 'OWNER' });
+  const entB = await TenantStore.createLegalEntity({ organizationId: orgB.id, legalName: 'Beta Logistics LLP', pan: generateTestPAN(), entityType: 'LLP' });
+  const regB = await TenantStore.createGSTRegistration({ organizationId: orgB.id, legalEntityId: entB.id, gstin: generateTestGSTIN('29'), stateCode: '29', stateName: 'Karnataka' });
 
   // Create an invoice in Org A
-  const invA = TenantStore.createSalesInvoice({
+  const invA = await TenantStore.createSalesInvoice({
     organizationId: orgA.id,
     legalEntityId: entA.id,
     gstRegistrationId: regA.id,
@@ -89,23 +103,23 @@ test('3. Tenancy & Isolation: Org A cannot read or mutate Org B data', () => {
   });
 
   // Test 1: Org B queries Org A's invoice by ID
-  const breachAttempt = TenantStore.getSalesInvoiceById(orgB.id, invA.id);
+  const breachAttempt = await TenantStore.getSalesInvoiceById(orgB.id, invA.id);
   assert.strictEqual(breachAttempt, null, 'Org B must NOT be able to read Org A invoice by ID');
 
   // Test 2: Org B lists invoices
-  const orgBList = TenantStore.getSalesInvoices(orgB.id);
+  const orgBList = await TenantStore.getSalesInvoices(orgB.id);
   assert.strictEqual(orgBList.items.length, 0, 'Org B must see 0 invoices');
 
   // Test 3: Org B attempts to update Org A's invoice
-  const updateBreach = TenantStore.updateSalesInvoice(orgB.id, invA.id, 1, { partyName: 'Malicious Hijack' });
+  const updateBreach = await TenantStore.updateSalesInvoice(orgB.id, invA.id, 1, { partyName: 'Malicious Hijack' });
   assert.strictEqual(updateBreach.notFound, true, 'Org B cannot mutate Org A invoice');
 
   // Verify Org A invoice was not altered
-  const verifyOrgA = TenantStore.getSalesInvoiceById(orgA.id, invA.id);
+  const verifyOrgA = await TenantStore.getSalesInvoiceById(orgA.id, invA.id);
   assert.strictEqual(verifyOrgA.partyName, 'Chennai Retail', 'Org A invoice data must remain unchanged');
 
   // Test 4: Org B attempts to delete Org A's invoice
-  const deleteBreach = TenantStore.deleteSalesInvoice(orgB.id, invA.id);
+  const deleteBreach = await TenantStore.deleteSalesInvoice(orgB.id, invA.id);
   assert.strictEqual(deleteBreach, false, 'Org B cannot delete Org A invoice');
 });
 
@@ -125,13 +139,13 @@ test('4. RBAC: Role Permissions Enforcement', () => {
   assert.strictEqual(hasPermission('VIEWER', 'canViewReports'), true);
 });
 
-test('5. Optimistic Concurrency Control (If-Match)', () => {
+test('5. Optimistic Concurrency Control (If-Match)', async () => {
   const nonce = crypto.randomUUID().substring(0, 8);
-  const org = TenantStore.createOrganization({ name: 'Concurrency Org', slug: `conc-${nonce}` });
-  const ent = TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Conc Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
-  const reg = TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
+  const org = await TenantStore.createOrganization({ name: 'Concurrency Org', slug: `conc-${nonce}` });
+  const ent = await TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Conc Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
+  const reg = await TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
 
-  const inv = TenantStore.createSalesInvoice({
+  const inv = await TenantStore.createSalesInvoice({
     organizationId: org.id,
     legalEntityId: ent.id,
     gstRegistrationId: reg.id,
@@ -148,57 +162,66 @@ test('5. Optimistic Concurrency Control (If-Match)', () => {
   assert.strictEqual(inv.version, 1, 'Initial version must be 1');
 
   // Update with correct version
-  const update1 = TenantStore.updateSalesInvoice(org.id, inv.id, 1, { partyName: 'Party Updated' });
+  const update1 = await TenantStore.updateSalesInvoice(org.id, inv.id, 1, { partyName: 'Party Updated' });
   assert.strictEqual(update1.invoice.version, 2, 'Version must increment to 2');
 
   // Update with stale version (expected 1, but is now 2)
-  const staleUpdate = TenantStore.updateSalesInvoice(org.id, inv.id, 1, { partyName: 'Stale Attempt' });
+  const staleUpdate = await TenantStore.updateSalesInvoice(org.id, inv.id, 1, { partyName: 'Stale Attempt' });
   assert.strictEqual(staleUpdate.conflict, true, 'Stale update must trigger conflict');
   assert.strictEqual(staleUpdate.currentVersion, 2);
 });
 
-test('6. Idempotency: Duplicate Filing Submissions', () => {
+test('6. Filing State Machine: Idempotency & No Fake ARN Synthesis', async () => {
   const nonce = crypto.randomUUID().substring(0, 8);
-  const org = TenantStore.createOrganization({ name: 'Filing Org', slug: `filing-${nonce}` });
-  const user = TenantStore.createUser({ email: `filing-${nonce}@test.in`, password: 'Password123!', fullName: 'Filer' });
-  const ent = TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Filing Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
-  const reg = TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
+  const org = await TenantStore.createOrganization({ name: 'Filing Org', slug: `filing-${nonce}` });
+  const user = await TenantStore.createUser({ email: `filing-${nonce}@test.in`, password: 'Password123!', fullName: 'Filer' });
+  const ent = await TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Filing Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
+  const reg = await TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
 
   const idempotencyKey = crypto.randomUUID();
+  const providerTrackingId = `mock_submission_${crypto.randomUUID()}`;
 
-  // First submission
-  const first = TenantStore.createFilingAttempt({
+  // First submission: state must be SUBMITTED, arn must be null (no invented ARN)
+  const first = await TenantStore.createFilingAttempt({
     organizationId: org.id,
     gstRegistrationId: reg.id,
     periodKey: '2026-09',
     returnType: 'GSTR-3B',
     idempotencyKey,
+    providerTrackingId,
+    status: 'SUBMITTED',
+    arn: null,
     authorizedBy: user.id
   });
 
   assert.strictEqual(first.isDuplicate, false, 'First submission must not be duplicate');
-  assert.ok(first.filing.arn, 'ARN must be generated');
+  assert.strictEqual(first.filing.arn, null, 'Must NOT synthesize a fake ARN locally');
+  assert.strictEqual(first.filing.status, 'SUBMITTED');
+  assert.strictEqual(first.filing.provider_tracking_id, providerTrackingId);
 
   // Second submission with identical idempotency key
-  const second = TenantStore.createFilingAttempt({
+  const second = await TenantStore.createFilingAttempt({
     organizationId: org.id,
     gstRegistrationId: reg.id,
     periodKey: '2026-09',
     returnType: 'GSTR-3B',
     idempotencyKey,
+    providerTrackingId: `mock_submission_${crypto.randomUUID()}`,
+    status: 'SUBMITTED',
+    arn: null,
     authorizedBy: user.id
   });
 
   assert.strictEqual(second.isDuplicate, true, 'Replayed submission must be flagged as duplicate');
-  assert.strictEqual(second.filing.arn, first.filing.arn, 'Must return identical filing record');
+  assert.strictEqual(second.filing.provider_tracking_id, first.filing.provider_tracking_id, 'Must return identical record');
 });
 
-test('7. Audit Trail: Tamper-Evident SHA-256 Hash Chaining', () => {
+test('7. Audit Trail: Tamper-Evident SHA-256 Hash Chaining', async () => {
   const nonce = crypto.randomUUID().substring(0, 8);
-  const org = TenantStore.createOrganization({ name: 'Audit Org', slug: `audit-${nonce}` });
-  const user = TenantStore.createUser({ email: `audit-${nonce}@test.in`, password: 'Password123!', fullName: 'Auditor' });
+  const org = await TenantStore.createOrganization({ name: 'Audit Org', slug: `audit-${nonce}` });
+  const user = await TenantStore.createUser({ email: `audit-${nonce}@test.in`, password: 'Password123!', fullName: 'Auditor' });
 
-  const event1 = TenantStore.appendAuditEvent({
+  const event1 = await TenantStore.appendAuditEvent({
     organizationId: org.id,
     actorId: user.id,
     action: 'INVOICE_CREATED',
@@ -210,7 +233,7 @@ test('7. Audit Trail: Tamper-Evident SHA-256 Hash Chaining', () => {
 
   assert.strictEqual(event1.prevHash, '0000000000000000000000000000000000000000000000000000000000000000', 'Genesis event prevHash must be zeroed');
 
-  const event2 = TenantStore.appendAuditEvent({
+  const event2 = await TenantStore.appendAuditEvent({
     organizationId: org.id,
     actorId: user.id,
     action: 'INVOICE_UPDATED',
@@ -223,15 +246,15 @@ test('7. Audit Trail: Tamper-Evident SHA-256 Hash Chaining', () => {
   assert.strictEqual(event2.prevHash, event1.eventHash, 'Event 2 prevHash must equal Event 1 eventHash');
 });
 
-test('8. Currency: Paise BigInt Precision Invariant', () => {
+test('8. Currency: Paise BigInt Precision & Purchase Default ITC NEEDS_REVIEW', async () => {
   const nonce = crypto.randomUUID().substring(0, 8);
-  const org = TenantStore.createOrganization({ name: 'Money Org', slug: `money-${nonce}` });
-  const ent = TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Money Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
-  const reg = TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
+  const org = await TenantStore.createOrganization({ name: 'Money Org', slug: `money-${nonce}` });
+  const ent = await TenantStore.createLegalEntity({ organizationId: org.id, legalName: 'Money Ltd', pan: generateTestPAN(), entityType: 'PVT_LTD' });
+  const reg = await TenantStore.createGSTRegistration({ organizationId: org.id, legalEntityId: ent.id, gstin: generateTestGSTIN('33'), stateCode: '33', stateName: 'Tamil Nadu' });
 
   // ₹ 1234567.89 = 123456789n paise
   const largePaise = 123456789n;
-  const inv = TenantStore.createSalesInvoice({
+  const inv = await TenantStore.createSalesInvoice({
     organizationId: org.id,
     legalEntityId: ent.id,
     gstRegistrationId: reg.id,
@@ -248,6 +271,23 @@ test('8. Currency: Paise BigInt Precision Invariant', () => {
     totalPaise: largePaise + 22222222n
   });
 
-  const fetched = TenantStore.getSalesInvoiceById(org.id, inv.id);
+  const fetched = await TenantStore.getSalesInvoiceById(org.id, inv.id);
   assert.strictEqual(fetched.taxablePaise, largePaise, 'Paise value must preserve exact BigInt integer without float loss');
+
+  // Verify Purchase Invoice default ITC eligibility is NEEDS_REVIEW
+  const purchase = await TenantStore.createPurchaseInvoice({
+    organizationId: org.id,
+    legalEntityId: ent.id,
+    gstRegistrationId: reg.id,
+    invoiceNumber: `BILL-ITC-${nonce}`,
+    invoiceDate: '2026-09-01',
+    partyName: 'Vendor Check',
+    placeOfSupply: '33',
+    supplyType: 'INTRA',
+    taxablePaise: 100000n,
+    ratePercent: 18,
+    totalPaise: 118000n
+  });
+
+  assert.strictEqual(purchase.itcEligibility, 'NEEDS_REVIEW', 'Default purchase ITC eligibility must be NEEDS_REVIEW');
 });

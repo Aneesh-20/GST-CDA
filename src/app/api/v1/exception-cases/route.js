@@ -10,7 +10,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    const cases = TenantStore.getExceptionCases(ctx.organizationId, status);
+    const cases = await TenantStore.getExceptionCases(ctx.organizationId, status);
     return NextResponse.json({
       success: true,
       cases: cases.map(c => ({

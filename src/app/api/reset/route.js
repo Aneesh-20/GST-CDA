@@ -1,4 +1,5 @@
 // POST /api/reset - Tenant Data Reset Guarded by Owner Permission & Confirmation
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { requireAuthContext } from '../../../lib/security/context.js';
 import { createProblemResponse, badRequest } from '../../../lib/security/errors.js';
@@ -23,7 +24,7 @@ export async function POST(request) {
     db.prepare(`DELETE FROM reconciliation_runs WHERE organization_id = ?`).run(ctx.organizationId);
     db.prepare(`DELETE FROM filing_attempts WHERE organization_id = ?`).run(ctx.organizationId);
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'TENANT_DATA_RESET',

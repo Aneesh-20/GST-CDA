@@ -1,14 +1,13 @@
-// POST /api/v1/session/switch-organization - Scope Switcher
+// POST /api/v1/session/switch-organization - Scope Switcher with Session Rotation
 import { NextResponse } from 'next/server.js';
 import { SwitchOrganizationSchema } from '../../../../../lib/validation/schemas.js';
-import { requireAuthContext } from '../../../../../lib/security/context.js';
 import { createProblemResponse, forbidden } from '../../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../../lib/services/tenantStore.js';
-import { updateSessionScope, getSessionFromRequest } from '../../../../../lib/security/session.js';
+import { rotateSession, getSessionFromRequest } from '../../../../../lib/security/session.js';
 
 export async function POST(request) {
   try {
-    const rawSession = getSessionFromRequest(request);
+    const rawSession = await getSessionFromRequest(request);
     if (!rawSession) {
       throw forbidden('Active session required');
     }
@@ -17,7 +16,7 @@ export async function POST(request) {
     const { organizationId, gstRegistrationId } = SwitchOrganizationSchema.parse(body);
 
     // Verify user membership in the target organization
-    const membership = TenantStore.getMembership(organizationId, rawSession.userId);
+    const membership = await TenantStore.getMembership(organizationId, rawSession.userId);
     if (!membership || membership.status !== 'ACTIVE') {
       throw forbidden('You are not a member of the requested organization');
     }
@@ -25,19 +24,20 @@ export async function POST(request) {
     // Verify registration belongs to target organization if provided
     let validRegId = null;
     if (gstRegistrationId) {
-      const reg = TenantStore.getGSTRegistrationById(organizationId, gstRegistrationId);
+      const reg = await TenantStore.getGSTRegistrationById(organizationId, gstRegistrationId);
       if (!reg) {
         throw forbidden('GST registration does not belong to the target organization');
       }
       validRegId = reg.id;
     } else {
-      const regs = TenantStore.getGSTRegistrations(organizationId);
+      const regs = await TenantStore.getGSTRegistrations(organizationId);
       if (regs.length > 0) {
         validRegId = regs[0].id;
       }
     }
 
-    const { token, sessionData } = updateSessionScope(rawSession.sessionId, {
+    // Rotate session to prevent session fixation across tenant scope switch
+    const newSession = await rotateSession(rawSession.sessionId, {
       organizationId,
       gstRegistrationId: validRegId,
       role: membership.role
@@ -45,7 +45,6 @@ export async function POST(request) {
 
     const response = NextResponse.json({
       success: true,
-      token,
       activeScope: {
         organizationId,
         role: membership.role,
@@ -53,7 +52,7 @@ export async function POST(request) {
       }
     });
 
-    response.cookies.set('gst_cda_session', token, {
+    response.cookies.set('gst_cda_session', newSession.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

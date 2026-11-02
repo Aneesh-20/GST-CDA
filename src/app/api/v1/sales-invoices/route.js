@@ -1,4 +1,5 @@
 // GET, POST /api/v1/sales-invoices - Sales Books Management
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { SalesInvoiceCreateSchema } from '../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
@@ -14,7 +15,7 @@ export async function GET(request) {
     const status = searchParams.get('status');
     const gstRegistrationId = searchParams.get('gstRegistrationId') || ctx.gstRegistrationId;
 
-    const result = TenantStore.getSalesInvoices(ctx.organizationId, {
+    const result = await TenantStore.getSalesInvoices(ctx.organizationId, {
       gstRegistrationId,
       cursor,
       limit,
@@ -47,7 +48,7 @@ export async function POST(request) {
       throw badRequest('No active GST registration in current session');
     }
 
-    const invoice = TenantStore.createSalesInvoice({
+    const invoice = await TenantStore.createSalesInvoice({
       organizationId: ctx.organizationId,
       legalEntityId: ctx.legalEntityId,
       gstRegistrationId,
@@ -67,7 +68,7 @@ export async function POST(request) {
       status: validated.status
     });
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'SALES_INVOICE_CREATED',

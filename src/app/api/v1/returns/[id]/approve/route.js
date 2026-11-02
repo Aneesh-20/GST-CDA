@@ -1,8 +1,9 @@
 // POST /api/v1/returns/:id/approve - Taxpayer Statutory Approval (Owner-Only)
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { ApproveReturnSchema } from '../../../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../../../lib/security/context.js';
-import { createProblemResponse, forbidden } from '../../../../../../lib/security/errors.js';
+import { createProblemResponse } from '../../../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../../../lib/services/tenantStore.js';
 
 export async function POST(request, { params }) {
@@ -28,7 +29,7 @@ export async function POST(request, { params }) {
       status: 'AUTHORIZED'
     };
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'RETURN_FILING_AUTHORIZED',

@@ -1,16 +1,34 @@
-// Secure Session Management with HMAC-SHA256 Token Signing
+// Secure Session Management with Boot-Time Secret, Database Persistence & Revocation
 import crypto from 'node:crypto';
+import { TenantStore } from '../services/tenantStore.js';
 
-// In production, loaded from process.env.SESSION_SECRET. A fallback is provided for development.
-const SESSION_SECRET = process.env.SESSION_SECRET || 'gst-cda-secure-session-hmac-secret-change-in-prod-9472301';
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-// In-memory session cache / fast lookup (persisted in DB as well)
-const activeSessions = new Map();
+function getSessionSecret() {
+  if (process.env.SESSION_SECRET) {
+    if (process.env.SESSION_SECRET.length < 32) {
+      throw new Error('SESSION_SECRET must be at least 32 characters long');
+    }
+    return process.env.SESSION_SECRET;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL SECURITY ERROR: SESSION_SECRET environment variable is mandatory in production');
+  }
+  // Secure ephemeral boot-time secret for development/tests (never hard-coded)
+  if (!globalThis.__GST_CDA_DEV_SECRET) {
+    globalThis.__GST_CDA_DEV_SECRET = crypto.randomBytes(32).toString('hex');
+  }
+  return globalThis.__GST_CDA_DEV_SECRET;
+}
+
+export function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 export function signToken(payload) {
+  const secret = getSessionSecret();
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const hmac = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
+  const hmac = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   return `${data}.${hmac}`;
 }
 
@@ -20,7 +38,8 @@ export function verifyToken(token) {
   if (parts.length !== 2) return null;
 
   const [data, signature] = parts;
-  const expectedHmac = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
+  const secret = getSessionSecret();
+  const expectedHmac = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   
   const sigBuf = Buffer.from(signature);
   const expectedBuf = Buffer.from(expectedHmac);
@@ -39,7 +58,7 @@ export function verifyToken(token) {
   }
 }
 
-export function createSession({ userId, organizationId, legalEntityId, gstRegistrationId, role, email, name }) {
+export async function createSession({ userId, organizationId, legalEntityId, gstRegistrationId, role, email, name }) {
   const sessionId = crypto.randomUUID();
   const expiresAt = Date.now() + SESSION_TTL_MS;
 
@@ -57,48 +76,68 @@ export function createSession({ userId, organizationId, legalEntityId, gstRegist
   };
 
   const token = signToken(sessionData);
-  activeSessions.set(sessionId, sessionData);
+  const tokenHash = hashToken(token);
+
+  // Persist session to database
+  await TenantStore.saveSessionRecord({
+    id: sessionId,
+    userId,
+    organizationId,
+    tokenHash,
+    role,
+    expiresAt: new Date(expiresAt).toISOString()
+  });
 
   return { sessionId, token, expiresAt, sessionData };
 }
 
-export function getSession(token) {
+export async function getSession(token) {
   const payload = verifyToken(token);
-  if (!payload) return null;
-  
-  // Verify with in-memory or session record
-  const cached = activeSessions.get(payload.sessionId);
-  if (cached && cached.exp < Date.now()) {
-    activeSessions.delete(payload.sessionId);
+  if (!payload || !payload.sessionId) return null;
+
+  const tokenHash = hashToken(token);
+  // Verify with database record for active & unrevoked status
+  const record = await TenantStore.getSessionRecordByTokenHash(tokenHash);
+  if (!record) return null;
+
+  if (new Date(record.expires_at).getTime() < Date.now()) {
+    await TenantStore.revokeSession(record.id);
     return null;
   }
-  return cached || payload;
-}
 
-export function updateSessionScope(sessionId, updates) {
-  const existing = activeSessions.get(sessionId);
-  if (!existing) return null;
-  
-  const updated = {
-    ...existing,
-    ...updates,
-    exp: Date.now() + SESSION_TTL_MS
-  };
-  
-  activeSessions.set(sessionId, updated);
   return {
-    token: signToken(updated),
-    sessionData: updated
+    ...payload,
+    role: record.role,
+    organizationId: record.organization_id
   };
 }
 
-export function destroySession(sessionId) {
+export async function rotateSession(currentSessionId, updates = {}) {
+  const existingRecord = await TenantStore.getSessionRecordById(currentSessionId);
+  if (!existingRecord) return null;
+
+  // Revoke current session
+  await TenantStore.revokeSession(currentSessionId);
+
+  // Issue new rotated session
+  return createSession({
+    userId: existingRecord.user_id,
+    organizationId: updates.organizationId || existingRecord.organization_id,
+    legalEntityId: updates.legalEntityId || null,
+    gstRegistrationId: updates.gstRegistrationId || null,
+    role: updates.role || existingRecord.role,
+    email: updates.email || existingRecord.email,
+    name: updates.name || existingRecord.name
+  });
+}
+
+export async function destroySession(sessionId) {
   if (sessionId) {
-    activeSessions.delete(sessionId);
+    await TenantStore.revokeSession(sessionId);
   }
 }
 
-export function getSessionFromRequest(request) {
+export async function getSessionFromRequest(request) {
   // Check Authorization Bearer header first
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {

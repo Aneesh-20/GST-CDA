@@ -3,15 +3,15 @@ import { NextResponse } from 'next/server.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
 import { createProblemResponse } from '../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../lib/services/tenantStore.js';
-import { ROLE_PERMISSIONS } from '../../../../../packages/authz/roles.ts';
+import { ROLE_PERMISSIONS } from '../../../../../packages/authz/roles.js';
 
 export async function GET(request) {
   try {
     const ctx = await requireAuthContext(request);
     
     // Fetch all organizations the user is a member of
-    const memberships = TenantStore.getUserMemberships(ctx.userId);
-    const registrations = TenantStore.getGSTRegistrations(ctx.organizationId);
+    const memberships = await TenantStore.getUserMemberships(ctx.userId);
+    const registrations = await TenantStore.getGSTRegistrations(ctx.organizationId);
 
     return NextResponse.json({
       user: {

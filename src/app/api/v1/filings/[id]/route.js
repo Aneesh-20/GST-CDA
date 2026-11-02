@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const filing = TenantStore.getFilingAttemptById(ctx.organizationId, id);
+    const filing = await TenantStore.getFilingAttemptById(ctx.organizationId, id);
     if (!filing) {
       throw notFound('Filing record not found in this organization');
     }
@@ -19,8 +19,9 @@ export async function GET(request, { params }) {
       success: true,
       filing: {
         id: filing.id,
-        arn: filing.arn,
         status: filing.status,
+        providerTrackingId: filing.provider_tracking_id,
+        arn: filing.arn, // null if still pending or submitted
         returnType: filing.return_type,
         periodKey: filing.period_key,
         payloadHash: filing.payload_hash,

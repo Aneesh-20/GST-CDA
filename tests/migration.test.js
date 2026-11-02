@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { runMigration } from '../scripts/migrate-legacy-data.js';
 
-test('Migration: Verify Legacy SQLite to Multi-Tenant Repository Reconciliation', () => {
+test('Migration: Verify Legacy SQLite to Multi-Tenant Repository Reconciliation', async () => {
   const legacyPath = path.join(process.cwd(), 'data', 'gst_cda.sqlite');
   
   // Seed sample legacy data if not already present
@@ -116,9 +116,10 @@ test('Migration: Verify Legacy SQLite to Multi-Tenant Repository Reconciliation'
     `).run(`INV-P-${nonce}`, legacyEmail, `BILL-LEG-${nonce}`, now);
   }
 
-  const report = runMigration();
+  const report = await runMigration();
   assert.strictEqual(report.status, 'COMPLETED');
   assert.ok(report.migratedOrganizationsCount >= 1, 'At least 1 organization must be migrated');
   assert.strictEqual(report.salesPaiseMatch, true, 'Sales paise in legacy must match migrated total');
   assert.strictEqual(report.purchasesPaiseMatch, true, 'Purchases paise in legacy must match migrated total');
 });
+

@@ -1,4 +1,5 @@
 // GET, POST /api/audit - Scoped by Session Tenant
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { requireAuthContext } from '../../../lib/security/context.js';
 import { createProblemResponse } from '../../../lib/security/errors.js';
@@ -7,7 +8,7 @@ import { TenantStore } from '../../../lib/services/tenantStore.js';
 export async function GET(request) {
   try {
     const ctx = await requireAuthContext(request, 'canViewReports');
-    const records = TenantStore.getAuditEvents(ctx.organizationId, 50);
+    const records = await TenantStore.getAuditEvents(ctx.organizationId, 50);
     return NextResponse.json({ success: true, records });
   } catch (error) {
     return createProblemResponse(error, request);
@@ -19,7 +20,7 @@ export async function POST(request) {
     const ctx = await requireAuthContext(request, 'canAuthorizeFiling');
     const body = await request.json();
 
-    const record = TenantStore.appendAuditEvent({
+    const record = await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: body.returnType ? `${body.returnType}_AUDIT_RECORD` : 'AUDIT_RECORD_CREATED',

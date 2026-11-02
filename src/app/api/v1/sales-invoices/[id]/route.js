@@ -1,8 +1,9 @@
 // GET, PATCH, DELETE /api/v1/sales-invoices/:id
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { InvoicePatchSchema } from '../../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../../lib/security/context.js';
-import { createProblemResponse, notFound, conflict, preconditionFailed } from '../../../../../lib/security/errors.js';
+import { createProblemResponse, notFound, preconditionFailed } from '../../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../../lib/services/tenantStore.js';
 
 export async function GET(request, { params }) {
@@ -11,7 +12,7 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const invoice = TenantStore.getSalesInvoiceById(ctx.organizationId, id);
+    const invoice = await TenantStore.getSalesInvoiceById(ctx.organizationId, id);
     if (!invoice) {
       throw notFound('Sales invoice not found in this organization');
     }
@@ -48,7 +49,7 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const validated = InvoicePatchSchema.parse(body);
 
-    const result = TenantStore.updateSalesInvoice(ctx.organizationId, id, expectedVersion, validated);
+    const result = await TenantStore.updateSalesInvoice(ctx.organizationId, id, expectedVersion, validated);
     if (result.notFound) {
       throw notFound('Sales invoice not found in this organization');
     }
@@ -56,7 +57,7 @@ export async function PATCH(request, { params }) {
       throw preconditionFailed(`Invoice has been modified by another operation (current version: ${result.currentVersion})`);
     }
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'SALES_INVOICE_UPDATED',
@@ -87,12 +88,12 @@ export async function DELETE(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const deleted = TenantStore.deleteSalesInvoice(ctx.organizationId, id);
+    const deleted = await TenantStore.deleteSalesInvoice(ctx.organizationId, id);
     if (!deleted) {
       throw notFound('Sales invoice not found in this organization');
     }
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'SALES_INVOICE_DELETED',

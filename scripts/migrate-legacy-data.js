@@ -7,7 +7,7 @@ import { TenantStore } from '../src/lib/services/tenantStore.js';
 
 const LEGACY_DB_PATH = path.join(process.cwd(), 'data', 'gst_cda.sqlite');
 
-export function runMigration() {
+export async function runMigration() {
   if (!fs.existsSync(LEGACY_DB_PATH)) {
     console.log('[Migration] No legacy database found at', LEGACY_DB_PATH);
     return { status: 'NO_LEGACY_DB', migratedUsers: 0 };
@@ -43,11 +43,11 @@ export function runMigration() {
     };
 
     // 1. Create or get user
-    let user = TenantStore.getUserByEmail(lUser.email);
+    let user = await TenantStore.getUserByEmail(lUser.email);
     if (!user) {
-      user = TenantStore.createUser({
+      user = await TenantStore.createUser({
         email: lUser.email,
-        password: 'Password123!', // Standard initial password for migrated accounts
+        password: 'Password123!',
         fullName: lUser.name,
         phone: null
       });
@@ -55,9 +55,9 @@ export function runMigration() {
 
     // 2. Create organization
     const orgSlug = lUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '-');
-    let org = TenantStore.getOrganizationBySlug(orgSlug);
+    let org = await TenantStore.getOrganizationBySlug(orgSlug);
     if (!org) {
-      org = TenantStore.createOrganization({
+      org = await TenantStore.createOrganization({
         name: lBiz.trade_name || lBiz.legal_name,
         slug: orgSlug,
         plan: 'STANDARD'
@@ -65,9 +65,9 @@ export function runMigration() {
     }
 
     // 3. Create membership
-    let membership = TenantStore.getMembership(org.id, user.id);
+    let membership = await TenantStore.getMembership(org.id, user.id);
     if (!membership) {
-      membership = TenantStore.createMembership({
+      membership = await TenantStore.createMembership({
         organizationId: org.id,
         userId: user.id,
         role: lUser.role || 'OWNER',
@@ -76,10 +76,10 @@ export function runMigration() {
     }
 
     // 4. Create Legal Entity & GST Registration
-    let entities = TenantStore.getLegalEntities(org.id);
+    let entities = await TenantStore.getLegalEntities(org.id);
     let legalEntity = entities.find(e => e.pan === lBiz.pan);
     if (!legalEntity) {
-      legalEntity = TenantStore.createLegalEntity({
+      legalEntity = await TenantStore.createLegalEntity({
         organizationId: org.id,
         legalName: lBiz.legal_name,
         tradeName: lBiz.trade_name,
@@ -89,10 +89,10 @@ export function runMigration() {
       });
     }
 
-    let registrations = TenantStore.getGSTRegistrations(org.id, legalEntity.id);
+    let registrations = await TenantStore.getGSTRegistrations(org.id, legalEntity.id);
     let gstRegistration = registrations.find(r => r.gstin === lBiz.gstin);
     if (!gstRegistration) {
-      gstRegistration = TenantStore.createGSTRegistration({
+      gstRegistration = await TenantStore.createGSTRegistration({
         organizationId: org.id,
         legalEntityId: legalEntity.id,
         gstin: lBiz.gstin,
@@ -107,7 +107,7 @@ export function runMigration() {
     for (const s of userSales) {
       totalSalesPaiseLegacy += BigInt(s.total_paise);
       try {
-        const created = TenantStore.createSalesInvoice({
+        const created = await TenantStore.createSalesInvoice({
           organizationId: org.id,
           legalEntityId: legalEntity.id,
           gstRegistrationId: gstRegistration.id,
@@ -128,7 +128,7 @@ export function runMigration() {
         });
         totalSalesPaiseMigrated += created.totalPaise;
       } catch (err) {
-        const existing = TenantStore.getSalesInvoices(org.id).items.find(i => i.invoiceNumber === s.invoice_number);
+        const existing = (await TenantStore.getSalesInvoices(org.id)).items.find(i => i.invoiceNumber === s.invoice_number);
         if (existing) {
           totalSalesPaiseMigrated += existing.totalPaise;
         }
@@ -140,7 +140,7 @@ export function runMigration() {
     for (const p of userPurchases) {
       totalPurchasesPaiseLegacy += BigInt(p.total_paise);
       try {
-        const created = TenantStore.createPurchaseInvoice({
+        const created = await TenantStore.createPurchaseInvoice({
           organizationId: org.id,
           legalEntityId: legalEntity.id,
           gstRegistrationId: gstRegistration.id,
@@ -157,12 +157,12 @@ export function runMigration() {
           sgstPaise: BigInt(p.sgst_paise),
           igstPaise: BigInt(p.igst_paise),
           totalPaise: BigInt(p.total_paise),
-          itcEligibility: p.itc_eligibility || 'ELIGIBLE',
+          itcEligibility: p.itc_eligibility || 'NEEDS_REVIEW',
           status: p.status
         });
         totalPurchasesPaiseMigrated += created.totalPaise;
       } catch (err) {
-        const existing = TenantStore.getPurchaseInvoices(org.id).items.find(i => i.invoiceNumber === p.invoice_number);
+        const existing = (await TenantStore.getPurchaseInvoices(org.id)).items.find(i => i.invoiceNumber === p.invoice_number);
         if (existing) {
           totalPurchasesPaiseMigrated += existing.totalPaise;
         }
@@ -172,7 +172,7 @@ export function runMigration() {
     // 7. Migrate Audits
     const userAudits = legacyAudits.filter(a => a.user_email === lUser.email);
     for (const a of userAudits) {
-      TenantStore.appendAuditEvent({
+      await TenantStore.appendAuditEvent({
         organizationId: org.id,
         actorId: user.id,
         action: 'MIGRATED_LEGACY_AUDIT',

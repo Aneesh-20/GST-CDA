@@ -1,8 +1,18 @@
--- PostgreSQL Multi-Tenant Migration with Row-Level Security (RLS)
+-- PostgreSQL Multi-Tenant Migration with Strict Row-Level Security (RLS)
 -- Tenancy hierarchy: organization -> legal_entity -> gst_registration -> return_period
+-- Complies with Milestone 1 Release Gate: USING + WITH CHECK, non-owner gst_cda_app role, FORCE RLS
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 0. Non-privileged Application Role
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'gst_cda_app') THEN
+    CREATE ROLE gst_cda_app LOGIN NOBYPASSRLS;
+  END IF;
+END
+$$;
 
 -- 1. Identity & Tenancy
 CREATE TABLE IF NOT EXISTS organizations (
@@ -43,6 +53,7 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     token_hash TEXT UNIQUE NOT NULL,
     role TEXT NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT false,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -143,7 +154,7 @@ CREATE TABLE IF NOT EXISTS purchase_invoices (
     sgst_paise BIGINT NOT NULL DEFAULT 0,
     igst_paise BIGINT NOT NULL DEFAULT 0,
     total_paise BIGINT NOT NULL,
-    itc_eligibility TEXT NOT NULL DEFAULT 'ELIGIBLE', -- ELIGIBLE, INELIGIBLE, BLOCKED
+    itc_eligibility TEXT NOT NULL DEFAULT 'NEEDS_REVIEW', -- NEEDS_REVIEW, ELIGIBLE, INELIGIBLE, BLOCKED
     status TEXT NOT NULL DEFAULT 'CONFIRMED',
     version INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -181,7 +192,7 @@ CREATE TABLE IF NOT EXISTS exception_cases (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. Filings & Submissions
+-- 5. Filings & Submissions (Statutory State Machine)
 CREATE TABLE IF NOT EXISTS filing_attempts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -189,8 +200,9 @@ CREATE TABLE IF NOT EXISTS filing_attempts (
     period_key TEXT NOT NULL,
     return_type TEXT NOT NULL, -- GSTR-1, GSTR-3B, GSTR-9
     idempotency_key TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'PREPARED', -- PREPARED, AUTHORIZED, SUBMITTED, FILED, REJECTED
-    arn TEXT,
+    provider_tracking_id TEXT,
+    status TEXT NOT NULL DEFAULT 'SUBMISSION_PENDING', -- PREPARED, AUTHORIZED, SUBMISSION_PENDING, SUBMITTED, FILED, REJECTED, FAILED
+    arn TEXT, -- Populated strictly from verified GSP acknowledgement receipt, never locally invented
     payload_hash TEXT NOT NULL,
     response_hash TEXT,
     authorized_by UUID NOT NULL REFERENCES users(id),
@@ -234,51 +246,114 @@ CREATE INDEX IF NOT EXISTS idx_sales_org ON sales_invoices(organization_id, gst_
 CREATE INDEX IF NOT EXISTS idx_purchases_org ON purchase_invoices(organization_id, gst_registration_id);
 CREATE INDEX IF NOT EXISTS idx_audit_org ON audit_events(organization_id, created_at DESC);
 
--- Enable Row-Level Security (RLS) on all tenant-owned tables
+-- Enable & FORCE Row-Level Security (RLS) on all tenant-owned tables
 ALTER TABLE organization_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE legal_entities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE gst_registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE return_periods ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sales_invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE purchase_invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reconciliation_runs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exception_cases ENABLE ROW LEVEL SECURITY;
-ALTER TABLE filing_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE import_jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organization_memberships FORCE ROW LEVEL SECURITY;
 
--- Create RLS Policies
--- PostgreSQL server enforces that app.organization_id is set per transaction:
--- SET LOCAL app.organization_id = 'uuid';
+ALTER TABLE auth_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auth_sessions FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitations FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE legal_entities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE legal_entities FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE gst_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gst_registrations FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE return_periods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE return_periods FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE sales_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_invoices FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE purchase_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_invoices FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE reconciliation_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reconciliation_runs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE exception_cases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exception_cases FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE filing_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE filing_attempts FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE import_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE import_jobs FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_events FORCE ROW LEVEL SECURITY;
+
+-- Create RLS Policies with BOTH USING and WITH CHECK
+-- Absent or empty app.organization_id evaluates to NULL and denies all reads/writes.
 CREATE POLICY tenant_isolation_memberships ON organization_memberships
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+
+CREATE POLICY tenant_isolation_sessions ON auth_sessions
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+
+CREATE POLICY tenant_isolation_invitations ON invitations
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_entities ON legal_entities
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_registrations ON gst_registrations
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_periods ON return_periods
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_sales ON sales_invoices
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_purchases ON purchase_invoices
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_reconciliations ON reconciliation_runs
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_exceptions ON exception_cases
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_filings ON filing_attempts
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_imports ON import_jobs
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
 CREATE POLICY tenant_isolation_audit ON audit_events
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    FOR ALL
+    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+
+-- Grant privileges only to application role
+GRANT USAGE ON SCHEMA public TO gst_cda_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO gst_cda_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO gst_cda_app;

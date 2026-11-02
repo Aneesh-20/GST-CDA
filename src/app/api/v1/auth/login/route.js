@@ -1,4 +1,4 @@
-// POST /api/v1/auth/login - Secure Session Authentication
+// POST /api/v1/auth/login - Secure Session Authentication (HttpOnly Cookie, No Token Leak in JSON)
 import { NextResponse } from 'next/server.js';
 import { LoginSchema } from '../../../../../lib/validation/schemas.js';
 import { createProblemResponse, unauthorized } from '../../../../../lib/security/errors.js';
@@ -11,7 +11,7 @@ export async function POST(request) {
     const body = await request.json();
     const validated = LoginSchema.parse(body);
 
-    const user = TenantStore.getUserByEmail(validated.email);
+    const user = await TenantStore.getUserByEmail(validated.email);
     if (!user) {
       throw unauthorized('Invalid email or password');
     }
@@ -21,17 +21,17 @@ export async function POST(request) {
       throw unauthorized('Invalid email or password');
     }
 
-    const memberships = TenantStore.getUserMemberships(user.id);
+    const memberships = await TenantStore.getUserMemberships(user.id);
     if (memberships.length === 0) {
       throw unauthorized('User has no active organization membership');
     }
 
-    // Default to the first active membership
+    // Default to primary active membership
     const primaryMembership = memberships[0];
-    const registrations = TenantStore.getGSTRegistrations(primaryMembership.organization_id);
+    const registrations = await TenantStore.getGSTRegistrations(primaryMembership.organization_id);
     const primaryRegistration = registrations.length > 0 ? registrations[0] : null;
 
-    const { sessionId, token, expiresAt, sessionData } = createSession({
+    const { sessionId, token, expiresAt } = await createSession({
       userId: user.id,
       organizationId: primaryMembership.organization_id,
       legalEntityId: primaryRegistration?.legal_entity_id || null,
@@ -41,9 +41,9 @@ export async function POST(request) {
       name: user.full_name
     });
 
+    // Do NOT return raw bearer token in JSON body when using HttpOnly cookie!
     const response = NextResponse.json({
       success: true,
-      token,
       expiresAt: new Date(expiresAt).toISOString(),
       user: {
         id: user.id,
@@ -58,7 +58,6 @@ export async function POST(request) {
       }
     });
 
-    // Set secure HTTP-only cookie
     response.cookies.set('gst_cda_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

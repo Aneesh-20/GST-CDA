@@ -1,8 +1,9 @@
 // POST /api/v1/return-periods/:id/prepare - Prepare GSTR-1 / GSTR-3B Summary Draft
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { PrepareReturnSchema } from '../../../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../../../lib/security/context.js';
-import { createProblemResponse, badRequest } from '../../../../../../lib/security/errors.js';
+import { createProblemResponse } from '../../../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../../../lib/services/tenantStore.js';
 
 export async function POST(request, { params }) {
@@ -17,12 +18,12 @@ export async function POST(request, { params }) {
       returnType: body.returnType || 'GSTR-3B'
     });
 
-    const salesResult = TenantStore.getSalesInvoices(ctx.organizationId, {
+    const salesResult = await TenantStore.getSalesInvoices(ctx.organizationId, {
       gstRegistrationId: ctx.gstRegistrationId,
       limit: 1000
     });
 
-    const purchasesResult = TenantStore.getPurchaseInvoices(ctx.organizationId, {
+    const purchasesResult = await TenantStore.getPurchaseInvoices(ctx.organizationId, {
       gstRegistrationId: ctx.gstRegistrationId,
       limit: 1000
     });
@@ -56,7 +57,7 @@ export async function POST(request, { params }) {
       calculatedAt: new Date().toISOString()
     };
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'RETURN_DRAFT_PREPARED',

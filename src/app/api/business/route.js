@@ -8,9 +8,9 @@ export async function GET(request) {
   try {
     const ctx = await requireAuthContext(request, 'canViewReports');
     
-    const entities = TenantStore.getLegalEntities(ctx.organizationId);
+    const entities = await TenantStore.getLegalEntities(ctx.organizationId);
     const entity = entities[0];
-    const registrations = TenantStore.getGSTRegistrations(ctx.organizationId);
+    const registrations = await TenantStore.getGSTRegistrations(ctx.organizationId);
     const registration = registrations[0];
 
     const business = {
@@ -41,9 +41,8 @@ export async function PUT(request) {
       throw badRequest('business data is required');
     }
 
-    // Update entity or registration
     if (ctx.gstRegistrationId && business.stateName) {
-      TenantStore.updateGSTRegistration(ctx.organizationId, ctx.gstRegistrationId, {
+      await TenantStore.updateGSTRegistration(ctx.organizationId, ctx.gstRegistrationId, {
         stateName: business.stateName
       });
     }

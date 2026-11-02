@@ -10,7 +10,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
 
-    const events = TenantStore.getAuditEvents(ctx.organizationId, limit);
+    const events = await TenantStore.getAuditEvents(ctx.organizationId, limit);
 
     return NextResponse.json({
       success: true,

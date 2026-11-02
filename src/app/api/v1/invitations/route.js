@@ -1,8 +1,9 @@
 // POST /api/v1/invitations - Invite Team Member / CA
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { InvitationSchema } from '../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
-import { createProblemResponse, forbidden } from '../../../../lib/security/errors.js';
+import { createProblemResponse } from '../../../../lib/security/errors.js';
 import { TenantStore } from '../../../../lib/services/tenantStore.js';
 
 export async function POST(request) {
@@ -11,15 +12,14 @@ export async function POST(request) {
     const body = await request.json();
     const validated = InvitationSchema.parse(body);
 
-    const invitation = TenantStore.createInvitation({
+    const invitation = await TenantStore.createInvitation({
       organizationId: ctx.organizationId,
       email: validated.email,
       role: validated.role,
       invitedBy: ctx.userId
     });
 
-    // Audit log
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'INVITATION_CREATED',

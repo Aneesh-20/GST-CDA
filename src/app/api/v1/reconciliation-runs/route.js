@@ -1,4 +1,5 @@
 // POST /api/v1/reconciliation-runs - 2B / Books Ingestion & Matching Engine
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { ReconciliationRunSchema } from '../../../../lib/validation/schemas.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
@@ -16,14 +17,14 @@ export async function POST(request) {
       throw badRequest('Active GST registration required for reconciliation');
     }
 
-    const run = TenantStore.createReconciliationRun({
+    const run = await TenantStore.createReconciliationRun({
       organizationId: ctx.organizationId,
       gstRegistrationId,
       periodKey: validated.periodKey,
       ruleVersion: validated.ruleVersion
     });
 
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: ctx.organizationId,
       actorId: ctx.userId,
       action: 'RECONCILIATION_RUN_COMPLETED',

@@ -1,4 +1,5 @@
 // POST /api/v1/auth/signup - Secure User & Organization Onboarding
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server.js';
 import { SignupSchema } from '../../../../../lib/validation/schemas.js';
 import { createProblemResponse, conflict } from '../../../../../lib/security/errors.js';
@@ -10,13 +11,13 @@ export async function POST(request) {
     const body = await request.json();
     const validated = SignupSchema.parse(body);
 
-    const existingUser = TenantStore.getUserByEmail(validated.email);
+    const existingUser = await TenantStore.getUserByEmail(validated.email);
     if (existingUser) {
       throw conflict('An account with this email address already exists');
     }
 
     // 1. Create User
-    const user = TenantStore.createUser({
+    const user = await TenantStore.createUser({
       email: validated.email,
       password: validated.password,
       fullName: validated.fullName,
@@ -26,14 +27,14 @@ export async function POST(request) {
     // 2. Create Organization
     const slug = validated.organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     const uniqueSlug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const organization = TenantStore.createOrganization({
+    const organization = await TenantStore.createOrganization({
       name: validated.organizationName,
       slug: uniqueSlug,
       plan: 'STANDARD'
     });
 
     // 3. Bind User as OWNER
-    const membership = TenantStore.createMembership({
+    const membership = await TenantStore.createMembership({
       organizationId: organization.id,
       userId: user.id,
       role: 'OWNER',
@@ -41,7 +42,7 @@ export async function POST(request) {
     });
 
     // 4. Create Legal Entity
-    const legalEntity = TenantStore.createLegalEntity({
+    const legalEntity = await TenantStore.createLegalEntity({
       organizationId: organization.id,
       legalName: validated.organizationName,
       tradeName: validated.organizationName,
@@ -53,7 +54,7 @@ export async function POST(request) {
     // 5. Create GST Registration if GSTIN provided
     let gstRegistration = null;
     if (validated.gstin) {
-      gstRegistration = TenantStore.createGSTRegistration({
+      gstRegistration = await TenantStore.createGSTRegistration({
         organizationId: organization.id,
         legalEntityId: legalEntity.id,
         gstin: validated.gstin,
@@ -63,8 +64,8 @@ export async function POST(request) {
       });
     }
 
-    // 6. Create Session
-    const { token, expiresAt } = createSession({
+    // 6. Create Session (persisted in auth_sessions)
+    const { token, expiresAt } = await createSession({
       userId: user.id,
       organizationId: organization.id,
       legalEntityId: legalEntity.id,
@@ -75,7 +76,7 @@ export async function POST(request) {
     });
 
     // 7. Audit log
-    TenantStore.appendAuditEvent({
+    await TenantStore.appendAuditEvent({
       organizationId: organization.id,
       actorId: user.id,
       action: 'ORGANIZATION_CREATED',
@@ -89,9 +90,9 @@ export async function POST(request) {
       }
     });
 
+    // Do NOT return raw bearer token in JSON body when using HttpOnly cookie!
     const response = NextResponse.json({
       success: true,
-      token,
       expiresAt: new Date(expiresAt).toISOString(),
       user: {
         id: user.id,

@@ -2,3 +2,4 @@
 import { NextResponse } from 'next/server.js';
 
 export { NextResponse };
+

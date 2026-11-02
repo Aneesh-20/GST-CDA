@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const job = TenantStore.getImportJobById(ctx.organizationId, id);
+    const job = await TenantStore.getImportJobById(ctx.organizationId, id);
     if (!job) {
       throw notFound('Import job not found in this organization');
     }

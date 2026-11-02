@@ -1,4 +1,4 @@
-// GET, POST, PUT, DELETE /api/invoices/sales - Scoped by Session Tenant
+// GET, POST, DELETE /api/invoices/sales - Scoped by Session Tenant
 import { NextResponse } from 'next/server.js';
 import { requireAuthContext } from '../../../../lib/security/context.js';
 import { createProblemResponse, badRequest, notFound } from '../../../../lib/security/errors.js';
@@ -7,7 +7,7 @@ import { TenantStore } from '../../../../lib/services/tenantStore.js';
 export async function GET(request) {
   try {
     const ctx = await requireAuthContext(request, 'canViewReports');
-    const result = TenantStore.getSalesInvoices(ctx.organizationId, {
+    const result = await TenantStore.getSalesInvoices(ctx.organizationId, {
       gstRegistrationId: ctx.gstRegistrationId,
       limit: 100
     });
@@ -49,7 +49,7 @@ export async function POST(request) {
     }
 
     for (const inv of list) {
-      TenantStore.createSalesInvoice({
+      await TenantStore.createSalesInvoice({
         organizationId: ctx.organizationId,
         legalEntityId: ctx.legalEntityId,
         gstRegistrationId: ctx.gstRegistrationId,
@@ -70,7 +70,7 @@ export async function POST(request) {
       });
     }
 
-    const updated = TenantStore.getSalesInvoices(ctx.organizationId, { limit: 100 }).items;
+    const updated = (await TenantStore.getSalesInvoices(ctx.organizationId, { limit: 100 })).items;
     return NextResponse.json({ success: true, sales: updated });
   } catch (error) {
     return createProblemResponse(error, request);
@@ -87,12 +87,12 @@ export async function DELETE(request) {
       throw badRequest('id parameter is required');
     }
 
-    const deleted = TenantStore.deleteSalesInvoice(ctx.organizationId, invoiceId);
+    const deleted = await TenantStore.deleteSalesInvoice(ctx.organizationId, invoiceId);
     if (!deleted) {
       throw notFound('Invoice not found');
     }
 
-    const updated = TenantStore.getSalesInvoices(ctx.organizationId, { limit: 100 }).items;
+    const updated = (await TenantStore.getSalesInvoices(ctx.organizationId, { limit: 100 })).items;
     return NextResponse.json({ success: true, sales: updated });
   } catch (error) {
     return createProblemResponse(error, request);

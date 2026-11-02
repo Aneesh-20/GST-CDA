@@ -26,3 +26,4 @@ export function verifyPassword(password, storedHash) {
   if (derivedKey.length !== keyBuffer.length) return false;
   return crypto.timingSafeEqual(derivedKey, keyBuffer);
 }
+

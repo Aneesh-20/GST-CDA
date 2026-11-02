@@ -7,7 +7,7 @@ import { TenantStore } from '../../../../lib/services/tenantStore.js';
 export async function GET(request) {
   try {
     const ctx = await requireAuthContext(request, 'canViewReports');
-    const result = TenantStore.getPurchaseInvoices(ctx.organizationId, {
+    const result = await TenantStore.getPurchaseInvoices(ctx.organizationId, {
       gstRegistrationId: ctx.gstRegistrationId,
       limit: 100
     });
@@ -50,7 +50,7 @@ export async function POST(request) {
     }
 
     for (const inv of list) {
-      TenantStore.createPurchaseInvoice({
+      await TenantStore.createPurchaseInvoice({
         organizationId: ctx.organizationId,
         legalEntityId: ctx.legalEntityId,
         gstRegistrationId: ctx.gstRegistrationId,
@@ -67,12 +67,12 @@ export async function POST(request) {
         sgstPaise: BigInt(inv.sgstPaise || inv.sgst_paise || 0),
         igstPaise: BigInt(inv.igstPaise || inv.igst_paise || 0),
         totalPaise: BigInt(inv.totalPaise || inv.total_paise || 0),
-        itcEligibility: inv.itcEligibility || inv.itc_eligibility || 'ELIGIBLE',
+        itcEligibility: inv.itcEligibility || inv.itc_eligibility || 'NEEDS_REVIEW',
         status: inv.status || 'CONFIRMED'
       });
     }
 
-    const updated = TenantStore.getPurchaseInvoices(ctx.organizationId, { limit: 100 }).items;
+    const updated = (await TenantStore.getPurchaseInvoices(ctx.organizationId, { limit: 100 })).items;
     return NextResponse.json({ success: true, purchases: updated });
   } catch (error) {
     return createProblemResponse(error, request);
@@ -89,12 +89,12 @@ export async function DELETE(request) {
       throw badRequest('id parameter is required');
     }
 
-    const deleted = TenantStore.deletePurchaseInvoice(ctx.organizationId, invoiceId);
+    const deleted = await TenantStore.deletePurchaseInvoice(ctx.organizationId, invoiceId);
     if (!deleted) {
       throw notFound('Invoice not found');
     }
 
-    const updated = TenantStore.getPurchaseInvoices(ctx.organizationId, { limit: 100 }).items;
+    const updated = (await TenantStore.getPurchaseInvoices(ctx.organizationId, { limit: 100 })).items;
     return NextResponse.json({ success: true, purchases: updated });
   } catch (error) {
     return createProblemResponse(error, request);
