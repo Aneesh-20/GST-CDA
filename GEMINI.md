@@ -5,8 +5,8 @@
   1. Verify the project builds cleanly (`./node_modules/.bin/next build`).
   2. Stage all modified and new files (`git add .`).
   3. Create a clear descriptive commit (`git commit -m "..."`).
-  4. Immediately push the commit to GitHub (`git push origin main`).
-- **Remote Configuration**: The repository remote `origin` is set to `git@github.com:Aneesh-20/GST-CDA.git` on branch `main` using authorized SSH credentials.
+  4. Immediately push the commit to GitHub (`git push origin aneesh`).
+- **Remote Configuration & Branch Rule**: The repository remote `origin` is set to `git@github.com:Aneesh-20/GST-CDA.git`. All active development, commits, and pushes must be made on branch `aneesh` (`git push origin aneesh`). Never push or work directly on branch `main`.
 
 ## Architectural Principles
 - **Financial Arithmetic Integrity**: All currency values (taxable, CGST, SGST, IGST, total liability, ITC) must be computed in integer paise using `BigInt` or minor-unit math. Zero floating-point drift is tolerated.
