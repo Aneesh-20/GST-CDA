@@ -40,3 +40,6 @@ pnpm-debug.log*
 next-env.d.ts
 
 .vercel
+
+data/*.sqlite-wal
+data/*.sqlite-shm
