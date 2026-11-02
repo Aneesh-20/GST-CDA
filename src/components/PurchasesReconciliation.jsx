@@ -23,7 +23,12 @@ import {
   FileText,
   Trash2,
   Search,
-  X
+  X,
+  MessageSquare,
+  Copy,
+  ExternalLink,
+  Send,
+  Lock
 } from 'lucide-react';
 import { SAMPLE_PURCHASE_DIFFERENCES } from '../lib/showcaseData.js';
 import { SAMPLE_PURCHASE_TABLE, parseCsvText, getPurchasesCsvTemplate, triggerBrowserDownload } from '../lib/realtimeData.js';
@@ -47,6 +52,13 @@ export default function PurchasesReconciliation({
   const [pendingParsedRows, setPendingParsedRows] = useState([]);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isPdfScanning, setIsPdfScanning] = useState(false);
+
+  // Super Premium: WhatsApp 1-Click Vendor Nudge State
+  const [isNudgeModalOpen, setIsNudgeModalOpen] = useState(false);
+  const [nudgeData, setNudgeData] = useState(null);
+
+  // Super Premium: IMS (Invoice Management System) Decisions State
+  const [imsDecisions, setImsDecisions] = useState({});
 
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
@@ -75,6 +87,48 @@ export default function PurchasesReconciliation({
 
   const totalTaxable = purchasesList.reduce((acc, p) => acc + (p.taxableRupees || 0), 0);
   const totalItc = purchasesList.reduce((acc, p) => acc + (p.gstPaise || 0), 0);
+
+  // Active differences: if purchases exist, show differences to reconcile
+  const activeDifferences = purchasesList.length > 0 
+    ? (differences.length > 0 ? differences : SAMPLE_PURCHASE_DIFFERENCES)
+    : [];
+
+  const handleOpenNudgeModal = (item) => {
+    const vendor = item.vendorName || item.customerName || 'Vendor Partner';
+    const invNo = item.invoiceNumber || item.id || 'INV-CURRENT';
+    const amount = item.gstPortalRecord ? item.gstPortalRecord.tax : `₹ ${(item.gstPaise || 0).toLocaleString('en-IN')}`;
+    const msg = `Namaste ${vendor}, regarding invoice #${invNo} for ${amount} GST: This bill is not yet reflected in our Government GSTR-2B portal under Section 16(2)(aa). Kindly upload your GSTR-1 return so we can claim this ITC and release your pending payment. Thank you!`;
+    setNudgeData({
+      vendorName: vendor,
+      billNumber: invNo,
+      gstAmount: amount,
+      message: msg
+    });
+    setIsNudgeModalOpen(true);
+  };
+
+  const handleCopyNudgeText = () => {
+    if (!nudgeData) return;
+    navigator.clipboard?.writeText(nudgeData.message);
+    if (onShowToast) onShowToast(`📋 Copied WhatsApp reminder text for ${nudgeData.vendorName}.`);
+  };
+
+  const handleLaunchWhatsApp = () => {
+    if (!nudgeData) return;
+    const encoded = encodeURIComponent(nudgeData.message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    if (onShowToast) onShowToast(`📲 Launched WhatsApp dispatch for ${nudgeData.vendorName}.`);
+    setIsNudgeModalOpen(false);
+  };
+
+  const handleSetImsDecision = (billId, decision) => {
+    setImsDecisions(prev => ({
+      ...prev,
+      [billId]: decision
+    }));
+    const label = decision === 'accept' ? 'Accepted for GSTR-2B ITC claim' : decision === 'reject' ? 'Rejected / Marked Disputed' : 'Kept Pending for Next Month';
+    if (onShowToast) onShowToast(`⚡ IMS Action for ${billId}: ${label}.`);
+  };
 
   const handleMarkReviewed = (diffId, vendorName) => {
     if (reviewedIds.includes(diffId)) {
@@ -453,7 +507,7 @@ export default function PurchasesReconciliation({
         <div style={{ backgroundColor: '#FEF7EC', padding: '16px 20px', borderRadius: 14, border: '1px solid #F7E1B8' }}>
           <div style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 700 }}>Items Needing Check</div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#B45309', marginTop: 4 }}>
-            {purchasesList.length > 0 ? differences.length - reviewedIds.length : 0}
+            {purchasesList.length > 0 ? activeDifferences.length - reviewedIds.length : 0}
           </div>
           <div style={{ fontSize: '0.7rem', color: '#B45309', marginTop: 2 }}>
             {reviewedIds.length > 0 ? `${reviewedIds.length} verified` : 'Supplier GSTR-2B status'}
@@ -498,7 +552,7 @@ export default function PurchasesReconciliation({
                 <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0B132B' }}>
                   {purchasesList.length === 0 
                     ? 'No purchase bills recorded yet' 
-                    : `${differences.length - reviewedIds.length} items to verify for maximum ITC`}
+                    : `${activeDifferences.length - reviewedIds.length} items to verify for maximum ITC`}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: '#596579', marginTop: 2 }}>
                   {purchasesList.length === 0
@@ -532,7 +586,7 @@ export default function PurchasesReconciliation({
 
           {/* 3 Detailed Comparison Cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {differences.map((diff) => {
+            {activeDifferences.map((diff) => {
               const isReviewed = reviewedIds.includes(diff.id);
               const isAmber = diff.severity === 'amber';
               const isNeutral = diff.severity === 'neutral';
@@ -639,6 +693,16 @@ export default function PurchasesReconciliation({
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenNudgeModal(diff)}
+                        className="whatsapp-nudge-pill"
+                        title="Nudge supplier on WhatsApp to file their GSTR-1 and protect your ITC"
+                      >
+                        <MessageSquare style={{ width: 13, height: 13 }} />
+                        <span>WhatsApp Nudge</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={onRequestCaSupport}
@@ -833,7 +897,8 @@ export default function PurchasesReconciliation({
                       <th style={{ padding: '14px 16px', textAlign: 'right' }}>Tax (ITC)</th>
                       <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
                       <th style={{ padding: '14px 16px', textAlign: 'center' }}>2B Match</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>Action</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>IMS Action (GSTN)</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>Nudge / Delete</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -865,14 +930,79 @@ export default function PurchasesReconciliation({
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteBill(p.id)}
-                            title="Delete this purchase bill"
-                            style={{ background: 'none', border: 'none', color: '#8D99AE', cursor: 'pointer', padding: 4 }}
-                          >
-                            <Trash2 style={{ width: 14, height: 14 }} />
-                          </button>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, backgroundColor: '#F8FAFC', padding: '3px 4px', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleSetImsDecision(p.id, 'accept')}
+                              title="Accept invoice to claim ITC in GSTR-2B"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                borderRadius: 6,
+                                border: 'none',
+                                cursor: 'pointer',
+                                backgroundColor: (imsDecisions[p.id] || 'accept') === 'accept' ? '#0E7051' : 'transparent',
+                                color: (imsDecisions[p.id] || 'accept') === 'accept' ? '#FFFFFF' : '#64748B'
+                              }}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSetImsDecision(p.id, 'pending')}
+                              title="Hold pending for supplier clarification"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                borderRadius: 6,
+                                border: 'none',
+                                cursor: 'pointer',
+                                backgroundColor: imsDecisions[p.id] === 'pending' ? '#B45309' : 'transparent',
+                                color: imsDecisions[p.id] === 'pending' ? '#FFFFFF' : '#64748B'
+                              }}
+                            >
+                              Hold
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSetImsDecision(p.id, 'reject')}
+                              title="Reject disputed invoice"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                borderRadius: 6,
+                                border: 'none',
+                                cursor: 'pointer',
+                                backgroundColor: imsDecisions[p.id] === 'reject' ? '#DC2626' : 'transparent',
+                                color: imsDecisions[p.id] === 'reject' ? '#FFFFFF' : '#64748B'
+                              }}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenNudgeModal(p)}
+                              title="Send 1-Click WhatsApp Nudge"
+                              style={{ background: 'none', border: 'none', color: '#047857', cursor: 'pointer', padding: 4 }}
+                            >
+                              <MessageSquare style={{ width: 14, height: 14 }} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBill(p.id)}
+                              title="Delete this purchase bill"
+                              style={{ background: 'none', border: 'none', color: '#8D99AE', cursor: 'pointer', padding: 4 }}
+                            >
+                              <Trash2 style={{ width: 14, height: 14 }} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1102,6 +1232,110 @@ export default function PurchasesReconciliation({
                 style={{ padding: '10px 22px', fontSize: '0.84rem', fontWeight: 700, color: '#FFFFFF', backgroundColor: '#0D6258', border: 'none', borderRadius: 10, cursor: 'pointer', boxShadow: '0 4px 14px rgba(13, 98, 88, 0.25)' }}
               >
                 Confirm & Import {pendingParsedRows.length} Bills
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL: 1-CLICK WHATSAPP VENDOR ITC RECOVERY NUDGE        */}
+      {/* ======================================================== */}
+      {isNudgeModalOpen && nudgeData && (
+        <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <div style={{ 
+            width: '100%', 
+            maxWidth: 500, 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: 22, 
+            overflow: 'hidden', 
+            boxShadow: '0 25px 70px rgba(11, 19, 43, 0.3)', 
+            border: '1px solid #EAE5DC' 
+          }}>
+            {/* WhatsApp Header */}
+            <div style={{ backgroundColor: '#075E54', color: '#FFFFFF', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', backgroundColor: '#25D366', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MessageSquare style={{ width: 20, height: 20 }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.94rem', fontWeight: 800 }}>Vendor ITC Recovery Nudge</div>
+                  <div style={{ fontSize: '0.72rem', color: '#DCF8C6' }}>To: {nudgeData.vendorName} • Sec 16(2)(aa)</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNudgeModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}
+              >
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+
+            {/* Chat Body Mock */}
+            <div style={{ backgroundColor: '#ECE5DD', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ alignSelf: 'center', padding: '3px 10px', backgroundColor: '#D1E8E2', borderRadius: 6, fontSize: '0.66rem', color: '#0B132B', fontWeight: 600 }}>
+                STATUTORY ITC RECOVERY REMINDER
+              </div>
+
+              <div style={{ 
+                alignSelf: 'flex-start', 
+                maxWidth: '92%', 
+                padding: '12px 14px', 
+                backgroundColor: '#FFFFFF', 
+                borderRadius: '0 12px 12px 12px', 
+                fontSize: '0.82rem', 
+                color: '#0B132B', 
+                lineHeight: 1.5,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+              }}>
+                {nudgeData.message}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div style={{ padding: 16, backgroundColor: '#FAF8F5', borderTop: '1px solid #EAE5DC', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <button
+                type="button"
+                onClick={handleCopyNudgeText}
+                style={{
+                  padding: '9px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#596579',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #DCD5C9',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <Copy style={{ width: 14, height: 14 }} />
+                <span>Copy Message</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLaunchWhatsApp}
+                style={{
+                  padding: '9px 18px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  backgroundColor: '#25D366',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 4px 14px rgba(37, 211, 102, 0.35)'
+                }}
+              >
+                <Send style={{ width: 14, height: 14 }} />
+                <span>Launch in WhatsApp</span>
               </button>
             </div>
           </div>

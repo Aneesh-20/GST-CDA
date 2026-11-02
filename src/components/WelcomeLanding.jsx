@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -12,10 +12,15 @@ import {
   ChevronRight,
   TrendingUp,
   Receipt,
-  HeartHandshake
+  HeartHandshake,
+  Scale,
+  X,
+  Lock
 } from 'lucide-react';
+import { CLEAR_TAX_COMPARISON_MATRIX } from '../lib/showcaseData.js';
 
 export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FAF8F5', color: '#0B132B', display: 'flex', flexDirection: 'column' }}>
       {/* Top Quiet Navigation */}
@@ -71,6 +76,27 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
           }}>
             September 2026 Active
           </span>
+
+          <button
+            type="button"
+            onClick={() => setIsComparisonOpen(true)}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              color: '#0D6258',
+              backgroundColor: '#EEF8F6',
+              border: '1px solid #B2DDD7',
+              borderRadius: 10,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Scale style={{ width: 13, height: 13, color: '#C87D0E' }} />
+            <span>Why Us vs ClearTax</span>
+          </button>
 
           <button
             type="button"
@@ -457,6 +483,89 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
           Statutory Indian GST compliance • Zero floating-point arithmetic drift
         </div>
       </footer>
+
+      {/* ======================================================== */}
+      {/* MODAL: WHY GST CDA IS BEST (BENCHMARK VS CLEARTAX)    */}
+      {/* ======================================================== */}
+      {isComparisonOpen && (
+        <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <div style={{ 
+            width: '100%', 
+            maxWidth: 820, 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: 24, 
+            overflow: 'hidden', 
+            boxShadow: '0 25px 70px rgba(11, 19, 43, 0.3)', 
+            border: '1px solid #EAE5DC',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '90vh'
+          }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0A1128', color: '#FFFFFF' }}>
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: 9999 }}>
+                  SUPER PREMIUM BENCHMARK
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '6px 0 2px 0' }}>
+                  Why GST CDA is Best vs ClearTax & Legacy Softwares
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>
+                  Crafted for 6.3 Crore MSMEs of Bharat: zero jargon, zero data hostage risk, and verified math.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsComparisonOpen(false)}
+                style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+
+            <div style={{ padding: 24, overflowY: 'auto' }}>
+              <table className="luxury-comparison-table">
+                <thead>
+                  <tr>
+                    <th>Capability & Dimension</th>
+                    <th style={{ backgroundColor: '#0D6258' }}>✨ GST CDA (Ours)</th>
+                    <th>ClearTax (Clear)</th>
+                    <th>Traditional CA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CLEAR_TAX_COMPARISON_MATRIX.map((row, idx) => (
+                    <tr key={idx} style={{ backgroundColor: row.highlight ? '#FAFDFB' : '#FFFFFF' }}>
+                      <td style={{ fontWeight: 700, color: '#0B132B' }}>{row.feature}</td>
+                      <td style={{ fontWeight: 700, color: '#0D6258', backgroundColor: 'rgba(13, 98, 88, 0.04)' }}>
+                        ✓ {row.gstCda}
+                      </td>
+                      <td style={{ color: '#64748B' }}>{row.clearTax}</td>
+                      <td style={{ color: '#94A3B8' }}>{row.traditionalCa}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ marginTop: 20, padding: 16, backgroundColor: '#FAF8F5', borderRadius: 14, border: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Lock style={{ width: 16, height: 16, color: '#0D6258' }} />
+                  <span style={{ fontSize: '0.8rem', color: '#596579' }}>
+                    <strong>Data Sovereignty Guarantee:</strong> Your records are never held hostage. Free export forever.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsComparisonOpen(false)}
+                  style={{ padding: '8px 18px', fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF', backgroundColor: '#0D6258', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                >
+                  Got It
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2129,6 +2129,133 @@ body {
   }
 }
 
+/* ======================================================== */
+/* SUPER PREMIUM LUXURY FINTECH ADDITIONS                  */
+/* ======================================================== */
+
+.super-premium-ticker {
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #0A1128 0%, #0D2823 50%, #0A1128 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  color: #FFFFFF;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(10, 17, 40, 0.15);
+  flex-wrap: wrap;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.pulse-dot-green {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10B981;
+  box-shadow: 0 0 10px #10B981;
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 4px #10B981; }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #10B981; }
+  100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 4px #10B981; }
+}
+
+.luxury-glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -8px rgba(11, 19, 43, 0.05), 0 0 0 1px rgba(13, 98, 88, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-glass-card:hover {
+  box-shadow: 0 16px 38px -10px rgba(11, 19, 43, 0.08), 0 0 0 1px rgba(13, 98, 88, 0.15);
+}
+
+.luxury-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.whatsapp-nudge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.whatsapp-nudge-pill:hover {
+  background-color: #25D366;
+  color: #FFFFFF;
+  border-color: #25D366;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.luxury-comparison-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+}
+
+.luxury-comparison-table th {
+  background-color: #0A1128;
+  color: #FFFFFF;
+  padding: 14px 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: 0.02em;
+}
+
+.luxury-comparison-table td {
+  padding: 13px 16px;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FFFFFF;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.luxury-comparison-table tr:last-child td {
+  border-bottom: none;
+}
+
+.luxury-comparison-table tr:hover td {
+  background-color: #F8FAFC;
+}
+
+
 
 
 

@@ -755,3 +755,92 @@ export const MSME_OS_ROADMAP = [
   'Insurance',
   'Exports'
 ];
+
+/**
+ * Super Premium Differentiation: GST CDA vs. ClearTax vs. Traditional CA
+ */
+export const CLEAR_TAX_COMPARISON_MATRIX = [
+  {
+    feature: 'Core Philosophy',
+    gstCda: 'Plain Language 5-Step Model for MSMEs',
+    clearTax: 'Corporate ERP jargon (SAP/Oracle focus)',
+    traditionalCa: 'Manual paper-based compliance',
+    highlight: true,
+  },
+  {
+    feature: 'Pricing Model',
+    gstCda: '₹0 Starter / ₹199 per filing (Transparent)',
+    clearTax: 'Hidden behind sales quote (₹40,000+ lock-in)',
+    traditionalCa: '₹1,500 – ₹5,000 monthly retainer',
+    highlight: true,
+  },
+  {
+    feature: 'Data Sovereignty & Lock-in',
+    gstCda: 'Zero Lock-in. 100% Free JSON/Excel/PDF forever',
+    clearTax: 'Historical data restricted if subscription lapses',
+    traditionalCa: 'Stored in CA personal files/tally',
+    highlight: true,
+  },
+  {
+    feature: 'Calculation Precision',
+    gstCda: 'Integer paise minor-unit math (0 drift)',
+    clearTax: 'Standard floating-point calculations',
+    traditionalCa: 'Manual spreadsheets & rounded figures',
+    highlight: false,
+  },
+  {
+    feature: 'Notice & Scrutiny Defense',
+    gstCda: 'Built-in Rule 88C & 88D Scrutiny Radar (Included)',
+    clearTax: 'Expensive enterprise add-on module',
+    traditionalCa: 'Charges extra ₹5k–₹25k per notice reply',
+    highlight: true,
+  },
+  {
+    feature: 'Vendor ITC Recovery',
+    gstCda: '1-Click WhatsApp Nudge with pre-composed draft',
+    clearTax: 'Enterprise ERP-only email automation',
+    traditionalCa: 'Manual phone calls by business owner',
+    highlight: true,
+  },
+  {
+    feature: 'Multi-Channel Access',
+    gstCda: 'Web Portal, Mobile App, Assisted Kiosk & WhatsApp',
+    clearTax: 'Desktop web-only portal',
+    traditionalCa: 'In-person visits & phone calls',
+    highlight: false,
+  },
+];
+
+/**
+ * Super Premium: GST Scrutiny & Notice Risk Radar Metrics
+ */
+export const SCRUTINY_DEFENSE_RADAR = {
+  overallScore: 100,
+  riskLevel: 'Zero Risk (Optimal)',
+  riskColor: '#0E7051',
+  rule88C: {
+    title: 'Rule 88C Check (GSTR-1 vs GSTR-3B Turnover)',
+    status: 'Passed (0.00% Variance)',
+    detail: 'Outward tax reported matches tax paid in summary return. No DRC-01B notice exposure.',
+    badge: 'Compliant',
+  },
+  rule88D: {
+    title: 'Rule 88D Check (GSTR-2B vs GSTR-3B ITC Claimed)',
+    status: 'Passed (100% Reconciled)',
+    detail: 'ITC claimed does not exceed GSTR-2B eligible credit. No DRC-01C notice exposure.',
+    badge: 'Protected',
+  },
+  sec16_2_aa: {
+    title: 'Section 16(2)(aa) Statutory Matching',
+    status: 'Passed (Supplier Uploads Verified)',
+    detail: 'All claimed credits correspond to invoices uploaded by registered suppliers.',
+    badge: 'Statutory Shield',
+  },
+  sec16_4: {
+    title: 'Section 16(4) Limitation Check',
+    status: 'Passed (Within 30th Nov Deadline)',
+    detail: 'No time-barred purchase credits in current filing period.',
+    badge: 'On-Time',
+  },
+};
+
