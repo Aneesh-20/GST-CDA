@@ -2139,6 +2139,208 @@ body {
   background-color: #F8FAFC;
 }
 
+/* ==========================================================================
+   PRECISION COMPLIANCE INTELLIGENCE SYSTEM (TAXMATE V2)
+   ========================================================================== */
+
+/* 1. Staged Entrance & Motion Orchestration */
+@keyframes fadeInUpSubtle {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.staged-enter-1 { animation: fadeInUpSubtle 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.staged-enter-2 { animation: fadeInUpSubtle 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both; }
+.staged-enter-3 { animation: fadeInUpSubtle 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+.staged-enter-4 { animation: fadeInUpSubtle 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both; }
+
+/* 2. Precision Command Center Surface */
+.precision-command-center {
+  background: radial-gradient(circle at 85% 15%, rgba(13, 98, 88, 0.32) 0%, rgba(11, 19, 43, 0.98) 60%),
+              linear-gradient(135deg, #070B14 0%, #0B132B 55%, #0A192F 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 50px -10px rgba(7, 11, 20, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.precision-command-center::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* 3. Compliance Orbit & SVG Constellation */
+@keyframes orbitRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orbit-ring-outer {
+  transform-origin: center;
+  animation: orbitRotate 30s linear infinite;
+}
+
+.orbit-glow-disc {
+  filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.45));
+}
+
+/* 4. Filing Runway (Desktop Horizontal / Mobile Progressive) */
+.filing-runway-container {
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1px solid #EAE5DC;
+  padding: 24px;
+  box-shadow: 0 4px 20px -4px rgba(11, 19, 43, 0.04);
+  position: relative;
+}
+
+.filing-runway-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  position: relative;
+}
+
+.filing-runway-station {
+  position: relative;
+  border-radius: 14px;
+  padding: 16px 14px;
+  background: #FAF8F5;
+  border: 1px solid #EAE5DC;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 124px;
+}
+
+.filing-runway-station:hover {
+  transform: translateY(-2px);
+  background: #FFFFFF;
+  border-color: #0D6258;
+  box-shadow: 0 8px 24px -4px rgba(13, 98, 88, 0.12);
+}
+
+.filing-runway-station.active-station {
+  background: #FFFFFF;
+  border: 1.5px solid #0D6258;
+  box-shadow: 0 10px 28px -6px rgba(13, 98, 88, 0.18), 0 0 0 3px rgba(13, 98, 88, 0.08);
+}
+
+@media (max-width: 1024px) {
+  .filing-runway-track {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .filing-runway-station {
+    min-height: auto !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 12px 14px !important;
+  }
+}
+
+/* 5. Core Intelligence Metric Cards */
+.intelligence-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #EAE5DC;
+  padding: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 2px 8px -2px rgba(11, 19, 43, 0.03);
+}
+
+.intelligence-card:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 24px -4px rgba(11, 19, 43, 0.08);
+}
+
+.intelligence-card.highlight-accent {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F5 100%);
+  border-color: #B2DDD7;
+}
+
+.intelligence-card.highlight-accent:hover {
+  border-color: #0D6258;
+  box-shadow: 0 10px 28px -4px rgba(13, 98, 88, 0.14);
+}
+
+/* 6. GSTN Secure Indicator */
+.gstn-secure-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #065F46;
+  white-space: nowrap;
+}
+
+/* 7. Active Sidebar Item Polish */
+.sidebar-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s ease;
+  color: #596579;
+  background: transparent;
+}
+
+.sidebar-nav-btn:hover {
+  background: #FAF8F5;
+  color: #0B132B;
+}
+
+.sidebar-nav-btn.active {
+  background: #EEF8F6;
+  color: #0D6258;
+  border-color: #B2DDD7;
+  font-weight: 700;
+  box-shadow: 0 2px 8px -1px rgba(13, 98, 88, 0.12);
+}
+
+/* 8. Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .orbit-ring-outer {
+    animation: none !important;
+  }
+}
+
 
 
 

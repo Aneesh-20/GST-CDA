@@ -372,20 +372,11 @@ export default function TaxMateShowcaseApp() {
                     setActiveNav(item.id);
                     if (item.id === 'purchases') setPurchasesSubTab('reconciliation');
                   }}
+                  className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    borderRadius: 10,
-                    border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
                     backgroundColor: isActive ? '#EEF8F6' : item.highlight ? '#FCFAF7' : 'transparent',
                     color: isActive ? '#0D6258' : '#596579',
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: '0.82rem',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.12s ease'
+                    fontWeight: isActive ? 700 : 500
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -430,20 +421,11 @@ export default function TaxMateShowcaseApp() {
                     setActiveNav(item.id);
                     setCalendarSubSection(item.id);
                   }}
+                  className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    borderRadius: 10,
-                    border: isActive ? '1px solid #B2DDD7' : '1px solid transparent',
                     backgroundColor: isActive ? '#EEF8F6' : 'transparent',
                     color: isActive ? '#0D6258' : '#596579',
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: '0.82rem',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.12s ease'
+                    fontWeight: isActive ? 700 : 500
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -829,9 +811,28 @@ export default function TaxMateShowcaseApp() {
               </button>
             </div>
 
-          {/* Right: Assisted Channels & Edit Workspace Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Right: Secure GSTN Pill, Assisted Channels & Edit Workspace Pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             
+            {/* Unobtrusive Secure GSTN Connection Indicator */}
+            <div className="gstn-secure-pill hide-on-mobile" title="Verified statutory GSTN gateway session">
+              <span className="pulse-dot-green" />
+              <span>GSTN Connected</span>
+            </div>
+
+            {/* Current Filing Period */}
+            <div className="hide-on-mobile" style={{
+              padding: '5px 10px',
+              borderRadius: 8,
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #EAE5DC',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              color: '#0B132B'
+            }}>
+              {businessProfile.period || 'September 2026'}
+            </div>
+
             {/* Assisted Channels Dropdown - Kiosk, WhatsApp & CA Console */}
             <div style={{ position: 'relative' }}>
               <button
