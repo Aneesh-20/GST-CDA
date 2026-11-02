@@ -1,9 +1,12 @@
-// GST CDA - Multi-Tenant Relational Repository with Session Persistence & RLS Support
+// GST CDA - Multi-Tenant Relational Repository with Session Persistence & Pluggable Database Support
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { hashPassword } from '../security/password.js';
+import { withTenantContext, getDatabaseAdapter } from '../db/adapter.js';
+
+export { withTenantContext };
 
 const DB_DIR = path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DB_DIR, 'gst_cda_v2.sqlite');
@@ -22,7 +25,7 @@ export function getTenantDb() {
   return dbInstance;
 }
 
-function initSchema(db) {
+export function initSchema(db) {
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA busy_timeout = 5000;
@@ -253,212 +256,246 @@ function initSchema(db) {
   `);
 }
 
-let activeOrganizationContext = null;
-
-export function withTenantContext(organizationId, callback) {
-  if (!organizationId) {
-    throw new Error('Tenant context requires an organizationId');
-  }
-  const prevContext = activeOrganizationContext;
-  try {
-    activeOrganizationContext = organizationId;
-    return callback();
-  } finally {
-    activeOrganizationContext = prevContext;
-  }
-}
-
 export const TenantStore = {
+  getAdapter() {
+    return getDatabaseAdapter();
+  },
+
   // Organizations
   async createOrganization({ name, slug, plan = 'STANDARD' }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO organizations (id, name, slug, plan, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, 1, ?, ?)
-    `).run(id, name, slug, plan, now, now);
+    if (this.getAdapter().dialect === 'postgres') {
+      await this.getAdapter().execute(
+        `SELECT set_config('app.allow_global_access', 'true', true); INSERT INTO organizations (id, name, slug, plan, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, true, $5, $6);`,
+        [id, name, slug, plan, now, now]
+      );
+    } else {
+      await this.getAdapter().execute(
+        `INSERT INTO organizations (id, name, slug, plan, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, 1, $5, $6)`,
+        [id, name, slug, plan, now, now]
+      );
+    }
     return { id, name, slug, plan, isActive: true, createdAt: now, updatedAt: now };
   },
 
   async getOrganizationById(id) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM organizations WHERE id = ?`).get(id);
-    return row || null;
+    return this.getAdapter().queryOne(`SELECT * FROM organizations WHERE id = $1`, [id]);
   },
 
   async getOrganizationBySlug(slug) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM organizations WHERE slug = ?`).get(slug);
-    return row || null;
+    return this.getAdapter().queryOne(`SELECT * FROM organizations WHERE slug = $1`, [slug]);
   },
 
   // Users & Memberships
   async createUser({ email, password, fullName, phone = null }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const passwordHash = hashPassword(password);
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO users (id, email, password_hash, full_name, phone, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-    `).run(id, email.toLowerCase(), passwordHash, fullName, phone, now, now);
+    if (this.getAdapter().dialect === 'postgres') {
+      await this.getAdapter().execute(
+        `SELECT set_config('app.allow_global_access', 'true', true); INSERT INTO users (id, email, password_hash, full_name, phone, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, true, $6, $7);`,
+        [id, email.toLowerCase(), passwordHash, fullName, phone, now, now]
+      );
+    } else {
+      await this.getAdapter().execute(
+        `INSERT INTO users (id, email, password_hash, full_name, phone, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 1, $6, $7)`,
+        [id, email.toLowerCase(), passwordHash, fullName, phone, now, now]
+      );
+    }
     return { id, email: email.toLowerCase(), fullName, phone, isActive: true, createdAt: now };
   },
 
   async getUserByEmail(email) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email.toLowerCase());
-    return row || null;
+    if (this.getAdapter().dialect === 'postgres') {
+      return this.getAdapter().queryOne(
+        `SELECT id, email, password_hash, full_name, phone, is_active FROM public.lookup_user_for_auth($1)`,
+        [email.toLowerCase()]
+      );
+    }
+    return this.getAdapter().queryOne(`SELECT * FROM users WHERE email = $1`, [email.toLowerCase()]);
   },
 
   async getUserById(id) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(id);
-    return row || null;
+    return this.getAdapter().queryOne(`SELECT * FROM users WHERE id = $1`, [id]);
   },
 
   async createMembership({ organizationId, userId, role = 'OWNER', status = 'ACTIVE' }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO organization_memberships (id, organization_id, user_id, role, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, organizationId, userId, role, status, now, now);
+    if (this.getAdapter().dialect === 'postgres') {
+      await this.getAdapter().execute(
+        `SELECT set_config('app.allow_global_access', 'true', true); INSERT INTO organization_memberships (id, organization_id, user_id, role, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+        [id, organizationId, userId, role, status, now, now]
+      );
+    } else {
+      await this.getAdapter().execute(
+        `INSERT INTO organization_memberships (id, organization_id, user_id, role, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [id, organizationId, userId, role, status, now, now]
+      );
+    }
     return { id, organizationId, userId, role, status, createdAt: now };
   },
 
-  async getUserMemberships(userId) {
-    const db = getTenantDb();
-    return db.prepare(`
+  async getUserMemberships(userId, tokenHash = null) {
+    if (this.getAdapter().dialect === 'postgres') {
+      if (tokenHash) {
+        return this.getAdapter().queryAll(`
+          SELECT organization_id, organization_name, organization_slug, role, status
+          FROM public.get_user_memberships_bootstrap($1)
+        `, [tokenHash]);
+      }
+      return this.getAdapter().queryAll(`
+        SELECT m.organization_id, o.name as organization_name, o.slug as organization_slug, m.role, m.status
+        FROM organization_memberships m
+        JOIN organizations o ON m.organization_id = o.id
+        WHERE m.user_id = $1 AND m.status = 'ACTIVE' AND o.is_active = true
+      `, [userId]);
+    }
+    return this.getAdapter().queryAll(`
       SELECT m.*, o.name as organization_name, o.slug as organization_slug, o.plan as organization_plan
       FROM organization_memberships m
       JOIN organizations o ON m.organization_id = o.id
-      WHERE m.user_id = ? AND m.status = 'ACTIVE' AND o.is_active = 1
-    `).all(userId);
+      WHERE m.user_id = $1 AND m.status = 'ACTIVE' AND o.is_active = 1
+    `, [userId]);
   },
 
   async getMembership(organizationId, userId) {
-    const db = getTenantDb();
-    return db.prepare(`
-      SELECT * FROM organization_memberships
-      WHERE organization_id = ? AND user_id = ?
-    `).get(organizationId, userId);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM organization_memberships WHERE organization_id = $1 AND user_id = $2`,
+      [organizationId, userId]
+    );
   },
 
   // Persistent Auth Sessions
   async saveSessionRecord({ id, userId, organizationId, tokenHash, role, expiresAt }) {
-    const db = getTenantDb();
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO auth_sessions (id, user_id, organization_id, token_hash, role, revoked, expires_at, created_at)
-      VALUES (?, ?, ?, ?, ?, 0, ?, ?)
-    `).run(id, userId, organizationId, tokenHash, role, expiresAt, now);
+    if (this.getAdapter().dialect === 'postgres') {
+      await this.getAdapter().withTransaction(organizationId, async () => {
+        await this.getAdapter().execute(
+          `INSERT INTO auth_sessions (id, user_id, organization_id, token_hash, role, revoked, expires_at, created_at) VALUES ($1, $2, $3, $4, $5, false, $6, $7)`,
+          [id, userId, organizationId, tokenHash, role, expiresAt, now]
+        );
+      });
+      return;
+    }
+    await this.getAdapter().execute(
+      `INSERT INTO auth_sessions (id, user_id, organization_id, token_hash, role, revoked, expires_at, created_at) VALUES ($1, $2, $3, $4, $5, 0, $6, $7)`,
+      [id, userId, organizationId, tokenHash, role, expiresAt, now]
+    );
   },
 
   async getSessionRecordByTokenHash(tokenHash) {
-    const db = getTenantDb();
-    return db.prepare(`
+    if (this.getAdapter().dialect === 'postgres') {
+      return this.getAdapter().queryOne(`
+        SELECT id, user_id, organization_id, role, expires_at, email, name
+        FROM public.lookup_active_session($1)
+      `, [tokenHash]);
+    }
+    return this.getAdapter().queryOne(`
       SELECT s.*, u.email, u.full_name as name
       FROM auth_sessions s
       JOIN users u ON s.user_id = u.id
-      WHERE s.token_hash = ? AND s.revoked = 0
-    `).get(tokenHash);
+      WHERE s.token_hash = $1 AND s.revoked = 0
+    `, [tokenHash]);
   },
 
   async getSessionRecordById(id) {
-    const db = getTenantDb();
-    return db.prepare(`
+    if (this.getAdapter().dialect === 'postgres') {
+      return this.getAdapter().queryOne(`
+        SELECT s.id, s.user_id, s.organization_id, s.role, s.expires_at, u.email, u.full_name as name
+        FROM auth_sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.id = $1 AND s.revoked = false
+      `, [id]);
+    }
+    return this.getAdapter().queryOne(`
       SELECT s.*, u.email, u.full_name as name
       FROM auth_sessions s
       JOIN users u ON s.user_id = u.id
-      WHERE s.id = ? AND s.revoked = 0
-    `).get(id);
+      WHERE s.id = $1 AND s.revoked = 0
+    `, [id]);
   },
 
   async revokeSession(id) {
-    const db = getTenantDb();
-    db.prepare(`UPDATE auth_sessions SET revoked = 1 WHERE id = ?`).run(id);
+    const revokedVal = this.getAdapter().dialect === 'postgres' ? true : 1;
+    await this.getAdapter().execute(`UPDATE auth_sessions SET revoked = $1 WHERE id = $2`, [revokedVal, id]);
   },
 
   // Invitations
   async createInvitation({ organizationId, email, role, invitedBy }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
     const now = new Date().toISOString();
 
-    db.prepare(`
-      INSERT INTO invitations (id, organization_id, email, role, invited_by, token_hash, status, expires_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?)
-    `).run(id, organizationId, email.toLowerCase(), role, invitedBy, tokenHash, expiresAt, now);
+    await this.getAdapter().execute(
+      `INSERT INTO invitations (id, organization_id, email, role, invited_by, token_hash, status, expires_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)`,
+      [id, organizationId, email.toLowerCase(), role, invitedBy, tokenHash, expiresAt, now]
+    );
 
     return { id, organizationId, email, role, token, expiresAt, createdAt: now };
   },
 
   // Legal Entities
   async createLegalEntity({ organizationId, legalName, tradeName, pan, entityType, isDemo = false }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO legal_entities (id, organization_id, legal_name, trade_name, pan, entity_type, is_demo, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, organizationId, legalName, tradeName || legalName, pan.toUpperCase(), entityType, isDemo ? 1 : 0, now, now);
+    await this.getAdapter().execute(
+      `INSERT INTO legal_entities (id, organization_id, legal_name, trade_name, pan, entity_type, is_demo, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [id, organizationId, legalName, tradeName || legalName, pan.toUpperCase(), entityType, isDemo ? 1 : 0, now, now]
+    );
     return { id, organizationId, legalName, tradeName: tradeName || legalName, pan: pan.toUpperCase(), entityType, isDemo, createdAt: now };
   },
 
   async getLegalEntities(organizationId) {
-    const db = getTenantDb();
-    return db.prepare(`
-      SELECT * FROM legal_entities WHERE organization_id = ? ORDER BY created_at ASC
-    `).all(organizationId);
+    return this.getAdapter().queryAll(
+      `SELECT * FROM legal_entities WHERE organization_id = $1 ORDER BY created_at ASC`,
+      [organizationId]
+    );
   },
 
   async getLegalEntityById(organizationId, id) {
-    const db = getTenantDb();
-    return db.prepare(`
-      SELECT * FROM legal_entities WHERE organization_id = ? AND id = ?
-    `).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM legal_entities WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   // GST Registrations
   async createGSTRegistration({ organizationId, legalEntityId, gstin, stateCode, stateName, registrationType = 'REGULAR' }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    db.prepare(`
-      INSERT INTO gst_registrations (id, organization_id, legal_entity_id, gstin, state_code, state_name, registration_type, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)
-    `).run(id, organizationId, legalEntityId, gstin.toUpperCase(), stateCode, stateName, registrationType, now, now);
+    await this.getAdapter().execute(
+      `INSERT INTO gst_registrations (id, organization_id, legal_entity_id, gstin, state_code, state_name, registration_type, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', $8, $9)`,
+      [id, organizationId, legalEntityId, gstin.toUpperCase(), stateCode, stateName, registrationType, now, now]
+    );
     return { id, organizationId, legalEntityId, gstin: gstin.toUpperCase(), stateCode, stateName, registrationType, status: 'ACTIVE', createdAt: now };
   },
 
   async getGSTRegistrations(organizationId, legalEntityId = null) {
-    const db = getTenantDb();
     if (legalEntityId) {
-      return db.prepare(`
-        SELECT * FROM gst_registrations WHERE organization_id = ? AND legal_entity_id = ? ORDER BY created_at ASC
-      `).all(organizationId, legalEntityId);
+      return this.getAdapter().queryAll(
+        `SELECT * FROM gst_registrations WHERE organization_id = $1 AND legal_entity_id = $2 ORDER BY created_at ASC`,
+        [organizationId, legalEntityId]
+      );
     }
-    return db.prepare(`
-      SELECT * FROM gst_registrations WHERE organization_id = ? ORDER BY created_at ASC
-    `).all(organizationId);
+    return this.getAdapter().queryAll(
+      `SELECT * FROM gst_registrations WHERE organization_id = $1 ORDER BY created_at ASC`,
+      [organizationId]
+    );
   },
 
   async getGSTRegistrationById(organizationId, id) {
-    const db = getTenantDb();
-    return db.prepare(`
-      SELECT * FROM gst_registrations WHERE organization_id = ? AND id = ?
-    `).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM gst_registrations WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   async updateGSTRegistration(organizationId, id, updates) {
-    const db = getTenantDb();
-    const existing = db.prepare(`SELECT * FROM gst_registrations WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const existing = await this.getGSTRegistrationById(organizationId, id);
     if (!existing) return null;
 
     const stateName = updates.stateName ?? existing.state_name;
@@ -466,13 +503,12 @@ export const TenantStore = {
     const status = updates.status ?? existing.status;
     const now = new Date().toISOString();
 
-    db.prepare(`
-      UPDATE gst_registrations 
-      SET state_name = ?, registration_type = ?, status = ?, updated_at = ?
-      WHERE organization_id = ? AND id = ?
-    `).run(stateName, registrationType, status, now, organizationId, id);
+    await this.getAdapter().execute(
+      `UPDATE gst_registrations SET state_name = $1, registration_type = $2, status = $3, updated_at = $4 WHERE organization_id = $5 AND id = $6`,
+      [stateName, registrationType, status, now, organizationId, id]
+    );
 
-    return db.prepare(`SELECT * FROM gst_registrations WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    return this.getGSTRegistrationById(organizationId, id);
   },
 
   // Sales Invoices
@@ -495,49 +531,48 @@ export const TenantStore = {
     totalPaise,
     status = 'CONFIRMED'
   }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
-    db.prepare(`
+
+    await this.getAdapter().execute(`
       INSERT INTO sales_invoices (
         id, organization_id, legal_entity_id, gst_registration_id, return_period_key,
         invoice_number, invoice_date, party_name, party_gstin, place_of_supply,
         supply_type, taxable_paise, rate_percent, cgst_paise, sgst_paise, igst_paise,
         total_paise, status, version, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `).run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 1, $19, $20)
+    `, [
       id, organizationId, legalEntityId, gstRegistrationId, returnPeriodKey,
       invoiceNumber, invoiceDate, partyName, partyGstin || null, placeOfSupply,
       supplyType, taxablePaise.toString(), ratePercent, cgstPaise.toString(), sgstPaise.toString(), igstPaise.toString(),
       totalPaise.toString(), status, now, now
-    );
+    ]);
 
     return this.getSalesInvoiceById(organizationId, id);
   },
 
   async getSalesInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
-    const db = getTenantDb();
-    let query = `SELECT * FROM sales_invoices WHERE organization_id = ?`;
+    let query = `SELECT * FROM sales_invoices WHERE organization_id = $1`;
     const params = [organizationId];
+    let pIdx = 2;
 
     if (gstRegistrationId) {
-      query += ` AND gst_registration_id = ?`;
+      query += ` AND gst_registration_id = $${pIdx++}`;
       params.push(gstRegistrationId);
     }
     if (status) {
-      query += ` AND status = ?`;
+      query += ` AND status = $${pIdx++}`;
       params.push(status);
     }
     if (cursor) {
-      query += ` AND id > ?`;
+      query += ` AND id > $${pIdx++}`;
       params.push(cursor);
     }
 
-    query += ` ORDER BY id ASC LIMIT ?`;
+    query += ` ORDER BY id ASC LIMIT $${pIdx++}`;
     params.push(limit + 1);
 
-    const rows = db.prepare(query).all(...params);
+    const rows = await this.getAdapter().queryAll(query, params);
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const nextCursor = hasMore ? items[items.length - 1].id : null;
@@ -550,14 +585,18 @@ export const TenantStore = {
   },
 
   async getSalesInvoiceById(organizationId, id) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM sales_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const row = await this.getAdapter().queryOne(
+      `SELECT * FROM sales_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
     return row ? mapInvoiceRow(row) : null;
   },
 
   async updateSalesInvoice(organizationId, id, expectedVersion, updates) {
-    const db = getTenantDb();
-    const existing = db.prepare(`SELECT * FROM sales_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const existing = await this.getAdapter().queryOne(
+      `SELECT * FROM sales_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
     if (!existing) return { notFound: true };
 
     if (expectedVersion !== null && existing.version !== expectedVersion) {
@@ -577,24 +616,26 @@ export const TenantStore = {
     const status = updates.status ?? existing.status;
     const nextVersion = existing.version + 1;
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       UPDATE sales_invoices
-      SET party_name = ?, place_of_supply = ?, supply_type = ?, taxable_paise = ?, rate_percent = ?,
-          cgst_paise = ?, sgst_paise = ?, igst_paise = ?, total_paise = ?, status = ?, version = ?, updated_at = ?
-      WHERE organization_id = ? AND id = ?
-    `).run(
+      SET party_name = $1, place_of_supply = $2, supply_type = $3, taxable_paise = $4, rate_percent = $5,
+          cgst_paise = $6, sgst_paise = $7, igst_paise = $8, total_paise = $9, status = $10, version = $11, updated_at = $12
+      WHERE organization_id = $13 AND id = $14
+    `, [
       partyName, placeOfSupply, supplyType, taxablePaise, ratePercent,
       cgstPaise, sgstPaise, igstPaise, totalPaise, status, nextVersion, now,
       organizationId, id
-    );
+    ]);
 
     return { invoice: await this.getSalesInvoiceById(organizationId, id) };
   },
 
   async deleteSalesInvoice(organizationId, id) {
-    const db = getTenantDb();
-    const res = db.prepare(`DELETE FROM sales_invoices WHERE organization_id = ? AND id = ?`).run(organizationId, id);
-    return res.changes > 0;
+    const res = await this.getAdapter().execute(
+      `DELETE FROM sales_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
+    return res.rowCount > 0;
   },
 
   // Purchase Invoices (Default ITC: NEEDS_REVIEW)
@@ -618,49 +659,48 @@ export const TenantStore = {
     itcEligibility = 'NEEDS_REVIEW',
     status = 'CONFIRMED'
   }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       INSERT INTO purchase_invoices (
         id, organization_id, legal_entity_id, gst_registration_id, return_period_key,
         invoice_number, invoice_date, party_name, party_gstin, place_of_supply,
         supply_type, taxable_paise, rate_percent, cgst_paise, sgst_paise, igst_paise,
         total_paise, itc_eligibility, status, version, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `).run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, 1, $20, $21)
+    `, [
       id, organizationId, legalEntityId, gstRegistrationId, returnPeriodKey,
       invoiceNumber, invoiceDate, partyName, partyGstin || null, placeOfSupply,
       supplyType, taxablePaise.toString(), ratePercent, cgstPaise.toString(), sgstPaise.toString(), igstPaise.toString(),
       totalPaise.toString(), itcEligibility, status, now, now
-    );
+    ]);
 
     return this.getPurchaseInvoiceById(organizationId, id);
   },
 
   async getPurchaseInvoices(organizationId, { gstRegistrationId = null, cursor = null, limit = 50, status = null } = {}) {
-    const db = getTenantDb();
-    let query = `SELECT * FROM purchase_invoices WHERE organization_id = ?`;
+    let query = `SELECT * FROM purchase_invoices WHERE organization_id = $1`;
     const params = [organizationId];
+    let pIdx = 2;
 
     if (gstRegistrationId) {
-      query += ` AND gst_registration_id = ?`;
+      query += ` AND gst_registration_id = $${pIdx++}`;
       params.push(gstRegistrationId);
     }
     if (status) {
-      query += ` AND status = ?`;
+      query += ` AND status = $${pIdx++}`;
       params.push(status);
     }
     if (cursor) {
-      query += ` AND id > ?`;
+      query += ` AND id > $${pIdx++}`;
       params.push(cursor);
     }
 
-    query += ` ORDER BY id ASC LIMIT ?`;
+    query += ` ORDER BY id ASC LIMIT $${pIdx++}`;
     params.push(limit + 1);
 
-    const rows = db.prepare(query).all(...params);
+    const rows = await this.getAdapter().queryAll(query, params);
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const nextCursor = hasMore ? items[items.length - 1].id : null;
@@ -673,14 +713,18 @@ export const TenantStore = {
   },
 
   async getPurchaseInvoiceById(organizationId, id) {
-    const db = getTenantDb();
-    const row = db.prepare(`SELECT * FROM purchase_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const row = await this.getAdapter().queryOne(
+      `SELECT * FROM purchase_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
     return row ? mapInvoiceRow(row) : null;
   },
 
   async updatePurchaseInvoice(organizationId, id, expectedVersion, updates) {
-    const db = getTenantDb();
-    const existing = db.prepare(`SELECT * FROM purchase_invoices WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const existing = await this.getAdapter().queryOne(
+      `SELECT * FROM purchase_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
     if (!existing) return { notFound: true };
 
     if (expectedVersion !== null && existing.version !== expectedVersion) {
@@ -701,94 +745,109 @@ export const TenantStore = {
     const status = updates.status ?? existing.status;
     const nextVersion = existing.version + 1;
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       UPDATE purchase_invoices
-      SET party_name = ?, place_of_supply = ?, supply_type = ?, taxable_paise = ?, rate_percent = ?,
-          cgst_paise = ?, sgst_paise = ?, igst_paise = ?, total_paise = ?, itc_eligibility = ?, status = ?, version = ?, updated_at = ?
-      WHERE organization_id = ? AND id = ?
-    `).run(
+      SET party_name = $1, place_of_supply = $2, supply_type = $3, taxable_paise = $4, rate_percent = $5,
+          cgst_paise = $6, sgst_paise = $7, igst_paise = $8, total_paise = $9, itc_eligibility = $10, status = $11, version = $12, updated_at = $13
+      WHERE organization_id = $14 AND id = $15
+    `, [
       partyName, placeOfSupply, supplyType, taxablePaise, ratePercent,
       cgstPaise, sgstPaise, igstPaise, totalPaise, itcEligibility, status, nextVersion, now,
       organizationId, id
-    );
+    ]);
 
     return { invoice: await this.getPurchaseInvoiceById(organizationId, id) };
   },
 
   async deletePurchaseInvoice(organizationId, id) {
-    const db = getTenantDb();
-    const res = db.prepare(`DELETE FROM purchase_invoices WHERE organization_id = ? AND id = ?`).run(organizationId, id);
-    return res.changes > 0;
+    const res = await this.getAdapter().execute(
+      `DELETE FROM purchase_invoices WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
+    return res.rowCount > 0;
   },
 
   // Reconciliation Runs & Exceptions
   async createReconciliationRun({ organizationId, gstRegistrationId, periodKey, ruleVersion = 'v1.0.0' }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const purchases = db.prepare(`
-      SELECT * FROM purchase_invoices 
-      WHERE organization_id = ? AND gst_registration_id = ?
-    `).all(organizationId, gstRegistrationId);
+    const purchases = await this.getAdapter().queryAll(
+      `SELECT * FROM purchase_invoices WHERE organization_id = $1 AND gst_registration_id = $2`,
+      [organizationId, gstRegistrationId]
+    );
 
     const matchedCount = purchases.filter(p => p.party_gstin && p.status === 'CONFIRMED').length;
     const mismatchedCount = purchases.filter(p => !p.party_gstin).length;
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       INSERT INTO reconciliation_runs (
         id, organization_id, gst_registration_id, period_key, rule_version,
         matched_count, mismatched_count, missing_in_2b_count, missing_in_books_count, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 'COMPLETED', ?)
-    `).run(id, organizationId, gstRegistrationId, periodKey, ruleVersion, matchedCount, mismatchedCount, now);
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 0, 'COMPLETED', $8)
+    `, [id, organizationId, gstRegistrationId, periodKey, ruleVersion, matchedCount, mismatchedCount, now]);
 
     if (mismatchedCount > 0) {
       const mismatched = purchases.find(p => !p.party_gstin);
       if (mismatched) {
         const excId = crypto.randomUUID();
-        db.prepare(`
+        await this.getAdapter().execute(`
           INSERT INTO exception_cases (
             id, organization_id, reconciliation_run_id, invoice_number, party_name,
             difference_paise, exception_type, status, resolution_notes, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, 'INVALID_GSTIN', 'OPEN', 'Supplier GSTIN is missing or unverified', ?, ?)
-        `).run(excId, organizationId, id, mismatched.invoice_number, mismatched.party_name, mismatched.total_paise, now, now);
+          ) VALUES ($1, $2, $3, $4, $5, $6, 'INVALID_GSTIN', 'OPEN', 'Supplier GSTIN is missing or unverified', $7, $8)
+        `, [excId, organizationId, id, mismatched.invoice_number, mismatched.party_name, mismatched.total_paise, now, now]);
       }
     }
 
-    return db.prepare(`SELECT * FROM reconciliation_runs WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM reconciliation_runs WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   async getExceptionCases(organizationId, status = null) {
-    const db = getTenantDb();
     if (status) {
-      return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND status = ? ORDER BY created_at DESC`).all(organizationId, status);
+      return this.getAdapter().queryAll(
+        `SELECT * FROM exception_cases WHERE organization_id = $1 AND status = $2 ORDER BY created_at DESC`,
+        [organizationId, status]
+      );
     }
-    return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? ORDER BY created_at DESC`).all(organizationId);
+    return this.getAdapter().queryAll(
+      `SELECT * FROM exception_cases WHERE organization_id = $1 ORDER BY created_at DESC`,
+      [organizationId]
+    );
   },
 
   async updateExceptionCase(organizationId, id, { action, notes }) {
-    const db = getTenantDb();
-    const existing = db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    const existing = await this.getAdapter().queryOne(
+      `SELECT * FROM exception_cases WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
     if (!existing) return null;
 
     const newStatus = action === 'ACCEPT' ? 'ACCEPTED' : (action === 'REJECT' ? 'REJECTED' : 'RESOLVED');
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       UPDATE exception_cases
-      SET status = ?, resolution_notes = ?, updated_at = ?
-      WHERE organization_id = ? AND id = ?
-    `).run(newStatus, notes || existing.resolution_notes, now, organizationId, id);
+      SET status = $1, resolution_notes = $2, updated_at = $3
+      WHERE organization_id = $4 AND id = $5
+    `, [newStatus, notes || existing.resolution_notes, now, organizationId, id]);
 
-    return db.prepare(`SELECT * FROM exception_cases WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM exception_cases WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   // Statutory Filing State Machine (No Fake ARNs)
   async createFilingAttempt({ organizationId, gstRegistrationId, periodKey, returnType, idempotencyKey, providerTrackingId, status = 'SUBMITTED', arn = null, authorizedBy }) {
-    const db = getTenantDb();
-    
     // Idempotency check
-    const existing = db.prepare(`SELECT * FROM filing_attempts WHERE idempotency_key = ?`).get(idempotencyKey);
+    const existing = await this.getAdapter().queryOne(
+      `SELECT * FROM filing_attempts WHERE idempotency_key = $1`,
+      [idempotencyKey]
+    );
     if (existing) {
       return { isDuplicate: true, filing: existing };
     }
@@ -798,55 +857,57 @@ export const TenantStore = {
     const responseHash = crypto.createHash('sha256').update(`${providerTrackingId}:${payloadHash}`).digest('hex');
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       INSERT INTO filing_attempts (
         id, organization_id, gst_registration_id, period_key, return_type,
         idempotency_key, provider_tracking_id, status, arn, payload_hash, response_hash, authorized_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    `, [
       id, organizationId, gstRegistrationId, periodKey, returnType,
       idempotencyKey, providerTrackingId, status, arn, payloadHash, responseHash, authorizedBy, now, now
-    );
+    ]);
 
-    const filing = db.prepare(`SELECT * FROM filing_attempts WHERE id = ?`).get(id);
+    const filing = await this.getAdapter().queryOne(`SELECT * FROM filing_attempts WHERE id = $1`, [id]);
     return { isDuplicate: false, filing };
   },
 
   async getFilingAttemptById(organizationId, id) {
-    const db = getTenantDb();
-    return db.prepare(`SELECT * FROM filing_attempts WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM filing_attempts WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   // Imports
   async createImportJob({ organizationId, entityType, filename }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       INSERT INTO import_jobs (id, organization_id, entity_type, filename, status, total_rows, valid_rows, error_rows, created_at)
-      VALUES (?, ?, ?, ?, 'COMPLETED', 1, 1, 0, ?)
-    `).run(id, organizationId, entityType, filename, now);
+      VALUES ($1, $2, $3, $4, 'COMPLETED', 1, 1, 0, $5)
+    `, [id, organizationId, entityType, filename, now]);
 
-    return db.prepare(`SELECT * FROM import_jobs WHERE id = ?`).get(id);
+    return this.getAdapter().queryOne(`SELECT * FROM import_jobs WHERE id = $1`, [id]);
   },
 
   async getImportJobById(organizationId, id) {
-    const db = getTenantDb();
-    return db.prepare(`SELECT * FROM import_jobs WHERE organization_id = ? AND id = ?`).get(organizationId, id);
+    return this.getAdapter().queryOne(
+      `SELECT * FROM import_jobs WHERE organization_id = $1 AND id = $2`,
+      [organizationId, id]
+    );
   },
 
   // Audit Trail (Chained Tamper-Evident SHA-256)
   async appendAuditEvent({ organizationId, actorId, action, entityType, entityId, correlationId, metadata = {} }) {
-    const db = getTenantDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const lastEvent = db.prepare(`
+    const lastEvent = await this.getAdapter().queryOne(`
       SELECT event_hash FROM audit_events 
-      WHERE organization_id = ? 
+      WHERE organization_id = $1 
       ORDER BY created_at DESC, id DESC LIMIT 1
-    `).get(organizationId);
+    `, [organizationId]);
 
     const prevHash = lastEvent ? lastEvent.event_hash : '0000000000000000000000000000000000000000000000000000000000000000';
     const metadataStr = JSON.stringify(metadata);
@@ -855,29 +916,52 @@ export const TenantStore = {
       .update(`${prevHash}:${organizationId}:${actorId || 'system'}:${action}:${entityId}:${correlationId}:${now}:${metadataStr}`)
       .digest('hex');
 
-    db.prepare(`
+    await this.getAdapter().execute(`
       INSERT INTO audit_events (
         id, organization_id, actor_id, action, entity_type, entity_id,
         prev_hash, event_hash, correlation_id, metadata, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `, [
       id, organizationId, actorId || null, action, entityType, entityId,
       prevHash, eventHash, correlationId, metadataStr, now
-    );
+    ]);
 
     return { id, organizationId, actorId, action, entityType, entityId, prevHash, eventHash, correlationId, createdAt: now };
   },
 
   async getAuditEvents(organizationId, limit = 50) {
-    const db = getTenantDb();
-    const rows = db.prepare(`
-      SELECT * FROM audit_events WHERE organization_id = ? ORDER BY created_at DESC LIMIT ?
-    `).all(organizationId, limit);
+    const rows = await this.getAdapter().queryAll(`
+      SELECT * FROM audit_events WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2
+    `, [organizationId, limit]);
 
     return rows.map(r => ({
       ...r,
       metadata: r.metadata ? JSON.parse(r.metadata) : {}
     }));
+  },
+
+  // Atomic Tenant Data Reset
+  async resetTenantData({ organizationId, actorId, correlationId, action = 'clear' }) {
+    return this.getAdapter().withTransaction(organizationId, async (tx) => {
+      await tx.execute(`DELETE FROM exception_cases WHERE organization_id = $1`, [organizationId]);
+      await tx.execute(`DELETE FROM reconciliation_runs WHERE organization_id = $1`, [organizationId]);
+      await tx.execute(`DELETE FROM purchase_invoices WHERE organization_id = $1`, [organizationId]);
+      await tx.execute(`DELETE FROM sales_invoices WHERE organization_id = $1`, [organizationId]);
+      await tx.execute(`DELETE FROM filing_attempts WHERE organization_id = $1`, [organizationId]);
+      await tx.execute(`DELETE FROM import_jobs WHERE organization_id = $1`, [organizationId]);
+
+      await this.appendAuditEvent({
+        organizationId,
+        actorId,
+        action: 'TENANT_DATA_RESET',
+        entityType: 'ORGANIZATION',
+        entityId: organizationId,
+        correlationId: correlationId || crypto.randomUUID(),
+        metadata: { action }
+      });
+
+      return { salesCount: 0, purchasesCount: 0 };
+    });
   }
 };
 

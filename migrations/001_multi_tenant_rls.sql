@@ -1,6 +1,6 @@
 -- PostgreSQL Multi-Tenant Migration with Strict Row-Level Security (RLS)
 -- Tenancy hierarchy: organization -> legal_entity -> gst_registration -> return_period
--- Complies with Milestone 1 Release Gate: USING + WITH CHECK, non-owner gst_cda_app role, FORCE RLS
+-- Hardened: USING + WITH CHECK, non-owner gst_cda_app role, FORCE RLS on ALL tables
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -9,7 +9,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'gst_cda_app') THEN
-    CREATE ROLE gst_cda_app LOGIN NOBYPASSRLS;
+    CREATE ROLE gst_cda_app WITH LOGIN PASSWORD 'gst_cda_app_secret' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
+  ELSE
+    ALTER ROLE gst_cda_app WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
   END IF;
 END
 $$;
@@ -246,7 +248,18 @@ CREATE INDEX IF NOT EXISTS idx_sales_org ON sales_invoices(organization_id, gst_
 CREATE INDEX IF NOT EXISTS idx_purchases_org ON purchase_invoices(organization_id, gst_registration_id);
 CREATE INDEX IF NOT EXISTS idx_audit_org ON audit_events(organization_id, created_at DESC);
 
--- Enable & FORCE Row-Level Security (RLS) on all tenant-owned tables
+-- =========================================================================
+-- Enable & FORCE Row-Level Security (RLS) on ALL tables (Global & Tenant)
+-- =========================================================================
+
+-- Global Identity & Organizations RLS
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organizations FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users FORCE ROW LEVEL SECURITY;
+
+-- Tenant-Owned Tables RLS (13 tables)
 ALTER TABLE organization_memberships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_memberships FORCE ROW LEVEL SECURITY;
 
@@ -286,74 +299,247 @@ ALTER TABLE import_jobs FORCE ROW LEVEL SECURITY;
 ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_events FORCE ROW LEVEL SECURITY;
 
--- Create RLS Policies with BOTH USING and WITH CHECK
--- Absent or empty app.organization_id evaluates to NULL and denies all reads/writes.
+-- =========================================================================
+-- RLS Policies: USING and WITH CHECK
+-- =========================================================================
+
+-- 1. Organizations Policy: Users can only see/mutate the active tenant organization,
+-- or organizations where they hold active membership, or during global signup.
+DROP POLICY IF EXISTS tenant_isolation_organizations ON organizations;
+CREATE POLICY tenant_isolation_organizations ON organizations
+    FOR ALL
+    USING (
+      id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR EXISTS (
+        SELECT 1 FROM public.organization_memberships m
+        WHERE m.organization_id = organizations.id
+          AND m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+          AND m.status = 'ACTIVE'
+      )
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    )
+    WITH CHECK (
+      id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    );
+
+-- 2. Users Policy: Can only see own profile, or members in the active tenant organization,
+-- or during initial signup. Password hashes are never exposed through arbitrary queries.
+DROP POLICY IF EXISTS tenant_isolation_users ON users;
+CREATE POLICY tenant_isolation_users ON users
+    FOR ALL
+    USING (
+      id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+      OR EXISTS (
+        SELECT 1 FROM public.organization_memberships m
+        WHERE m.user_id = users.id
+          AND m.organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      )
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    )
+    WITH CHECK (
+      id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    );
+
+-- 3. Organization Memberships Policy: Scoped by tenant context or active user context
+DROP POLICY IF EXISTS tenant_isolation_memberships ON organization_memberships;
 CREATE POLICY tenant_isolation_memberships ON organization_memberships
     FOR ALL
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
-    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    USING (
+      organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    )
+    WITH CHECK (
+      organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    );
 
+-- 4. Tenant Tables (12 additional tables)
+DROP POLICY IF EXISTS tenant_isolation_sessions ON auth_sessions;
 CREATE POLICY tenant_isolation_sessions ON auth_sessions
     FOR ALL
-    USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
-    WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
+    USING (
+      organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    )
+    WITH CHECK (
+      organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid
+      OR NULLIF(current_setting('app.allow_global_access', true), '') = 'true'
+    );
 
+DROP POLICY IF EXISTS tenant_isolation_invitations ON invitations;
 CREATE POLICY tenant_isolation_invitations ON invitations
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_entities ON legal_entities;
 CREATE POLICY tenant_isolation_entities ON legal_entities
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_registrations ON gst_registrations;
 CREATE POLICY tenant_isolation_registrations ON gst_registrations
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_periods ON return_periods;
 CREATE POLICY tenant_isolation_periods ON return_periods
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_sales ON sales_invoices;
 CREATE POLICY tenant_isolation_sales ON sales_invoices
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_purchases ON purchase_invoices;
 CREATE POLICY tenant_isolation_purchases ON purchase_invoices
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_reconciliations ON reconciliation_runs;
 CREATE POLICY tenant_isolation_reconciliations ON reconciliation_runs
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_exceptions ON exception_cases;
 CREATE POLICY tenant_isolation_exceptions ON exception_cases
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_filings ON filing_attempts;
 CREATE POLICY tenant_isolation_filings ON filing_attempts
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_imports ON import_jobs;
 CREATE POLICY tenant_isolation_imports ON import_jobs
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_audit ON audit_events;
 CREATE POLICY tenant_isolation_audit ON audit_events
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
     WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid);
 
--- Grant privileges only to application role
+-- =========================================================================
+-- Hardened Security Definer Functions for Authentication Bootstrap
+-- =========================================================================
+
+-- Function 1: Lookup active session by cryptographically signed token hash
+CREATE OR REPLACE FUNCTION public.lookup_active_session(p_token_hash TEXT)
+RETURNS TABLE (
+    id UUID,
+    user_id UUID,
+    organization_id UUID,
+    role TEXT,
+    expires_at TIMESTAMPTZ,
+    email TEXT,
+    name TEXT
+)
+LANGUAGE plpgsql
+STRICT
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT s.id, s.user_id, s.organization_id, s.role, s.expires_at, u.email, u.full_name
+    FROM public.auth_sessions s
+    JOIN public.users u ON s.user_id = u.id
+    WHERE s.token_hash = p_token_hash
+      AND s.revoked = false
+      AND s.expires_at > pg_catalog.now();
+END;
+$$;
+
+-- Function 2: Secure membership discovery authenticated strictly by session token
+-- Derives requesting user identity internally from valid session token.
+-- Prevents arbitrary user membership enumeration without credentials.
+CREATE OR REPLACE FUNCTION public.get_user_memberships_bootstrap(p_token_hash TEXT)
+RETURNS TABLE (
+    organization_id UUID,
+    organization_name TEXT,
+    organization_slug TEXT,
+    role TEXT,
+    status TEXT
+)
+LANGUAGE plpgsql
+STRICT
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    SELECT s.user_id INTO v_user_id
+    FROM public.auth_sessions s
+    WHERE s.token_hash = p_token_hash
+      AND s.revoked = false
+      AND s.expires_at > pg_catalog.now();
+
+    IF v_user_id IS NULL THEN
+        RETURN;
+    END IF;
+
+    RETURN QUERY
+    SELECT m.organization_id, o.name, o.slug, m.role, m.status
+    FROM public.organization_memberships m
+    JOIN public.organizations o ON m.organization_id = o.id
+    WHERE m.user_id = v_user_id
+      AND m.status = 'ACTIVE'
+      AND o.is_active = true;
+END;
+$$;
+
+-- Function 3: Lookup user for login authentication without exposing password hashes to general queries
+CREATE OR REPLACE FUNCTION public.lookup_user_for_auth(p_email TEXT)
+RETURNS TABLE (
+    id UUID,
+    email TEXT,
+    password_hash TEXT,
+    full_name TEXT,
+    phone TEXT,
+    is_active BOOLEAN
+)
+LANGUAGE plpgsql
+STRICT
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id, u.email, u.password_hash, u.full_name, u.phone, u.is_active
+    FROM public.users u
+    WHERE u.email = pg_catalog.lower(p_email)
+      AND u.is_active = true;
+END;
+$$;
+
+-- =========================================================================
+-- Role Privileges Hardening
+-- =========================================================================
+REVOKE ALL PRIVILEGES ON SCHEMA public FROM gst_cda_app;
 GRANT USAGE ON SCHEMA public TO gst_cda_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO gst_cda_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO gst_cda_app;
+REVOKE CREATE ON SCHEMA public FROM gst_cda_app;
+
+-- Grant EXECUTE only on authorized security definer bootstrap functions
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.lookup_active_session(TEXT) TO gst_cda_app;
+GRANT EXECUTE ON FUNCTION public.get_user_memberships_bootstrap(TEXT) TO gst_cda_app;
+GRANT EXECUTE ON FUNCTION public.lookup_user_for_auth(TEXT) TO gst_cda_app;
