@@ -1,26 +1,46 @@
-import { NextResponse } from 'next/server';
-import { resetUserData, clearUserRecords } from '../../../lib/db.js';
+// POST /api/reset - Tenant Data Reset Guarded by Owner Permission & Confirmation
+import crypto from 'node:crypto';
+import { NextResponse } from 'next/server.js';
+import { requireAuthContext } from '../../../lib/security/context.js';
+import { createProblemResponse, badRequest } from '../../../lib/security/errors.js';
+import { TenantStore, getTenantDb } from '../../../lib/services/tenantStore.js';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { userEmail, action } = body;
+    const ctx = await requireAuthContext(request, 'canManageTeam');
+    const body = await request.json().catch(() => ({}));
+    const { action, confirmation } = body;
 
-    if (!userEmail) {
-      return NextResponse.json({ error: 'userEmail is required' }, { status: 400 });
+    if (confirmation !== 'CONFIRM_RESET_TENANT_DATA') {
+      throw badRequest("Explicit confirmation 'CONFIRM_RESET_TENANT_DATA' required for destructive reset operations");
     }
 
-    if (action === 'seed-sample') {
-      const result = resetUserData(userEmail);
-      return NextResponse.json({ success: true, ...result });
-    } else {
-      // Default reset action clears everything from scratch: 0 sales and 0 purchases
-      const result = clearUserRecords(userEmail);
-      return NextResponse.json({ success: true, ...result });
-    }
+    const db = getTenantDb();
+    
+    // Scoped only to the caller's organizationId
+    db.prepare(`DELETE FROM sales_invoices WHERE organization_id = ?`).run(ctx.organizationId);
+    db.prepare(`DELETE FROM purchase_invoices WHERE organization_id = ?`).run(ctx.organizationId);
+    db.prepare(`DELETE FROM exception_cases WHERE organization_id = ?`).run(ctx.organizationId);
+    db.prepare(`DELETE FROM reconciliation_runs WHERE organization_id = ?`).run(ctx.organizationId);
+    db.prepare(`DELETE FROM filing_attempts WHERE organization_id = ?`).run(ctx.organizationId);
+
+    await TenantStore.appendAuditEvent({
+      organizationId: ctx.organizationId,
+      actorId: ctx.userId,
+      action: 'TENANT_DATA_RESET',
+      entityType: 'ORGANIZATION',
+      entityId: ctx.organizationId,
+      correlationId: request.headers.get('x-correlation-id') || crypto.randomUUID(),
+      metadata: { action: action || 'clear' }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Tenant invoices and compliance runs cleared successfully',
+      salesCount: 0,
+      purchasesCount: 0
+    });
   } catch (error) {
-    console.error('POST /api/reset error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return createProblemResponse(error, request);
   }
 }
-
