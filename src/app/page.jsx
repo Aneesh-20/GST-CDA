@@ -52,7 +52,7 @@ import CalendarVaultSupport from '../components/CalendarVaultSupport.jsx';
 import { COMPLIANCE_SCORE, EXPERIENCE_CHANNELS, SAMPLE_SALES_TABLE } from '../lib/showcaseData.js';
 import { BLANK_BUSINESS, STARTER_BUSINESS, SAMPLE_PURCHASE_TABLE } from '../lib/realtimeData.js';
 
-export default function GSTCDAShowcaseApp() {
+export default function TaxMateShowcaseApp() {
   // Main view state: 'app' (default hero showcase) | 'landing' | 'onboarding'
   const [viewMode, setViewMode] = useState('app');
   
@@ -298,14 +298,14 @@ export default function GSTCDAShowcaseApp() {
                 fontSize: '0.88rem',
                 boxShadow: '0 4px 12px rgba(13, 98, 88, 0.25)'
               }}>
-                CDA
+                TM
               </div>
               <div>
                 <div style={{ fontWeight: 800, fontSize: '0.98rem', letterSpacing: '-0.02em', color: '#0B132B' }}>
-                  GST CDA
+                  TaxMate
                 </div>
                 <div style={{ fontSize: '0.66rem', color: '#596579' }}>
-                  GST Compliance Digital Assistant
+                  Smart GST Compliance Companion
                 </div>
               </div>
             </div>
@@ -522,11 +522,11 @@ export default function GSTCDAShowcaseApp() {
                   fontWeight: 800, 
                   fontSize: '0.85rem' 
                 }}>
-                  CDA
+                  TM
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0B132B' }}>GST CDA</div>
-                  <div style={{ fontSize: '0.64rem', color: '#596579' }}>Compliance Digital Assistant</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0B132B' }}>TaxMate</div>
+                  <div style={{ fontSize: '0.64rem', color: '#596579' }}>Smart GST Compliance Companion</div>
                 </div>
               </div>
               <button
@@ -791,7 +791,7 @@ export default function GSTCDAShowcaseApp() {
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EAE5DC'}
               >
                 <Search style={{ width: 14, height: 14, color: '#0D6258' }} />
-                <span style={{ flex: 1 }}>Ask GST CDA...</span>
+                <span style={{ flex: 1 }}>Ask TaxMate...</span>
                 <kbd style={{ 
                   fontSize: '0.68rem', 
                   backgroundColor: '#FFFFFF', 
@@ -823,7 +823,7 @@ export default function GSTCDAShowcaseApp() {
                   color: '#0D6258',
                   flexShrink: 0
                 }}
-                aria-label="Search or Ask GST CDA"
+                aria-label="Search or Ask TaxMate"
               >
                 <Search style={{ width: 15, height: 15 }} />
               </button>
@@ -1374,7 +1374,7 @@ export default function GSTCDAShowcaseApp() {
                   <MessageSquare style={{ width: 20, height: 20 }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.94rem', fontWeight: 800 }}>GST CDA Concierge</div>
+                  <div style={{ fontSize: '0.94rem', fontWeight: 800 }}>TaxMate Concierge</div>
                   <div style={{ fontSize: '0.72rem', color: '#DCF8C6' }}>Official Business Account • Online</div>
                 </div>
               </div>

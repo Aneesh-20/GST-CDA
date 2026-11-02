@@ -1,4 +1,4 @@
-// GST CDA - GSTIN Validation & State Directory
+// TaxMate - GSTIN Validation & State Directory
 // Note: Local validation verifies syntax and checksum. It does NOT claim GSTN live verification.
 
 export interface GSTINValidationResult {

@@ -1,4 +1,4 @@
-# GST CDA - Data Dictionary & Relational Schema
+# TaxMate - Data Dictionary & Relational Schema
 
 **Entity Relationships & Minor Unit (Paise) Storage Model**
 

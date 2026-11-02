@@ -1,4 +1,4 @@
-// GST CDA - Database Schema (Prisma)
+// TaxMate - Database Schema (Prisma)
 // Supports local zero-dependency SQLite and enterprise PostgreSQL via DATABASE_URL
 
 generator client {

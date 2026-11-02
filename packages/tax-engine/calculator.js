@@ -1,4 +1,4 @@
-// GST CDA - Deterministic Tax Calculation Engine
+// TaxMate - Deterministic Tax Calculation Engine
 
 export const VALID_GST_RATES = [0, 0.25, 3, 5, 12, 18, 28];
 

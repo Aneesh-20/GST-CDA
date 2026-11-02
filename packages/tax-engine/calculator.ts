@@ -1,4 +1,4 @@
-// GST CDA - Deterministic Tax Calculation Engine
+// TaxMate - Deterministic Tax Calculation Engine
 // Complies with Section 9 of System Specification: Exact minor unit arithmetic and reproducible traces.
 
 import { CalculationTrace, SupplyType } from '../domain/types';

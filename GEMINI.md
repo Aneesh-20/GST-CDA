@@ -1,4 +1,4 @@
-# Project Guidelines & Autonomous Workflows: GST CDA
+# Project Guidelines & Autonomous Workflows: TaxMate
 
 ## Standing Git Workflow
 - **Auto-Commit and Push**: After making and verifying any changes, modifications, or new features in this codebase:

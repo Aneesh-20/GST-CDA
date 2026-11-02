@@ -65,7 +65,7 @@ export default function HomeHeroDashboard({
     const timestamp = new Date().toISOString();
     const certContent = `================================================================================
 STATUTORY GST AUDIT DEFENSE & COMPLIANCE CERTIFICATE
-GST COMPLIANCE DIGITAL ASSISTANT (GST CDA) - SOVEREIGN AUDIT PROOF
+TAXMATE - SMART GST COMPLIANCE COMPANION - SOVEREIGN AUDIT PROOF
 ================================================================================
 Certificate ID    : ${certId}
 Timestamp (UTC)   : ${timestamp}
@@ -102,7 +102,7 @@ Audit Hash (SHA-256)              : 8f4e2b9c7a1d3f5e6a8b9c0d1e2f3a4b5c6d7e8f9a0b
 Storage Architecture             : Local Sovereign Database (No Cloud Hostage)
 Statutory GSP API Status          : Verified Compliant with GSTN Protocols
 
-ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY GST CDA.
+ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY TAXMATE.
 ================================================================================`;
 
     triggerBrowserDownload(`GST_Audit_Defense_Certificate_${business.period || 'Current'}.txt`, certContent, 'text/plain;charset=utf-8;');
@@ -919,7 +919,7 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY GST CDA.
       </div>
 
       {/* ======================================================== */}
-      {/* MODAL 1: WHY GST CDA IS BEST (BENCHMARK VS CLEARTAX)    */}
+      {/* MODAL 1: WHY TAXMATE IS BEST (BENCHMARK VS CLEARTAX)    */}
       {/* ======================================================== */}
       {isComparisonModalOpen && (
         <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
@@ -942,7 +942,7 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY GST CDA.
                   SUPER PREMIUM BENCHMARK
                 </span>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '6px 0 2px 0' }}>
-                  Why GST CDA is Best vs ClearTax & Legacy Softwares
+                  Why TaxMate is Best vs ClearTax & Legacy Softwares
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>
                   Crafted for 6.3 Crore MSMEs of Bharat: zero jargon, zero data hostage risk, and verified math.
@@ -964,7 +964,7 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY GST CDA.
                 <thead>
                   <tr>
                     <th>Capability & Dimension</th>
-                    <th style={{ backgroundColor: '#0D6258' }}>✨ GST CDA (Ours)</th>
+                    <th style={{ backgroundColor: '#0D6258' }}>✨ TaxMate (Ours)</th>
                     <th>ClearTax (Clear)</th>
                     <th>Traditional CA</th>
                   </tr>

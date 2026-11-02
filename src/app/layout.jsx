@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'GST CDA - GST Compliance Digital Assistant',
+  title: 'TaxMate - Smart GST Compliance Companion',
   description: 'GST Made Simple. Business Made Easy. Beginner-first Indian compliance SaaS.',
 };
 

@@ -1,4 +1,4 @@
-// GST CDA - Grounded Copilot Engine
+// TaxMate - Grounded Copilot Engine
 
 const KNOWLEDGE_BASE = [
   {

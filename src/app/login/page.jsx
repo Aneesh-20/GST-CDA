@@ -50,12 +50,12 @@ export default function LoginPage() {
       <div className="auth-card">
         {/* Header & Logo */}
         <div className="auth-header">
-          <div className="auth-logo">GST</div>
+          <div className="auth-logo">TM</div>
           <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.02em' }}>
-            GST CDA
+            TaxMate
           </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', marginTop: 4 }}>
-            GST Compliance Digital Assistant
+            Smart GST Compliance Companion
           </p>
         </div>
 
@@ -193,7 +193,7 @@ export default function LoginPage() {
             };
             localStorage.setItem('gst_cda_current_user', JSON.stringify(user));
             localStorage.setItem('gst_cda_reset_normal', 'true');
-            alert('Account created successfully! Welcome to GST CDA.');
+            alert('Account created successfully! Welcome to TaxMate.');
             window.location.href = '/';
           }}>
             <div className="form-group">

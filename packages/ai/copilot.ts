@@ -1,4 +1,4 @@
-// GST CDA - Grounded Copilot Engine
+// TaxMate - Grounded Copilot Engine
 // Rule: AI explains & guides. It never computes tax, decides ITC, or claims filing success.
 
 export interface CopilotMessage {

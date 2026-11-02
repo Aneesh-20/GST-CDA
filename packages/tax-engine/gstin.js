@@ -1,4 +1,4 @@
-// GST CDA - GSTIN Validation & State Directory
+// TaxMate - GSTIN Validation & State Directory
 
 export const INDIAN_STATES = {
   '01': 'Jammu and Kashmir',

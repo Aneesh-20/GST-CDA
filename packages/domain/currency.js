@@ -1,4 +1,4 @@
-// GST CDA - Exact Minor Unit (Paise) Currency Engine
+// TaxMate - Exact Minor Unit (Paise) Currency Engine
 // Rule: Never use floating-point numbers for financial computations.
 
 /**

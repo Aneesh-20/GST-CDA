@@ -1,4 +1,4 @@
-# GST CDA - Security, Privacy & Threat Model
+# TaxMate - Security, Privacy & Threat Model
 
 **Standard:** Section 9 of System Specification  
 **Classification:** Financial & Statutory Data Compliance (India Digital Personal Data Protection Act - DPDP)

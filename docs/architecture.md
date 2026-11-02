@@ -1,4 +1,4 @@
-# GST CDA - Architecture & System Design
+# TaxMate - Architecture & System Design
 
 **Tagline:** *GST Made Simple. Business Made Easy.*  
 **System Classification:** Indian Compliance SaaS (SME/MSME/Taxpayer & CA Assisted)  
@@ -8,7 +8,7 @@
 
 ## 1. System Overview
 
-GST CDA is architected as a modular monolith adhering to strict domain boundaries, separation of concerns, and rigorous truthfulness standards:
+TaxMate is architected as a modular monolith adhering to strict domain boundaries, separation of concerns, and rigorous truthfulness standards:
 
 ```mermaid
 graph TD

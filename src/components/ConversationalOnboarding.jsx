@@ -66,10 +66,10 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
             fontWeight: 800, 
             fontSize: '0.85rem' 
           }}>
-            CDA
+            TM
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0B132B' }}>GST CDA</div>
+            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0B132B' }}>TaxMate</div>
             <div style={{ fontSize: '0.68rem', color: '#8D99AE' }}>Guided Onboarding Concierge</div>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function ConversationalOnboarding({ onComplete, onCancel }) {
           {step === 1 && (
             <div style={{ animation: 'fadeIn 0.2s ease-out' }}>
               <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0D6258', fontWeight: 800, marginBottom: 8 }}>
-                WELCOME TO GST CDA • STARTUP EXPRESS
+                WELCOME TO TAXMATE • STARTUP EXPRESS
               </div>
               <h2 className="font-editorial" style={{ fontSize: '2.4rem', fontWeight: 500, lineHeight: 1.15, color: '#0B132B', margin: '0 0 6px 0' }}>
                 Do you already have a business?

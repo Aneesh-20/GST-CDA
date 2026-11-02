@@ -1,5 +1,5 @@
 /**
- * GST CDA - Real-Time Data Store & File Import Helpers
+ * TaxMate - Real-Time Data Store & File Import Helpers
  * Supports: CSV, TXT, Excel/XLSX mapping, and PDF Invoice Extraction
  * Minor-unit integer arithmetic with zero floating-point drift
  */

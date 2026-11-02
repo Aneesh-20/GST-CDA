@@ -531,7 +531,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
                 VIRAL FLYWHEEL
               </span>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0B132B', margin: '2px 0 0 0' }}>
-                The GST CDA Growth Loop
+                The TaxMate Growth Loop
               </h3>
               <p style={{ fontSize: '0.84rem', color: '#596579', marginTop: 4 }}>
                 Every monthly return filed turns into a referral event, onboarding new MSMEs from registration to monthly filing.
@@ -600,7 +600,7 @@ export default function CalendarVaultSupport({ activeSection = 'calendar', onSho
               Assisted GST Services at Physical Locations
             </h2>
             <p style={{ fontSize: '0.96rem', color: '#E6F4F1', lineHeight: 1.6, maxWidth: 680, margin: 0 }}>
-              Physical touchpoints for smaller towns and MSME markets across Kerala and India. A trained local kiosk operator provides hands-on assistance while the backend runs on GST CDA.
+              Physical touchpoints for smaller towns and MSME markets across Kerala and India. A trained local kiosk operator provides hands-on assistance while the backend runs on TaxMate.
             </p>
           </div>
 

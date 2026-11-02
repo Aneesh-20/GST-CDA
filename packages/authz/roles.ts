@@ -1,4 +1,4 @@
-// GST CDA - Role-Based Access Control & Tenant Boundary Enforcement
+// TaxMate - Role-Based Access Control & Tenant Boundary Enforcement
 
 export type AppRole = 'OWNER' | 'CA' | 'KIOSK_OPERATOR' | 'ADMIN' | 'VIEWER';
 

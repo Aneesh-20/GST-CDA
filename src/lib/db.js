@@ -1,4 +1,4 @@
-// Real SQLite database for GST CDA using node:sqlite
+// Real SQLite database for TaxMate using node:sqlite
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';

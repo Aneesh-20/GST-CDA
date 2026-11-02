@@ -1,4 +1,4 @@
-// GST CDA - Demo Mode Data Store
+// TaxMate - Demo Mode Data Store
 // Fictional Tamil Nadu business: Murugan Electricals & Hardware
 
 export const DEMO_BUSINESS = {

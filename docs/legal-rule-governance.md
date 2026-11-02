@@ -1,4 +1,4 @@
-# GST CDA - Legal & Deterministic Rule Governance
+# TaxMate - Legal & Deterministic Rule Governance
 
 **Governance Standard:** Section 9 of System Specification  
 **Core Rule:** No LLM, heuristic guess, or hard-coded assumptions may determine final tax liabilities, return due dates, or Input Tax Credit (ITC) eligibility.

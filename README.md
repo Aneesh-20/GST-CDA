@@ -1,4 +1,4 @@
-# 🏛️ GST CDA — GST Compliance Digital Assistant
+# 🏛️ TaxMate — Smart GST Compliance Companion
 
 > **A Super-Premium, Beginner-First Indian GST Compliance & Tax Filing SaaS Platform.**  
 > Built with Next.js 15, React 19, Native SQLite Ledger, and Zero Floating-Point Arithmetic.
@@ -13,9 +13,9 @@
 
 ## 🌟 Overview
 
-**GST CDA (GST Compliance Digital Assistant)** is a modern, high-precision compliance and taxation platform designed for Indian MSMEs, Chartered Accountants (CAs), and CSC Kiosk Operators. It bridges the gap between intricate Indian GST law (CGST, SGST, IGST, ITC rules) and everyday business owners by translating complex tax jargon into actionable, transparent, and cryptographically verified financial workflows.
+**TaxMate** is a modern, high-precision compliance and taxation platform designed for Indian MSMEs, Chartered Accountants (CAs), and CSC Kiosk Operators. It bridges the gap between intricate Indian GST law (CGST, SGST, IGST, ITC rules) and everyday business owners by translating complex tax jargon into actionable, transparent, and cryptographically verified financial workflows.
 
-Inspired by elite fintech platforms like **Mercury, Stripe, and Apple Pro**, GST CDA features an obsidian velvet & emerald luxury interface with real-time multi-tenant database isolation.
+Inspired by elite fintech platforms like **Mercury, Stripe, and Apple Pro**, TaxMate features an obsidian velvet & emerald luxury interface with real-time multi-tenant database isolation.
 
 ---
 

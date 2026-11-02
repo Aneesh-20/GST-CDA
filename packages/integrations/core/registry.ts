@@ -1,4 +1,4 @@
-// GST CDA - Integration Capability Registry
+// TaxMate - Integration Capability Registry
 // Source: 182-API analysis workbook
 
 export type CapabilityStatus = 

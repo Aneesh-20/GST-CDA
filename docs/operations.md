@@ -1,4 +1,4 @@
-# GST CDA - Operations & Deployment Runbook
+# TaxMate - Operations & Deployment Runbook
 
 **Target Environments:** Local Workstation (Development & Testing), Staging (Sandbox GSP), Production (Certified GSP/GSTN)
 

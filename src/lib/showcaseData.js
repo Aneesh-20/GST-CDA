@@ -1,6 +1,6 @@
 /**
- * GST CDA - GST Compliance Digital Assistant
- * Core Reference Data aligned with GST CDA Concept Paper
+ * TaxMate - Smart GST Compliance Companion
+ * Core Reference Data aligned with TaxMate Concept Paper
  * 
  * Fictional Business: Anaya Home & Living (Kochi, Kerala)
  * Period: September 2026
@@ -756,11 +756,12 @@ export const MSME_OS_ROADMAP = [
 ];
 
 /**
- * Super Premium Differentiation: GST CDA vs. ClearTax vs. Traditional CA
+ * Super Premium Differentiation: TaxMate vs. ClearTax vs. Traditional CA
  */
 export const CLEAR_TAX_COMPARISON_MATRIX = [
   {
     feature: 'Core Philosophy',
+    taxMate: 'Plain Language 5-Step Model for MSMEs',
     gstCda: 'Plain Language 5-Step Model for MSMEs',
     clearTax: 'Corporate ERP jargon (SAP/Oracle focus)',
     traditionalCa: 'Manual paper-based compliance',
@@ -768,6 +769,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Pricing Model',
+    taxMate: '₹0 Starter / ₹199 per filing (Transparent)',
     gstCda: '₹0 Starter / ₹199 per filing (Transparent)',
     clearTax: 'Hidden behind sales quote (₹40,000+ lock-in)',
     traditionalCa: '₹1,500 – ₹5,000 monthly retainer',
@@ -775,6 +777,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Data Sovereignty & Lock-in',
+    taxMate: 'Zero Lock-in. 100% Free JSON/Excel/PDF forever',
     gstCda: 'Zero Lock-in. 100% Free JSON/Excel/PDF forever',
     clearTax: 'Historical data restricted if subscription lapses',
     traditionalCa: 'Stored in CA personal files/tally',
@@ -782,6 +785,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Calculation Precision',
+    taxMate: 'Integer paise minor-unit math (0 drift)',
     gstCda: 'Integer paise minor-unit math (0 drift)',
     clearTax: 'Standard floating-point calculations',
     traditionalCa: 'Manual spreadsheets & rounded figures',
@@ -789,6 +793,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Notice & Scrutiny Defense',
+    taxMate: 'Built-in Rule 88C & 88D Scrutiny Radar (Included)',
     gstCda: 'Built-in Rule 88C & 88D Scrutiny Radar (Included)',
     clearTax: 'Expensive enterprise add-on module',
     traditionalCa: 'Charges extra ₹5k–₹25k per notice reply',
@@ -796,6 +801,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Vendor ITC Recovery',
+    taxMate: '1-Click WhatsApp Nudge with pre-composed draft',
     gstCda: '1-Click WhatsApp Nudge with pre-composed draft',
     clearTax: 'Enterprise ERP-only email automation',
     traditionalCa: 'Manual phone calls by business owner',
@@ -803,6 +809,7 @@ export const CLEAR_TAX_COMPARISON_MATRIX = [
   },
   {
     feature: 'Multi-Channel Access',
+    taxMate: 'Web Portal, Mobile App, Assisted Kiosk & WhatsApp',
     gstCda: 'Web Portal, Mobile App, Assisted Kiosk & WhatsApp',
     clearTax: 'Desktop web-only portal',
     traditionalCa: 'In-person visits & phone calls',

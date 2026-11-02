@@ -1,4 +1,4 @@
-// GST CDA - Domain Types & Core Interfaces
+// TaxMate - Domain Types & Core Interfaces
 
 export type BusinessType = 
   | 'PROPRIETORSHIP'

@@ -1,4 +1,4 @@
-// GST CDA - Integration Capability Registry
+// TaxMate - Integration Capability Registry
 
 export const CAPABILITY_REGISTRY = [
   // Session & Public Auth

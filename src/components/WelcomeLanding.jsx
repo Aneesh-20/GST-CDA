@@ -52,14 +52,14 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
             letterSpacing: '-0.02em',
             boxShadow: '0 4px 12px rgba(13, 98, 88, 0.25)'
           }}>
-            CDA
+            TM
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: '0.98rem', letterSpacing: '-0.02em', color: '#0B132B' }}>
-              GST CDA
+              TaxMate
             </div>
             <div style={{ fontSize: '0.7rem', color: '#596579', letterSpacing: '0.02em' }}>
-              GST Compliance Digital Assistant
+              Smart GST Compliance Companion
             </div>
           </div>
         </div>
@@ -477,7 +477,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
         color: '#8D99AE' 
       }}>
         <div>
-          GST CDA • GST Compliance Digital Assistant • Quiet Luxury Indian Fintech Showcase
+          TaxMate • Smart GST Compliance Companion • Quiet Luxury Indian Fintech Showcase
         </div>
         <div>
           Statutory Indian GST compliance • Zero floating-point arithmetic drift
@@ -485,7 +485,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
       </footer>
 
       {/* ======================================================== */}
-      {/* MODAL: WHY GST CDA IS BEST (BENCHMARK VS CLEARTAX)    */}
+      {/* MODAL: WHY TAXMATE IS BEST (BENCHMARK VS CLEARTAX)       */}
       {/* ======================================================== */}
       {isComparisonOpen && (
         <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
@@ -507,7 +507,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
                   SUPER PREMIUM BENCHMARK
                 </span>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '6px 0 2px 0' }}>
-                  Why GST CDA is Best vs ClearTax & Legacy Softwares
+                  Why TaxMate is Best vs ClearTax & Legacy Softwares
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>
                   Crafted for 6.3 Crore MSMEs of Bharat: zero jargon, zero data hostage risk, and verified math.
@@ -528,7 +528,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo }) {
                 <thead>
                   <tr>
                     <th>Capability & Dimension</th>
-                    <th style={{ backgroundColor: '#0D6258' }}>✨ GST CDA (Ours)</th>
+                    <th style={{ backgroundColor: '#0D6258' }}>✨ TaxMate (Ours)</th>
                     <th>ClearTax (Clear)</th>
                     <th>Traditional CA</th>
                   </tr>

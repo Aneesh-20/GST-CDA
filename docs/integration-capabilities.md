@@ -1,4 +1,4 @@
-# GST CDA - Integration Capability Matrix & Registry
+# TaxMate - Integration Capability Matrix & Registry
 
 **Workbook Analysis Version:** 1.0.0  
 **Total Catalogued Endpoints:** 182 APIs  

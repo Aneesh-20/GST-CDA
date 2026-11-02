@@ -164,7 +164,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onAskCopil
           fontSize: '0.72rem',
           color: '#8D99AE'
         }}>
-          <span>GST CDA • GST Compliance Digital Assistant</span>
+          <span>TaxMate • Smart GST Compliance Companion</span>
           <span>Press ↵ to select</span>
         </div>
       </div>

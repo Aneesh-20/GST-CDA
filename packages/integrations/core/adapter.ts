@@ -1,4 +1,4 @@
-// GST CDA - Provider Adapter Interface & Circuit Breaker Contract
+// TaxMate - Provider Adapter Interface & Circuit Breaker Contract
 
 export interface ProviderRequestOptions {
   idempotencyKey: string;
