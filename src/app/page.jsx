@@ -53,8 +53,15 @@ import { COMPLIANCE_SCORE, EXPERIENCE_CHANNELS, SAMPLE_SALES_TABLE } from '../li
 import { BLANK_BUSINESS, STARTER_BUSINESS, SAMPLE_PURCHASE_TABLE } from '../lib/realtimeData.js';
 
 export default function TaxMateShowcaseApp() {
-  // Main view state: 'app' (default hero showcase) | 'landing' | 'onboarding'
-  const [viewMode, setViewMode] = useState('app');
+  // Main view state: 'landing' (default rich marketing website) | 'app' (hero compliance dashboard) | 'onboarding'
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'app') return 'app';
+      if (params.get('view') === 'landing') return 'landing';
+    }
+    return 'landing';
+  });
   
   // Navigation tabs in main app
   const [activeNav, setActiveNav] = useState('home');
@@ -284,7 +291,11 @@ export default function TaxMateShowcaseApp() {
           
           {/* Brand Monogram & Name */}
           <div style={{ padding: '24px 20px 18px', borderBottom: '1px solid #FAF8F5' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div 
+              onClick={() => setViewMode('landing')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              title="Return to Product Showcase Website"
+            >
               <div style={{ 
                 width: 34, 
                 height: 34, 
@@ -814,6 +825,31 @@ export default function TaxMateShowcaseApp() {
           {/* Right: Secure GSTN Pill, Assisted Channels & Edit Workspace Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             
+            {/* Switch to Public Website Showcase */}
+            <button
+              type="button"
+              onClick={() => setViewMode('landing')}
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                color: '#0D6258',
+                backgroundColor: '#EEF8F6',
+                border: '1px solid #B2DDD7',
+                borderRadius: 10,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 1px 4px rgba(13, 98, 88, 0.08)',
+                transition: 'all 0.15s ease'
+              }}
+              title="Return to Public Marketing Website"
+            >
+              <Sparkles style={{ width: 13, height: 13, color: '#C87D0E' }} />
+              <span className="hide-on-mobile">Website Overview</span>
+            </button>
+
             {/* Unobtrusive Secure GSTN Connection Indicator */}
             <div className="gstn-secure-pill hide-on-mobile" title="Verified statutory GSTN gateway session">
               <span className="pulse-dot-green" />
