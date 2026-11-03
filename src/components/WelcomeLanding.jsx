@@ -282,23 +282,23 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
             type="button"
             onClick={onExploreDemo}
             style={{
-              padding: '8px 18px',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              color: '#0B132B',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #DCD5C9',
+              padding: '9px 20px',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              backgroundColor: '#0D6258',
+              border: 'none',
               borderRadius: 10,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              boxShadow: '0 1px 3px rgba(11, 19, 43, 0.05)',
+              boxShadow: '0 4px 14px rgba(13, 98, 88, 0.25)',
               transition: 'all 0.15s ease'
             }}
           >
-            <span>Launch Live App</span>
-            <ArrowRight style={{ width: 14, height: 14, color: '#0D6258' }} />
+            <span>File Now</span>
+            <ArrowRight style={{ width: 14, height: 14, color: '#FFFFFF' }} />
           </button>
         </div>
       </header>
