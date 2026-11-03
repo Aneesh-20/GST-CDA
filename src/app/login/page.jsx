@@ -1307,7 +1307,7 @@ export default function LoginPage() {
       </div>
 
       {/* ======================================================== */}
-      {/* 3. GOOGLE SIGN-IN MODAL POPUP                            */}
+      {/* 3. GOOGLE SIGN-IN DARK OAUTH WINDOW (MATCHING GOOGLE UX)  */}
       {/* ======================================================== */}
       {isGoogleModalOpen && (
         <div style={{
@@ -1316,227 +1316,392 @@ export default function LoginPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.65)',
-          backdropFilter: 'blur(6px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.78)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 9999,
-          padding: 16
+          padding: '16px'
         }}>
           <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 20,
-            maxWidth: 420,
+            backgroundColor: '#000000',
+            borderRadius: 28,
+            maxWidth: 820,
             width: '100%',
-            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.25)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            boxShadow: '0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+            border: '1px solid #303134',
             overflow: 'hidden',
-            animation: 'dropdownPop 0.2s ease-out'
+            color: '#FFFFFF',
+            fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            position: 'relative'
           }}>
-            {/* Modal Header */}
-            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+            {/* Indeterminate Google loading progress bar */}
+            {isSubmitting && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: '#1E293B', overflow: 'hidden' }}>
+                <div style={{
+                  width: '45%',
+                  height: '100%',
+                  backgroundColor: '#8AB4F8',
+                  animation: 'dropdownPop 0.8s infinite ease-in-out alternate'
+                }} />
+              </div>
+            )}
+
+            {/* Top Bar with G Logo & Close Button */}
+            <div style={{ padding: '24px 32px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <svg width="22" height="22" viewBox="0 0 24 24">
+                <svg width="20" height="20" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0B132B' }}>Sign in with Google</h3>
-                  <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748B' }}>Choose an account to continue to TaxMate</p>
-                </div>
+                <span style={{ fontSize: '0.88rem', fontWeight: 500, color: '#E8EAED', letterSpacing: '0.01em' }}>
+                  Sign in with Google
+                </span>
               </div>
+
               <button
                 type="button"
-                onClick={() => setIsGoogleModalOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 4 }}
+                onClick={() => {
+                  setIsGoogleModalOpen(false);
+                  setShowCustomGoogleInput(false);
+                }}
+                style={{ background: 'none', border: 'none', color: '#9AA0A6', cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Close Google sign in"
               >
                 <X style={{ width: 18, height: 18 }} />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div style={{ padding: '16px 20px' }}>
+            {/* Main Content Area */}
+            <div className="google-oauth-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: '1.05fr 1fr',
+              gap: '36px',
+              padding: '28px 32px 36px',
+              minHeight: '340px'
+            }}>
               
-              {/* Account Option 1: Aneesh Naren */}
-              <button
-                type="button"
-                onClick={() => executeGoogleLogin('aneesh.naren@gmail.com', 'Aneesh Naren')}
-                disabled={isSubmitting}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFFFFF',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  marginBottom: 10,
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F8FAFC';
-                  e.currentTarget.style.borderColor = '#0D6258';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  e.currentTarget.style.borderColor = '#E2E8F0';
-                }}
-              >
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  backgroundColor: '#0D6258',
+              {/* LEFT COLUMN: TITLE & CONTEXT */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                <h2 style={{
+                  fontSize: '2rem',
+                  fontWeight: 400,
                   color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.95rem'
+                  margin: '0 0 10px 0',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2
                 }}>
-                  A
+                  Choose an account
+                </h2>
+                
+                <div style={{ fontSize: '1.02rem', color: '#E8EAED', fontWeight: 400 }}>
+                  to continue to <span style={{ color: '#8AB4F8', fontWeight: 500 }}>TaxMate</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0B132B' }}>Aneesh Naren</div>
-                  <div style={{ fontSize: '0.76rem', color: '#64748B' }}>aneesh.naren@gmail.com</div>
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, backgroundColor: '#ECFDF5', padding: '3px 8px', borderRadius: 9999 }}>
-                  Recommended
-                </span>
-              </button>
+              </div>
 
-              {/* Account Option 2: Business Account */}
-              <button
-                type="button"
-                onClick={() => executeGoogleLogin('trader.business@gmail.com', 'Registered Trader')}
-                disabled={isSubmitting}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFFFFF',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  marginBottom: 12,
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F8FAFC';
-                  e.currentTarget.style.borderColor = '#0D6258';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  e.currentTarget.style.borderColor = '#E2E8F0';
-                }}
-              >
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.95rem'
-                }}>
-                  T
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0B132B' }}>Trader Enterprise</div>
-                  <div style={{ fontSize: '0.76rem', color: '#64748B' }}>trader.business@gmail.com</div>
-                </div>
-              </button>
+              {/* RIGHT COLUMN: ACCOUNTS LIST */}
+              <div>
+                {!showCustomGoogleInput ? (
+                  <div>
+                    {/* Account 1: Narendaran T.J */}
+                    <div 
+                      onClick={() => executeGoogleLogin('vasanthinarendren.tj@gmail.com', 'Narendaran T.J')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '12px 10px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#18191B'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: '#795548',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.88rem',
+                        flexShrink: 0
+                      }}>
+                        N
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 500, color: '#FFFFFF', lineHeight: 1.3 }}>
+                          Narendaran T.J
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#9AA0A6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          vasanthinarendren.tj@gmail.com
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Custom Google Account Toggle */}
-              {!showCustomGoogleInput ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCustomGoogleInput(true)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: 10,
-                    border: '1px dashed #CBD5E1',
-                    backgroundColor: '#FAF8F5',
-                    color: '#0D6258',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textAlign: 'center'
-                  }}
-                >
-                  + Use another Google account
-                </button>
-              ) : (
-                <div style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ marginBottom: 10 }}>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
-                      Google Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="e.g. myname@gmail.com"
-                      value={customGoogleEmail}
-                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: '0.86rem', boxSizing: 'border-box' }}
-                    />
+                    <div style={{ height: 1, backgroundColor: '#303134' }} />
+
+                    {/* Account 2: Aneesh Narendran */}
+                    <div 
+                      onClick={() => executeGoogleLogin('fftgmessi@gmail.com', 'Aneesh Narendran')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '12px 10px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#18191B'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: '#00594C',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.88rem',
+                        flexShrink: 0
+                      }}>
+                        A
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 500, color: '#FFFFFF', lineHeight: 1.3 }}>
+                          Aneesh Narendran
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#9AA0A6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          fftgmessi@gmail.com
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ height: 1, backgroundColor: '#303134' }} />
+
+                    {/* Account 3: Aneesh TN */}
+                    <div 
+                      onClick={() => executeGoogleLogin('aneesh.narendaran@gmail.com', 'Aneesh TN')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '12px 10px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#18191B'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: '#1976D2',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.88rem',
+                        flexShrink: 0
+                      }}>
+                        A
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 500, color: '#FFFFFF', lineHeight: 1.3 }}>
+                          Aneesh TN
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#9AA0A6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          aneesh.narendaran@gmail.com
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ height: 1, backgroundColor: '#303134' }} />
+
+                    {/* Account 4: Buk8 */}
+                    <div 
+                      onClick={() => executeGoogleLogin('buk8tech@gmail.com', 'Buk8')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '12px 10px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#18191B'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: '#0A0E1A',
+                        border: '1px solid #1E293B',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {/* Buk8 Dotted Tech Logo */}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <circle cx="8" cy="6" r="2" fill="#4285F4"/>
+                          <circle cx="16" cy="6" r="2" fill="#4285F4"/>
+                          <circle cx="8" cy="12" r="2" fill="#4285F4"/>
+                          <circle cx="16" cy="12" r="2" fill="#4285F4"/>
+                          <circle cx="8" cy="18" r="2" fill="#4285F4"/>
+                          <circle cx="16" cy="18" r="2" fill="#4285F4"/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 500, color: '#FFFFFF', lineHeight: 1.3 }}>
+                          Buk8
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#9AA0A6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          buk8tech@gmail.com
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ height: 1, backgroundColor: '#303134' }} />
+
+                    {/* Account 5: Use another account */}
+                    <div 
+                      onClick={() => setShowCustomGoogleInput(true)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '12px 10px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#18191B'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 500, color: '#FFFFFF' }}>
+                          Use another account
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ height: 1, backgroundColor: '#303134' }} />
+
+                    {/* Bottom Legal Disclaimer matching screenshot */}
+                    <div style={{ marginTop: '24px', fontSize: '0.78rem', color: '#9AA0A6', lineHeight: 1.5 }}>
+                      Before using this app, you can review TaxMate’s{' '}
+                      <span style={{ color: '#8AB4F8', cursor: 'pointer' }}>Privacy Policy</span> and{' '}
+                      <span style={{ color: '#8AB4F8', cursor: 'pointer' }}>Terms of Service</span>.
+                    </div>
                   </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0B132B', marginBottom: 4 }}>
-                      Your Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Aneesh"
-                      value={customGoogleName}
-                      onChange={(e) => setCustomGoogleName(e.target.value)}
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: '0.86rem', boxSizing: 'border-box' }}
-                    />
+                ) : (
+                  /* Custom Google Email Input (Google Dark Theme) */
+                  <div style={{ paddingTop: 10 }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 500, color: '#FFFFFF', marginBottom: 6 }}>
+                      Sign in with another Google account
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#9AA0A6', marginBottom: 18 }}>
+                      Enter your Google email address or workspace account
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <input
+                        type="email"
+                        placeholder="Email or phone"
+                        value={customGoogleEmail}
+                        onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                        autoFocus
+                        style={{
+                          width: '100%',
+                          padding: '14px 16px',
+                          borderRadius: 8,
+                          border: '1px solid #5F6368',
+                          backgroundColor: '#000000',
+                          color: '#FFFFFF',
+                          fontSize: '0.95rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                        onFocus={(e) => e.currentTarget.style.borderColor = '#8AB4F8'}
+                        onBlur={(e) => e.currentTarget.style.borderColor = '#5F6368'}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24 }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomGoogleInput(false)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#8AB4F8',
+                          fontSize: '0.88rem',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        Back
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (customGoogleEmail.trim()) {
+                            executeGoogleLogin(customGoogleEmail.trim(), customGoogleEmail.split('@')[0]);
+                          }
+                        }}
+                        disabled={isSubmitting || !customGoogleEmail.includes('@')}
+                        style={{
+                          padding: '10px 24px',
+                          borderRadius: 9999,
+                          backgroundColor: '#8AB4F8',
+                          color: '#000000',
+                          fontSize: '0.88rem',
+                          fontWeight: 600,
+                          border: 'none',
+                          cursor: (isSubmitting || !customGoogleEmail.includes('@')) ? 'not-allowed' : 'pointer',
+                          opacity: (isSubmitting || !customGoogleEmail.includes('@')) ? 0.6 : 1
+                        }}
+                      >
+                        {isSubmitting ? 'Signing in...' : 'Next'}
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (customGoogleEmail.trim()) {
-                        executeGoogleLogin(customGoogleEmail.trim(), customGoogleName.trim());
-                      }
-                    }}
-                    disabled={isSubmitting || !customGoogleEmail.includes('@')}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: 8,
-                      backgroundColor: '#0D6258',
-                      color: '#FFFFFF',
-                      fontSize: '0.86rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      cursor: (isSubmitting || !customGoogleEmail.includes('@')) ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    {isSubmitting ? 'Authenticating...' : 'Sign In with this Google Account'}
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
 
-            </div>
-
-            {/* Modal Footer Note */}
-            <div style={{ padding: '12px 20px', backgroundColor: '#F8FAFC', borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
-              <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748B' }}>
-                To continue, Google will share your name, email address, and profile with TaxMate.
-              </p>
             </div>
 
           </div>

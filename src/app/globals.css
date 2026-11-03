@@ -2522,6 +2522,14 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  .google-oauth-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    padding: 20px 20px 28px !important;
+  }
+}
+
 /* 9. Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
