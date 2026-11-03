@@ -21,7 +21,6 @@ import {
   Users,
   Smartphone,
   MessageSquare,
-  Gift,
   HelpCircle,
   ExternalLink,
   Zap,
@@ -34,7 +33,7 @@ import {
   CreditCard,
   Database
 } from 'lucide-react';
-import { TAXMATE_EXCELLENCE_PILLARS, REFERRAL_ENGINE_DATA } from '../lib/showcaseData.js';
+import { TAXMATE_EXCELLENCE_PILLARS } from '../lib/showcaseData.js';
 
 export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusinessModal }) {
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
@@ -1520,45 +1519,7 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
       </section>
 
       {/* ======================================================== */}
-      {/* 9. REFERRAL FLYWHEEL (PDF PAGE 5)                       */}
-      {/* ======================================================== */}
-      <section style={{ padding: '64px 32px', backgroundColor: '#FEF7EC', borderTop: '1px solid #F7E1B8', borderBottom: '1px solid #F7E1B8' }}>
-        <div style={{ maxWidth: 980, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#C87D0E', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <Gift style={{ width: 22, height: 22 }} />
-          </div>
-          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#B45309' }}>
-            CUSTOMER REFERRAL ENGINE
-          </span>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#78350F', margin: '8px 0 12px 0' }}>
-            “Filed successfully 🎉 Refer another business and receive ₹500 credit.”
-          </h2>
-          <p style={{ fontSize: '0.96rem', color: '#92400E', maxWidth: 640, margin: '0 auto 24px' }}>
-            Every filing becomes a viral customer acquisition event. Referred businesses receive ₹500 off their first GST filing, creating a self-sustaining growth loop for MSMEs.
-          </p>
-
-          <button
-            type="button"
-            onClick={onExploreDemo}
-            style={{
-              padding: '12px 28px',
-              borderRadius: 12,
-              backgroundColor: '#B45309',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              fontSize: '0.88rem',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(180, 83, 9, 0.3)'
-            }}
-          >
-            Claim Referral Code: {REFERRAL_ENGINE_DATA.referralCode}
-          </button>
-        </div>
-      </section>
-
-      {/* ======================================================== */}
-      {/* 10. PRODUCT VISION & FOOTER (PDF PAGE 6 & 7)            */}
+      {/* 9. PRODUCT VISION & FOOTER (PDF PAGE 6 & 7)             */}
       {/* ======================================================== */}
       <footer style={{ backgroundColor: '#070B14', color: '#FFFFFF', padding: '64px 32px 40px' }}>
         <div style={{ maxWidth: 1260, margin: '0 auto' }}>
