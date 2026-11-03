@@ -279,7 +279,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
 
           <button
             type="button"
-            onClick={onExploreDemo}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+              }
+            }}
             className="btn-glowing-primary"
             style={{
               padding: '9px 22px',
@@ -344,7 +348,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
               
               {/* Card 1: 5-Step Filing Copilot */}
               <div 
-                onClick={onExploreDemo}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  }
+                }}
                 style={{
                   padding: '20px 22px',
                   borderRadius: 16,
@@ -601,7 +609,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
               return (
                 <div 
                   key={p.id}
-                  onClick={onExploreDemo}
+                  onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  }
+                }}
                   style={{
                     padding: 24,
                     borderRadius: 18,
@@ -1260,7 +1272,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
 
                 <button
                   type="button"
-                  onClick={onExploreDemo}
+                  onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  }
+                }}
                   style={{
                     padding: '12px 24px',
                     borderRadius: 12,
@@ -1467,7 +1483,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
                 <div style={{ marginTop: 28 }}>
                   <button
                     type="button"
-                    onClick={onExploreDemo}
+                    onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  }
+                }}
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -1516,7 +1536,11 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <button
                 type="button"
-                onClick={onExploreDemo}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  }
+                }}
                 style={{
                   padding: '14px 32px',
                   borderRadius: 12,
