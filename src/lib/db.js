@@ -110,6 +110,20 @@ function initSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_records(user_email);
   `);
 
+  // Safe schema migrations for phone, password and auth_provider
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN phone TEXT;`);
+  } catch (e) {}
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN password TEXT;`);
+  } catch (e) {}
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'credentials';`);
+  } catch (e) {}
+  try {
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);`);
+  } catch (e) {}
+
   seedDefaultUsers(db);
 }
 
@@ -243,6 +257,153 @@ export function findOrCreateUser(email, name, role = 'OWNER', businessName = '')
   }
 
   const business = db.prepare('SELECT * FROM businesses WHERE LOWER(user_email) = LOWER(?)').get(user.email);
+  return { user, business: formatBusiness(business) };
+}
+
+// Clean 10-digit phone number helper
+export function cleanPhoneNumber(phone) {
+  if (!phone) return '';
+  const digits = String(phone).replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    return digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith('0')) {
+    return digits.slice(1);
+  }
+  return digits.slice(-10);
+}
+
+// Create or update user with phone & password
+export function createOrUpdatePhoneUser({ phone, password, name = '', businessName = '' }) {
+  const db = getDb();
+  const cleanPhone = cleanPhoneNumber(phone);
+  if (!cleanPhone || cleanPhone.length < 10) {
+    throw new Error('Valid 10-digit phone number is required');
+  }
+
+  const phoneEmail = `${cleanPhone}@phone.taxmate.in`;
+  let user = db.prepare('SELECT * FROM users WHERE phone = ? OR LOWER(email) = LOWER(?)').get(cleanPhone, phoneEmail);
+
+  const finalName = name || (user?.name && !user.name.includes('Trader') ? user.name : `Trader ${cleanPhone.slice(-4)}`);
+  const finalBiz = businessName || user?.business_name || `${finalName}'s Enterprise`;
+
+  if (user) {
+    db.prepare(`
+      UPDATE users 
+      SET phone = ?, password = ?, name = ?, business_name = ?, auth_provider = 'phone'
+      WHERE id = ?
+    `).run(cleanPhone, password, finalName, finalBiz, user.id);
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  } else {
+    const userId = `usr-ph-${Date.now()}`;
+    db.prepare(`
+      INSERT INTO users (id, email, name, role, business_name, created_at, phone, password, auth_provider)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, phoneEmail, finalName, 'OWNER', finalBiz, new Date().toISOString(), cleanPhone, password, 'phone');
+
+    const bizId = `biz-ph-${Date.now()}`;
+    const pan = 'AABC' + String(Math.floor(1000 + Math.random() * 9000)) + 'P';
+    const gstin = '33' + pan + '1Z' + String(Math.floor(1 + Math.random() * 9));
+
+    db.prepare(`
+      INSERT INTO businesses (id, user_email, legal_name, trade_name, gstin, pan, state_code, state_name, business_type, return_period, is_demo, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(bizId, phoneEmail, finalBiz, finalBiz, gstin, pan, '33', 'Tamil Nadu', 'Sole Proprietorship', 'October 2026', 0, new Date().toISOString());
+
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  }
+
+  let business = db.prepare('SELECT * FROM businesses WHERE LOWER(user_email) = LOWER(?)').get(user.email);
+  return { user, business: formatBusiness(business) };
+}
+
+// Find user by credentials (Phone number, Email, or Username) + Password
+export function findUserByCredentials({ identifier, password }) {
+  const db = getDb();
+  const raw = (identifier || '').trim();
+  if (!raw) {
+    return { error: 'Phone number, username, or email is required' };
+  }
+
+  const cleanPhone = cleanPhoneNumber(raw);
+  let user = null;
+
+  // 1. Check by phone number if identifier is numeric or looks like phone
+  if (cleanPhone && cleanPhone.length === 10) {
+    user = db.prepare('SELECT * FROM users WHERE phone = ? OR email = ?').get(cleanPhone, `${cleanPhone}@phone.taxmate.in`);
+  }
+
+  // 2. Check by email or username if not found
+  if (!user) {
+    const normalized = raw.toLowerCase();
+    user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(name) = LOWER(?)').get(normalized, normalized);
+  }
+
+  // 3. If still not found and no @ in identifier
+  if (!user && !raw.includes('@')) {
+    user = db.prepare('SELECT * FROM users WHERE LOWER(email) LIKE ?').get(`${raw.toLowerCase()}%`);
+  }
+
+  if (!user) {
+    return { error: `No account registered with "${raw}". Please register or continue with Phone OTP.` };
+  }
+
+  // Check password if user has one set
+  if (user.password) {
+    if (user.password !== password) {
+      return { error: 'Incorrect password. Please try again or log in with Phone OTP.' };
+    }
+  } else {
+    // If user has no password yet (e.g. demo account), accept password and record it
+    if (password) {
+      db.prepare('UPDATE users SET password = ? WHERE id = ?').run(password, user.id);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+    }
+  }
+
+  let business = db.prepare('SELECT * FROM businesses WHERE LOWER(user_email) = LOWER(?)').get(user.email);
+  if (!business) {
+    const { business: newBiz } = findOrCreateUser(user.email, user.name, user.role, user.business_name);
+    business = newBiz;
+  }
+
+  return { success: true, user, business: formatBusiness(business) };
+}
+
+// Google Sign-In helper
+export function googleLoginUser({ email, name, avatarUrl = '', businessName = '' }) {
+  const db = getDb();
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  if (!normalizedEmail) {
+    throw new Error('Google email is required');
+  }
+
+  let user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(normalizedEmail);
+  const finalName = name || normalizedEmail.split('@')[0] || 'Google User';
+  const finalBiz = businessName || `${finalName}'s Enterprise`;
+
+  if (!user) {
+    const userId = `usr-g-${Date.now()}`;
+    db.prepare(`
+      INSERT INTO users (id, email, name, role, business_name, created_at, auth_provider)
+      VALUES (?, ?, ?, ?, ?, ?, 'google')
+    `).run(userId, normalizedEmail, finalName, 'OWNER', finalBiz, new Date().toISOString());
+
+    const bizId = `biz-g-${Date.now()}`;
+    const pan = 'AABG' + String(Math.floor(1000 + Math.random() * 9000)) + 'Z';
+    const gstin = '33' + pan + '1Z' + String(Math.floor(1 + Math.random() * 9));
+
+    db.prepare(`
+      INSERT INTO businesses (id, user_email, legal_name, trade_name, gstin, pan, state_code, state_name, business_type, return_period, is_demo, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(bizId, normalizedEmail, finalBiz, finalBiz, gstin, pan, '33', 'Tamil Nadu', 'Sole Proprietorship', 'October 2026', 0, new Date().toISOString());
+
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  } else {
+    db.prepare(`UPDATE users SET auth_provider = 'google' WHERE id = ?`).run(user.id);
+  }
+
+  let business = db.prepare('SELECT * FROM businesses WHERE LOWER(user_email) = LOWER(?)').get(user.email);
   return { user, business: formatBusiness(business) };
 }
 
