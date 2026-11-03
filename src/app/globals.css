@@ -2469,6 +2469,59 @@ body {
   }
 }
 
+/* Split-Screen Full-Width Responsive Login Layout for Desktop & Mobile */
+.login-split-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  background-color: #FAF8F5;
+  color: #0B132B;
+}
+
+.login-brand-panel {
+  background: 
+    radial-gradient(circle at 15% 20%, rgba(13, 98, 88, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 85% 80%, rgba(217, 119, 6, 0.08) 0%, transparent 50%),
+    #FAF8F5;
+  border-right: 1px solid #EAE5DC;
+  padding: 48px 48px;
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-form-panel {
+  background-color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 36px;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .login-split-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #FFFFFF;
+  }
+  .login-brand-panel {
+    display: none !important;
+  }
+  .login-form-panel {
+    flex: 1;
+    width: 100%;
+    padding: 28px 20px;
+    background-color: #FFFFFF;
+    justify-content: flex-start;
+  }
+}
+
 /* 9. Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
