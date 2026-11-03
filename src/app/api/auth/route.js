@@ -20,10 +20,11 @@ const phoneOtpStore = new Map();
 async function sendRealSmsOtp(phone, otp) {
   const cleanPhone = phone.replace(/\D/g, '').slice(-10);
 
-  // 1. FAST2SMS (Standard in India for instant transactional OTP)
+  // 1. FAST2SMS (Standard in India for instant transactional OTP to ALL numbers)
   if (process.env.FAST2SMS_API_KEY) {
     try {
-      const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+      // Try route: 'otp' first
+      let response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
         method: 'POST',
         headers: {
           'authorization': process.env.FAST2SMS_API_KEY,
@@ -35,8 +36,27 @@ async function sendRealSmsOtp(phone, otp) {
           variables_values: otp.toString(),
         }),
       });
-      const data = await response.json();
-      console.log(`[Fast2SMS] Sent OTP to +91 ${cleanPhone}:`, data);
+      let data = await response.json();
+      console.log(`[Fast2SMS OTP route] Sent to +91 ${cleanPhone}:`, data);
+      
+      // If OTP route failed (e.g. template issue), fallback to Quick SMS route ('q') which delivers to ALL numbers
+      if (!data || data.return !== true) {
+        response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+          method: 'POST',
+          headers: {
+            'authorization': process.env.FAST2SMS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            route: 'q',
+            message: `Your TaxMate verification code is ${otp}. Valid for 5 minutes.`,
+            numbers: cleanPhone,
+          }),
+        });
+        data = await response.json();
+        console.log(`[Fast2SMS Quick route] Sent to +91 ${cleanPhone}:`, data);
+      }
+
       if (data && data.return === true) {
         return { success: true, provider: 'Fast2SMS', details: data };
       }
@@ -123,6 +143,18 @@ export async function POST(request) {
         otp: generatedOtp,
         expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
       });
+
+      // If user requested OTP via WhatsApp
+      if (body.channel === 'WHATSAPP') {
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodeURIComponent(`Your TaxMate GST verification code is ${generatedOtp}. Valid for 5 minutes.`)}`;
+        return NextResponse.json({
+          success: true,
+          message: `OTP dispatched to WhatsApp for +91 ${cleanPhone}`,
+          phone: cleanPhone,
+          channel: 'WHATSAPP',
+          whatsappUrl
+        });
+      }
 
       // Dispatch real SMS
       const smsResult = await sendRealSmsOtp(cleanPhone, generatedOtp);

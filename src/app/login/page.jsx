@@ -118,8 +118,7 @@ export default function LoginPage() {
   // ============================================================
   // 2. PHONE OTP FLOW: STEP 1 - SEND OTP
   // ============================================================
-  const handleRequestOtp = async (e) => {
-    e.preventDefault();
+  const handleRequestOtp = async (channel = 'SMS') => {
     const cleanDigits = mobileNumber.replace(/\D/g, '');
     if (cleanDigits.length < 10) {
       setOtpError('Please enter a valid 10-digit mobile number');
@@ -134,13 +133,17 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'REQUEST_PHONE_OTP',
-          phone: cleanDigits
+          phone: cleanDigits,
+          channel: typeof channel === 'string' ? channel : 'SMS'
         })
       });
       const data = await res.json();
       if (data.success) {
         setOtpSent(true);
         setOtpCountdown(30);
+        if (data.whatsappUrl) {
+          window.open(data.whatsappUrl, '_blank');
+        }
       } else {
         setOtpError(data.error || 'Failed to send OTP via SMS');
       }
@@ -835,11 +838,38 @@ export default function LoginPage() {
                       fontSize: '0.96rem', 
                       borderRadius: 12,
                       opacity: (isSubmitting || mobileNumber.length < 10) ? 0.7 : 1,
-                      cursor: (isSubmitting || mobileNumber.length < 10) ? 'not-allowed' : 'pointer'
+                      cursor: (isSubmitting || mobileNumber.length < 10) ? 'not-allowed' : 'pointer',
+                      marginBottom: 10
                     }}
                   >
-                    <span>{isSubmitting ? 'Sending OTP...' : 'Send Verification Code'}</span>
+                    <span>{isSubmitting ? 'Sending OTP...' : 'Send Verification Code via SMS'}</span>
                     <ArrowRight style={{ width: 16, height: 16 }} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRequestOtp('WHATSAPP')}
+                    disabled={isSubmitting || mobileNumber.length < 10}
+                    style={{
+                      width: '100%',
+                      padding: '12px 18px',
+                      fontSize: '0.88rem',
+                      borderRadius: 12,
+                      border: '1.5px solid #22C55E',
+                      backgroundColor: '#F0FDF4',
+                      color: '#15803D',
+                      fontWeight: 700,
+                      cursor: (isSubmitting || mobileNumber.length < 10) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#DCFCE7'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F0FDF4'}
+                  >
+                    <span>💬 Receive OTP on WhatsApp</span>
                   </button>
                 </form>
               ) : (
@@ -886,22 +916,27 @@ export default function LoginPage() {
                       }}
                     />
 
-                    {/* Resend SMS row */}
+                    {/* Resend and WhatsApp row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                        Didn't receive SMS?
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRequestOtp('WHATSAPP')}
+                        style={{ background: 'none', border: 'none', color: '#16A34A', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                      >
+                        💬 Send via WhatsApp
+                      </button>
+                      
                       {otpCountdown > 0 ? (
                         <span style={{ fontSize: '0.75rem', color: '#8D99AE', fontWeight: 600 }}>
-                          Resend OTP in {otpCountdown}s
+                          Resend SMS in {otpCountdown}s
                         </span>
                       ) : (
                         <button
                           type="button"
-                          onClick={handleRequestOtp}
+                          onClick={() => handleRequestOtp('SMS')}
                           style={{ background: 'none', border: 'none', color: '#0D6258', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
                         >
-                          Resend Code
+                          Resend SMS
                         </button>
                       )}
                     </div>
