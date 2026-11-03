@@ -130,8 +130,8 @@ export default function ComplianceCommandCenter({
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'}
             >
-              <Scale style={{ width: 13, height: 13, color: '#FCD34D' }} />
-              <span>Benchmark vs ClearTax</span>
+              <Award style={{ width: 13, height: 13, color: '#34D399' }} />
+              <span>Why TaxMate is Best</span>
             </button>
           </div>
         </div>

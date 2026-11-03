@@ -5,10 +5,12 @@ import {
   X,
   Lock,
   ShieldCheck,
-  Scale
+  Award,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { 
-  CLEAR_TAX_COMPARISON_MATRIX,
+  TAXMATE_EXCELLENCE_PILLARS,
   SCRUTINY_DEFENSE_RADAR
 } from '../lib/showcaseData.js';
 import { DEFAULT_BUSINESS, triggerBrowserDownload } from '../lib/realtimeData.js';
@@ -179,7 +181,7 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY TAXMATE.
       />
 
       {/* ======================================================== */}
-      {/* MODAL 1: WHY TAXMATE IS BEST (BENCHMARK VS CLEARTAX)    */}
+      {/* MODAL 1: WHY TAXMATE IS THE BEST GST PLATFORM            */}
       {/* ======================================================== */}
       {isComparisonModalOpen && (
         <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', padding: 20 }}>
@@ -199,13 +201,13 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY TAXMATE.
             <div style={{ padding: '20px 24px', borderBottom: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0A1128', color: '#FFFFFF' }}>
               <div>
                 <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: 9999 }}>
-                  PRECISION BENCHMARK
+                  STANDARDS OF EXCELLENCE
                 </span>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '6px 0 2px 0' }}>
-                  Why TaxMate is Best vs ClearTax & Legacy Softwares
+                  Why TaxMate is the Best GST Platform for Your Business
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>
-                  Crafted for 6.3 Crore MSMEs of Bharat: zero jargon, zero data hostage risk, and verified math.
+                  Crafted for 6.3 Crore Indian MSMEs: zero confusing jargon, mathematical perfection, and total data freedom.
                 </p>
               </div>
 
@@ -218,32 +220,57 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY TAXMATE.
               </button>
             </div>
 
-            {/* Modal Body: Comparison Table */}
-            <div style={{ padding: 24, overflowY: 'auto' }}>
-              <table className="luxury-comparison-table">
-                <thead>
-                  <tr>
-                    <th>Capability & Dimension</th>
-                    <th style={{ backgroundColor: '#0D6258' }}>✨ TaxMate (Ours)</th>
-                    <th>ClearTax (Clear)</th>
-                    <th>Traditional CA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CLEAR_TAX_COMPARISON_MATRIX.map((row, idx) => (
-                    <tr key={idx} style={{ backgroundColor: row.highlight ? '#FAFDFB' : '#FFFFFF' }}>
-                      <td style={{ fontWeight: 700, color: '#0B132B' }}>{row.feature}</td>
-                      <td style={{ fontWeight: 700, color: '#0D6258', backgroundColor: 'rgba(13, 98, 88, 0.04)' }}>
-                        ✓ {row.taxMate || row.gstCda}
-                      </td>
-                      <td style={{ color: '#64748B' }}>{row.clearTax}</td>
-                      <td style={{ color: '#94A3B8' }}>{row.traditionalCa}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Modal Body: 7 Excellence Pillars */}
+            <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {TAXMATE_EXCELLENCE_PILLARS.map((pillar, idx) => (
+                <div 
+                  key={idx}
+                  style={{
+                    padding: '16px 18px',
+                    borderRadius: 14,
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #EAE5DC',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 14,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: 10, 
+                    backgroundColor: '#EEF8F6', 
+                    color: '#0D6258', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    flexShrink: 0,
+                    marginTop: 2
+                  }}>
+                    <CheckCircle2 style={{ width: 18, height: 18 }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <h4 style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0B132B', margin: 0 }}>
+                        {pillar.feature}
+                      </h4>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#0D6258', backgroundColor: '#EEF8F6', padding: '2px 8px', borderRadius: 9999 }}>
+                        TaxMate Standard
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: '#0B132B', lineHeight: 1.5, margin: '0 0 6px 0', fontWeight: 600 }}>
+                      {pillar.taxMate}
+                    </p>
+                    <div style={{ fontSize: '0.74rem', color: '#596579', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Sparkles style={{ width: 12, height: 12, color: '#D97706' }} />
+                      <span><strong>Why it matters:</strong> {pillar.whyBest}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
-              <div style={{ marginTop: 20, padding: 16, backgroundColor: '#FAF8F5', borderRadius: 14, border: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ marginTop: 10, padding: 16, backgroundColor: '#FFFFFF', borderRadius: 14, border: '1px solid #EAE5DC', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Lock style={{ width: 16, height: 16, color: '#0D6258' }} />
                   <span style={{ fontSize: '0.8rem', color: '#596579' }}>
@@ -253,9 +280,9 @@ ISSUED UNDER STATUTORY COMPLIANCE ASSURANCE STANDARDS BY TAXMATE.
                 <button
                   type="button"
                   onClick={() => setIsComparisonModalOpen(false)}
-                  style={{ padding: '8px 18px', fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF', backgroundColor: '#0D6258', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                  style={{ padding: '8px 20px', fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF', backgroundColor: '#0D6258', border: 'none', borderRadius: 10, cursor: 'pointer' }}
                 >
-                  Got It
+                  Close & Explore
                 </button>
               </div>
             </div>

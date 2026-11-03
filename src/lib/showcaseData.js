@@ -756,66 +756,61 @@ export const MSME_OS_ROADMAP = [
 ];
 
 /**
- * Super Premium Differentiation: TaxMate vs. ClearTax vs. Traditional CA
+ * The 7 Pillars: Why TaxMate is the Best Choice for Indian MSMEs
  */
-export const CLEAR_TAX_COMPARISON_MATRIX = [
+export const TAXMATE_EXCELLENCE_PILLARS = [
   {
-    feature: 'Core Philosophy',
-    taxMate: 'Plain Language 5-Step Model for MSMEs',
-    gstCda: 'Plain Language 5-Step Model for MSMEs',
-    clearTax: 'Corporate ERP jargon (SAP/Oracle focus)',
-    traditionalCa: 'Manual paper-based compliance',
+    feature: 'Plain-Language 5-Step Copilot',
+    taxMate: '5 plain human steps: Sales → Purchases → ITC → Tax → File. Greets you with "Your GST for this month is ready."',
+    whyBest: 'Eliminates all confusing statutory tax jargon so any business owner can file in ~2 minutes.',
+    icon: 'Bot',
     highlight: true,
   },
   {
-    feature: 'Pricing Model',
-    taxMate: '₹0 Starter / ₹199 per filing (Transparent)',
-    gstCda: '₹0 Starter / ₹199 per filing (Transparent)',
-    clearTax: 'Hidden behind sales quote (₹40,000+ lock-in)',
-    traditionalCa: '₹1,500 – ₹5,000 monthly retainer',
+    feature: 'Transparent MSME Pricing',
+    taxMate: 'Forever-Free Starter tier & ₹199 per-filing. 100% price transparency with no hidden enterprise sales quotes.',
+    whyBest: 'Fair, predictable pricing tailored for small businesses with zero contract lock-ins.',
+    icon: 'Receipt',
     highlight: true,
   },
   {
-    feature: 'Data Sovereignty & Lock-in',
-    taxMate: 'Zero Lock-in. 100% Free JSON/Excel/PDF forever',
-    gstCda: 'Zero Lock-in. 100% Free JSON/Excel/PDF forever',
-    clearTax: 'Historical data restricted if subscription lapses',
-    traditionalCa: 'Stored in CA personal files/tally',
+    feature: '100% Data Sovereignty',
+    taxMate: 'Zero lock-in. Full JSON, Excel, CSV, and PDF export available anytime without fees or expired account blocks.',
+    whyBest: 'Your financial records remain 100% yours forever. Never held hostage.',
+    icon: 'Lock',
     highlight: true,
   },
   {
-    feature: 'Calculation Precision',
-    taxMate: 'Integer paise minor-unit math (0 drift)',
-    gstCda: 'Integer paise minor-unit math (0 drift)',
-    clearTax: 'Standard floating-point calculations',
-    traditionalCa: 'Manual spreadsheets & rounded figures',
-    highlight: false,
-  },
-  {
-    feature: 'Notice & Scrutiny Defense',
-    taxMate: 'Built-in Rule 88C & 88D Scrutiny Radar (Included)',
-    gstCda: 'Built-in Rule 88C & 88D Scrutiny Radar (Included)',
-    clearTax: 'Expensive enterprise add-on module',
-    traditionalCa: 'Charges extra ₹5k–₹25k per notice reply',
+    feature: 'Integer-Paise Precision (0 Float Drift)',
+    taxMate: 'Deterministic minor-unit integer BigInt arithmetic. 0.00% rounding errors on all taxes and set-offs.',
+    whyBest: 'Eliminates the 1-paisa floating-point rounding discrepancies that trigger automated department notices.',
+    icon: 'Award',
     highlight: true,
   },
   {
-    feature: 'Vendor ITC Recovery',
-    taxMate: '1-Click WhatsApp Nudge with pre-composed draft',
-    gstCda: '1-Click WhatsApp Nudge with pre-composed draft',
-    clearTax: 'Enterprise ERP-only email automation',
-    traditionalCa: 'Manual phone calls by business owner',
+    feature: 'Automated Notice Defense Radar',
+    taxMate: 'Continuous pre-audit radar monitors Rule 88C (GSTR-1 vs 3B turnover) & Rule 88D (ITC variance).',
+    whyBest: 'Pre-evaluates every return before submission to neutralize DRC-01B and DRC-01C notice exposure.',
+    icon: 'ShieldCheck',
     highlight: true,
   },
   {
-    feature: 'Multi-Channel Access',
-    taxMate: 'Web Portal, Mobile App, Assisted Kiosk & WhatsApp',
-    gstCda: 'Web Portal, Mobile App, Assisted Kiosk & WhatsApp',
-    clearTax: 'Desktop web-only portal',
-    traditionalCa: 'In-person visits & phone calls',
-    highlight: false,
+    feature: '1-Click WhatsApp Vendor Recovery',
+    taxMate: 'Instant pre-composed WhatsApp notices for suppliers with missing invoices before the 14th cutoff.',
+    whyBest: 'Ensures 100% of your eligible Input Tax Credit appears in GSTR-2B before monthly return filing.',
+    icon: 'MessageSquare',
+    highlight: true,
+  },
+  {
+    feature: 'Universal Multi-Channel Access',
+    taxMate: 'Web Portal, Mobile App, WhatsApp Gateway, and physical Assisted Town Kiosks across Kerala & India.',
+    whyBest: 'File from your smartphone, your office desktop, or walk into your neighborhood assisted center.',
+    icon: 'Smartphone',
+    highlight: true,
   },
 ];
+
+export const CLEAR_TAX_COMPARISON_MATRIX = TAXMATE_EXCELLENCE_PILLARS;
 
 /**
  * Super Premium: GST Scrutiny & Notice Risk Radar Metrics
