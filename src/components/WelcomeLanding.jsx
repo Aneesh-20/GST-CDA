@@ -280,20 +280,10 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
           <button
             type="button"
             onClick={onExploreDemo}
+            className="btn-glowing-primary"
             style={{
-              padding: '9px 20px',
+              padding: '9px 22px',
               fontSize: '0.86rem',
-              fontWeight: 800,
-              color: '#FFFFFF',
-              backgroundColor: '#0D6258',
-              border: 'none',
-              borderRadius: 10,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 4px 14px rgba(13, 98, 88, 0.25)',
-              transition: 'all 0.15s ease'
             }}
           >
             <span>File Now</span>
@@ -390,24 +380,15 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
                 <div style={{ marginTop: 16 }}>
                   <button
                     type="button"
+                    className="btn-glowing-primary"
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
-                      backgroundColor: '#0D6258',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.84rem',
-                      borderRadius: 10,
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6
+                      padding: '11px 14px',
+                      fontSize: '0.86rem',
                     }}
                   >
                     <span>Run Health Check</span>
-                    <ArrowRight style={{ width: 14, height: 14 }} />
+                    <ArrowRight style={{ width: 14, height: 14, color: '#FFFFFF' }} />
                   </button>
                 </div>
               </div>
@@ -1156,23 +1137,14 @@ export default function WelcomeLanding({ onGetStarted, onExploreDemo, onOpenBusi
               <button
                 type="button"
                 onClick={onGetStarted}
+                className="btn-glowing-amber"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
                   padding: '13px 26px',
-                  borderRadius: 12,
-                  backgroundColor: '#D97706',
-                  color: '#FFFFFF',
-                  fontWeight: 800,
                   fontSize: '0.92rem',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 16px rgba(217, 119, 6, 0.25)'
                 }}
               >
                 <span>Launch Startup Express</span>
-                <ArrowRight style={{ width: 16, height: 16 }} />
+                <ArrowRight style={{ width: 16, height: 16, color: '#FFFFFF' }} />
               </button>
             </div>
 
