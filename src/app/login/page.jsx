@@ -40,10 +40,8 @@ export default function LoginPage() {
   const [mobileNumber, setMobileNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [activeOtp, setActiveOtp] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [otpError, setOtpError] = useState('');
-  const [smsBanner, setSmsBanner] = useState(null);
   
   // Create Password States (Step after OTP)
   const [newPassword, setNewPassword] = useState('');
@@ -142,12 +140,9 @@ export default function LoginPage() {
       const data = await res.json();
       if (data.success) {
         setOtpSent(true);
-        setActiveOtp(data.otp);
         setOtpCountdown(30);
-        // Show simulated incoming SMS banner
-        setSmsBanner(`📱 SMS from TAXMATE: Your OTP is ${data.otp}. Valid for 5 minutes.`);
       } else {
-        setOtpError(data.error || 'Failed to send OTP');
+        setOtpError(data.error || 'Failed to send OTP via SMS');
       }
     } catch (err) {
       setOtpError('Could not reach authentication server');
@@ -163,7 +158,7 @@ export default function LoginPage() {
     e.preventDefault();
     const cleanDigits = mobileNumber.replace(/\D/g, '');
     if (!otpCode || otpCode.trim().length < 4) {
-      setOtpError('Please enter the verification code');
+      setOtpError('Please enter the 6-digit verification code received on your phone');
       return;
     }
 
@@ -181,8 +176,6 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (data.success && data.verified) {
-        // Clear SMS banner
-        setSmsBanner(null);
         // User is verified! Advance to Step 3: CREATE PASSWORD for their phone number
         setOwnerName(data.user?.name || `Trader ${cleanDigits.slice(-4)}`);
         setBusinessName(data.user?.business_name || `Enterprise ${cleanDigits.slice(-4)}`);
@@ -495,64 +488,6 @@ export default function LoginPage() {
               SSL SECURE
             </span>
           </div>
-
-          {/* SIMULATED SMS BANNER (Appears when OTP is requested) */}
-          {smsBanner && (
-            <div style={{
-              backgroundColor: '#0F172A',
-              color: '#FFFFFF',
-              padding: '12px 14px',
-              borderRadius: 12,
-              marginBottom: 20,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              animation: 'dropdownPop 0.25s ease-out',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 10
-            }}>
-              <Smartphone style={{ width: 20, height: 20, color: '#34D399', flexShrink: 0, marginTop: 2 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Simulated Mobile SMS Notification
-                </div>
-                <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                  Your TaxMate OTP code is: <span style={{ color: '#FCD34D', fontSize: '1.05rem', letterSpacing: '0.1em' }}>{activeOtp}</span>
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#CBD5E1', marginTop: 4 }}>
-                  Click below to auto-fill this code into the verification box.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOtpCode(activeOtp)}
-                  style={{
-                    marginTop: 8,
-                    padding: '5px 10px',
-                    borderRadius: 6,
-                    backgroundColor: '#1E293B',
-                    color: '#34D399',
-                    border: '1px solid #334155',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5
-                  }}
-                >
-                  <Copy style={{ width: 12, height: 12 }} />
-                  <span>Auto-fill {activeOtp}</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSmsBanner(null)}
-                style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 2 }}
-              >
-                <X style={{ width: 16, height: 16 }} />
-              </button>
-            </div>
-          )}
 
           {/* Form Header */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -951,20 +886,20 @@ export default function LoginPage() {
                       }}
                     />
 
-                    {/* Resend and Demo hint row */}
+                    {/* Resend SMS row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                      <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 700 }}>
-                        ✓ Demo Code: <strong>{activeOtp || '123456'}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                        Didn't receive SMS?
                       </span>
                       {otpCountdown > 0 ? (
-                        <span style={{ fontSize: '0.74rem', color: '#8D99AE' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#8D99AE', fontWeight: 600 }}>
                           Resend OTP in {otpCountdown}s
                         </span>
                       ) : (
                         <button
                           type="button"
                           onClick={handleRequestOtp}
-                          style={{ background: 'none', border: 'none', color: '#0D6258', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                          style={{ background: 'none', border: 'none', color: '#0D6258', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
                         >
                           Resend Code
                         </button>
